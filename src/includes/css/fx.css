@@ -1,0 +1,31 @@
+
+
+/* Infinite Scroll */
+.plura-fx-infinitescroll-container {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: var(--plura-fx-infinitescroll-height); /* Dynamic height */
+}
+
+.plura-fx-infinitescroll-track {
+    position: absolute;
+    top: 0;
+    left: var(--plura-fx-infinitescroll-pos); /* Track movement control */
+    display: flex;
+    white-space: nowrap;
+}
+
+.plura-fx-infinitescroll-wrapper {
+    position: absolute; /* Allow wrappers to be repositioned independently */
+    display: flex;
+}
+
+.plura-fx-infinitescroll-item {
+    display: inline-block;
+    white-space: nowrap; /* Prevents line breaks in items */
+}
+
+.plura-fx-infinitescroll-target {
+    /* Specific styles for the target element if needed */
+}

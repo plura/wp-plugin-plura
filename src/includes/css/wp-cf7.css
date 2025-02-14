@@ -1,0 +1,250 @@
+:root {
+
+	--plura-globals-wp-form-cols: 1;
+	--plura-globals-wp-form-gap: 30px;
+	--plura-globals-wp-form-obj-h: 40px;
+
+}
+
+
+/**
+ *	. Globals
+ * 	. Others [Radio - Label as Input / Button]
+ *	. Multi-Step
+ */
+
+
+.wpcf7 :is( 
+	form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label:not(.wpcf7-list-item-label), 
+	form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap
+) :is(
+	input:is( 
+		[type="date"],
+		[type="email"],
+		[type="file"],
+		[type="number"],
+		[type="text"],
+		[type="tel"],
+		[type="time"] ), 
+		
+	select, textarea
+	
+),
+.wpcf7 form.plura-wp-cf7 .wpcf7-response-output {
+	width: 100%;
+}
+
+
+.wpcf7 form.plura-wp-cf7 input[type="submit"],
+.wpcf7 :is( 
+	form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label:not(.wpcf7-list-item-label), 
+	form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap
+)/*:is(
+	[data-tag="input"][data-input-type="email"],
+	[data-tag="input"][data-input-type="tel"],
+	[data-tag="input"][data-input-type="text"],
+	[data-tag="textarea"]
+)*/,
+
+
+.wpcf7 form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap label.wpcf7-list-item-label {
+	--plura-globals-wp-form-obj-w: calc( ( 100% - var(--plura-globals-wp-form-gap) * ( var(	--plura-globals-wp-form-cols ) - 1 ) ) / var(--plura-globals-wp-form-cols) );
+	width: var(--plura-globals-wp-form-obj-w);
+}
+
+.wpcf7 form.plura-wp-cf7 {
+	display: flex !important;
+	flex-wrap: wrap;
+	gap: var(--plura-globals-wp-form-gap);
+	justify-content: space-between;
+}
+
+.wpcf7 form.plura-wp-cf7 > p,
+.wpcf7 form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label[data-tag] .wpcf7-form-control-wrap {
+	display: contents;
+}
+
+.wpcf7 form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label[data-tag] {
+	display: block;
+}
+
+.wpcf7 form.plura-wp-cf7 :is(
+	
+	input:is(
+		[type="date"],
+		[type="email"],
+		[type="number"],
+		[type="text"],
+		[type="tel"],
+		[type="time"]
+	),
+
+	select ) {
+	padding: 0 0 0 calc( var(--plura-globals-wp-form-gap) / 2 );	
+}
+
+.wpcf7 form.plura-wp-cf7 textarea {
+	padding: calc( var(--plura-globals-wp-form-gap) / 2 ) calc( var(--plura-globals-wp-form-gap) / 2 ) 0;	
+}
+
+
+.wpcf7 form.plura-wp-cf7 :is(
+	
+	input:is(
+		[type="date"],
+		[type="email"],
+		[type="file"],
+		[type="number"],
+		[type="tel"],
+		[type="time"],
+		[type="text"],
+		[type="submit"]
+	),
+
+	select, button,
+
+	.wpcf7-radio.plura-wp-cf7-btn label
+
+) {
+	height: var(--plura-globals-wp-form-obj-h);
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-response-output {
+	padding: calc( var(--plura-globals-wp-form-gap) / 2 );
+	min-height: calc( var(--plura-globals-wp-form-obj-h) + var(--plura-globals-wp-form-gap) / 2 );
+}
+
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-acceptance .wpcf7-list-item {
+	margin-left: 0;
+}
+
+.wpcf7 form.plura-wp-cf7 input[type="checkbox"] {
+	margin: 0;
+}
+
+.wpcf7 form.plura-wp-cf7 :is(.wpcf7-checkbox, .wpcf7-radio) {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc( var(--plura-globals-wp-form-gap) / 2 );
+}
+
+.wpcf7 form.plura-wp-cf7 :is(.wpcf7-checkbox, .wpcf7-radio):not(.plura-wp-cf7-btn) .wpcf7-list-item {
+	margin-left: 0;
+}
+
+
+.wpcf7 form.plura-wp-cf7 input[type="submit"] {
+	border: none;
+}
+
+.wpcf7 form.plura-wp-cf7 input[type="submit"]:disabled {
+	opacity: .5;
+}
+
+
+/* https://markheath.net/post/customize-radio-button-css */
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-response-output:not(:empty) {
+	align-items: center;
+	display: flex !important;
+	gap: calc( var(--plura-globals-wp-form-gap) / 6 );
+	justify-content: center;
+	margin: 0 !important;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-response-output svg {
+	margin: 0;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-spinner {
+	margin: auto;
+}
+
+.wpcf7 form.plura-wp-cf7:not(.submitting) .wpcf7-spinner {
+	display: none;
+}
+
+
+
+
+/* Form: Others [Radio - Label as Input / Button] */
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn {
+	--n: 2;
+	gap: var(--plura-globals-wp-form-gap);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;	
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item {
+	display: contents;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item input {
+  opacity: 0;
+  position: fixed;
+  width: 0;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item label.wpcf7-list-item-label:not(.has-info)::after,
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item label.wpcf7-list-item-label::before {
+	content: none;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item label.wpcf7-list-item-label {
+	align-items: center;
+	background-color: var(--plura-globals-colors-secondary);
+	display: flex;
+	height: var(--plura-globals-wp-form-obj-h);
+	justify-content: center;
+	text-align: center;
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item input:checked + label.wpcf7-list-item-label {
+    background-color: var(--plura-globals-colors-primary);
+}
+
+.wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item label.wpcf7-list-item-label.has-info {
+	flex-direction: column;
+	height: auto;
+	justify-content: flex-start;
+	padding: var(--plura-globals-wp-form-gap);
+}
+
+
+
+
+/* Form: fieldset [multi-step] */
+
+/* use the same flex settings as the defaul form */
+.wpcf7 form.plura-wp-cf7.cf7mls fieldset.fieldset-cf7mls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--plura-globals-wp-form-gap);
+	justify-content: space-between;
+}
+
+/* use the same width settings as the default form */
+.wpcf7 form.plura-wp-cf7.cf7mls fieldset.fieldset-cf7mls :is( button:is(.cf7mls_back, .cf7mls_next), input[type="submit"] ) {
+	width: calc( ( 100% - var(--plura-globals-wp-form-gap) ) / 2 );
+}
+
+.wpcf7 form.plura-wp-cf7.cf7mls fieldset.fieldset-cf7mls button:is(.cf7mls_back, .cf7mls_next) {
+	height: var(--plura-globals-wp-form-obj-h);
+	margin: 0;
+}
+
+.wpcf7 form.plura-wp-cf7.cf7mls .fieldset-cf7mls-wrapper,
+.wpcf7 form.plura-wp-cf7.cf7mls .fieldset-cf7mls-wrapper fieldset.fieldset-cf7mls > p,
+.wpcf7 form.plura-wp-cf7.cf7mls .fieldset-cf7mls-wrapper fieldset.fieldset-cf7mls .cf7mls-btns {	
+	display: contents;
+}
+
+.wpcf7 form.plura-wp-cf7.cf7mls fieldset.fieldset-cf7mls button.cf7mls_next {
+	margin-left: auto;
+}
+
+.wpcf7 form.plura-wp-cf7.cf7mls input[type="submit"] {
+	margin-top: 0;
+}

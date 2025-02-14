@@ -1,0 +1,104 @@
+/**
+ *	. Core
+ *	. Filter
+ *		. Filter Item Tag
+ *	. Grid
+ *		- Grid Items
+ *		- Grid Item
+ * 
+ */
+
+:root {
+	--plura-wp-dynamic-grid-gap: 15px;
+	--plura-wp-dynamic-grid-filter-gap: var( --plura-wp-dynamic-grid-gap );
+	--plura-wp-dynamic-grid-filter-pad: 3px;
+	--plura-wp-dynamic-grid-items-gap: var( --plura-wp-dynamic-grid-gap );
+	--plura-wp-dynamic-grid-item-gap: 20px;
+	--plura-wp-dynamic-grid-item-ratio: 1 / 1;
+	--plura-wp-dynamic-grid-item-img-ratio: 16 / 9;
+}
+
+@media (min-width: 991px) {
+
+	:root {
+		--plura-wp-dynamic-grid-gap: 20px;
+		--plura-wp-dynamic-grid-item-ratio: 4 / 3;
+	}
+
+}
+
+
+/* Core */
+.plura-wp-dynamic-grid {
+	display: flex;
+	flex-direction: column;
+	gap: var(--plura-wp-dynamic-grid-gap);
+}
+
+
+/* Filter Item: Tag */
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-filter .plura-wp-dynamic-grid-filter-group[data-filter-type="tag"] {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--plura-wp-dynamic-grid-filter-gap);
+}
+
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-filter .plura-wp-dynamic-grid-filter-group[data-filter-type="tag"] .plura-wp-dynamic-grid-filter-item {
+	border: 1px solid #666;
+	cursor: pointer;
+	opacity: .5;
+	padding: var(--plura-wp-dynamic-grid-filter-pad) calc( 2 * var( --plura-wp-dynamic-grid-filter-pad ) );
+}
+
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-filter .plura-wp-dynamic-grid-filter-group[data-filter-type="tag"] .plura-wp-dynamic-grid-filter-item.on {
+	opacity: 1;
+}
+
+
+
+
+
+/* Grid: Grid Items */
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-items {
+	--s: 1s;
+	--grid-gap: var( --plura-wp-dynamic-grid-items-gap );
+	--grid-item-ratio: var( --plura-wp-dynamic-grid-item-ratio );
+	--w: calc( ( var(--grid-w) - ( var(--grid-cols) - 1 ) * var(--grid-gap) ) / var(--grid-cols) );
+	--h: calc( var(--w) / ( var(--grid-item-ratio) ) );
+
+	height: calc( var(--h) * var(--grid-rows) + var(--grid-gap) * ( var(--grid-rows) - 1 ) );
+	position: relative;
+	transition: height var(--s) ease-out;
+}
+
+
+/* Grid: Grid Item */
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-items {
+	--grid-item-ratio: 9 / 10;
+}
+
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-items .plura-wp-dynamic-grid-item {
+	aspect-ratio: var(--grid-item-ratio);
+	border: 1px solid #666;
+	left: calc( var(--x) * ( var(--w) + var(--grid-gap) ) );
+	opacity: 0;
+	padding: var(--plura-wp-dynamic-grid-item-gap);
+	position: absolute;
+	transition: visibility 0s linear var(--s), opacity var(--s) ease-out, left var(--s) ease-out, top var(--s) ease-out;
+	top: calc( var(--y) * ( var(--h) + var(--grid-gap) ) );
+	visibility: hidden;
+	width: var(--w);
+	z-index: auto;
+}
+
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-items .plura-wp-dynamic-grid-item.on {
+	visibility: visible;
+	opacity: 1;
+	transition-delay: 0s;
+}
+
+.plura-wp-dynamic-grid .plura-wp-dynamic-grid-items .plura-wp-dynamic-grid-item .plura-wp-dynamic-grid-item-featured-img {
+	aspect-ratio: var(--plura-wp-dynamic-grid-item-img-ratio);
+	object-fit: cover;
+}
+

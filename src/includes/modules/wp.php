@@ -1,7 +1,6 @@
 <?php
 
 /**
- * 		. Fix
  * 		. Utils
  *		 	- Enqueue
  *    	. REST
@@ -10,37 +9,6 @@
  *    		- Datetime
  *     		- Nav List
  */
-
-
-/**
- * Global defaults for WP DateTime settings in the PLURA theme.
- *
- * @global array $PLURA_WP_DATETIME_DEFAULTS {
- *     Default settings for DateTime display.
- *
- *     @type string $date   The date to be displayed. Default is an empty string.
- *     @type string $echo   The format to display the date. Default is 'l, F jS, Y g:i A'.
- *     @type string $format The format in which the date should be parsed. Default is an empty string.
- *     @type string $id     The ID of the DateTime element. Default is an empty string.
- *     @type string $tag    The HTML tag to wrap the DateTime element. Default is 'div'.
- * }
- */
-$GLOBALS['PLURA_WP_DATETIME_DEFAULTS'] = [
-	'atts' => '',
-	'date' => '',
-	'format' => __('l, F jS, Y g:i A', 'plura'),
-	'source' => 'Y-m-d H:i:s',
-	'id' => '',
-	'tag' => 'div'
-];
-
-
-
-
-/* FIX: CF7 Breaking Spaces */
-add_filter( 'wpcf7_autop_or_not', '__return_false' );
-
-
 
 
 
@@ -76,43 +44,74 @@ function plura_wp_enqueue( $scripts, $basefile, $prefix = '', $dir = 'includes/'
 
 
 
-/* REST: IDs */
-add_action( 'rest_api_init', function () {
-	
-	register_rest_route( 'pwp/v1', '/ids/', array(
-		'methods' => 'GET',
-		'callback' => 'plura_wp_ids',
-  	) );
+/**
+ * Register REST API endpoint for batch post data retrieval
+ * 
+ * Endpoint: GET /pwp/v1/ids?ids=1,2,3
+ * Returns: { [id]: { title: string, id: int, url: string } }
+ */
+add_action('rest_api_init', function() {
+    register_rest_route('pwp/v1', '/ids', [
+        'methods'  => WP_REST_Server::READABLE,
+        'callback' => 'plura_wp_ids',
+        'args'     => [
+            'ids' => [
+                'required'          => true,
+                'validate_callback' => function($param) {
+                    return is_string($param) && preg_match('/^\d+(,\d+)*$/', $param);
+                },
+                'sanitize_callback' => 'sanitize_text_field',
+                'description'      => __('Comma-separated list of post IDs', 'plura')
+            ]
+        ],
+        'permission_callback' => '__return_true'
+    ]);
+});
 
-} );
 
+/**
+ * Retrieves post data for specified IDs from REST request
+ *
+ * @param WP_REST_Request|null $request Optional REST request object containing 'ids' parameter
+ * @return array<int,array{title:string,id:int,url:string}> Associative array of post data keyed by ID
+ */
+function plura_wp_ids(?WP_REST_Request $request = null): array {
+    // Early return if no valid request or IDs parameter
+    if (!$request || !$request->get_param('ids')) {
+        return [];
+    }
 
-function plura_wp_ids( WP_REST_Request $request = NULL ) {
+    $ids = array_filter(
+        array_map('intval', explode(',', $request->get_param('ids'))),
+        fn($id) => $id > 0
+    );
 
-	if( $request && $request->get_param('ids') ) {
+    if (empty($ids)) {
+        return [];
+    }
 
-		$ids = explode(',', $request->get_param('ids') );
+    $query = new WP_Query([
+        'post_type'      => 'any',
+        'post__in'       => $ids,
+        'posts_per_page' => count($ids),
+        'no_found_rows'  => true,
+        'orderby'        => 'post__in'
+    ]);
 
-		$query = new WP_Query(['post_type' => 'any', 'post__in' => $ids]);
+    if (!$query->have_posts()) {
+        return [];
+    }
 
-		if( $query->have_posts() ) {
+    $data = [];
+    foreach ($query->posts as $post) {
+        $data[$post->ID] = [
+            'title' => $post->post_title,
+            'id'    => $post->ID,
+            'url'   => get_permalink($post)
+        ];
+    }
 
-			$data = [];
-
-			foreach( $query->posts as $post ) {
-
-				$data[ $post->ID ] = ['title' => $post->post_title, 'id' => $post->ID, 'url' => get_permalink( $post )];
-
-			}
-
-			return $data;
-
-		}
-
-	}
-
-	return [];
-
+    return $data;
 }
 
 
@@ -149,61 +148,121 @@ function plura_wp_ids( WP_REST_Request $request = NULL ) {
 
 
 /* Layout: Datetime */
-add_shortcode('plura-wp-datetime', function( $args ) {
 
-	global $PLURA_WP_DATETIME_DEFAULTS;
+/**
+ * Formats and outputs a datetime with HTML attributes.
+ *
+ * Supports localization, HTML customization, and optional relative time formatting.
+ *
+ * @param DateTime|string|null $date     The date to format (DateTime object, date string, or null)
+ * @param string|array|null    $class    CSS class(es) for the wrapper element
+ * @param string               $format   Date format string (default: 'l, F jS, Y g:i A')
+ * @param int|null             $id       Post ID to fetch the post date (overrides $date if provided)
+ * @param string               $source   Source date format for parsing string dates (default: 'Y-m-d H:i:s')
+ * @param string               $tag      HTML tag to wrap the date (default: 'time')
+ * @param bool                 $relative Whether to show relative time instead of formatted date (default: false)
+ *
+ * @return string|null Formatted HTML string or null if the date is invalid
+ */
+function plura_wp_datetime(
+	DateTime|string|null $date = null,
+	string|array|null $class = null,
+	string $format = 'l, F jS, Y g:i A',
+	?int $id = null,
+	string $source = 'Y-m-d H:i:s',
+	string $tag = 'time',
+	bool $relative = false
+): ?string {
+	// If an ID is provided, get the post date
+	if ($id) {
+		$date = get_the_date($source, $id);
+	}
 
-	$atts = shortcode_atts( $PLURA_WP_DATETIME_DEFAULTS, $args );
+	// Create DateTime object from either string or existing DateTime
+	$datetime = $date instanceof DateTime ? $date : null;
+	if (!$datetime && $date !== null && $date !== '') {
+		$datetime = DateTime::createFromFormat($source, $date);
 
-	if( !empty( $atts['id'] ) || is_singular() ) {
+		// Fallback to flexible parser if format fails
+		if (!$datetime && is_string($date)) {
+			try {
+				$datetime = new DateTime($date);
+			} catch (Exception $e) {
+				return null;
+			}
+		}
+	}
 
-		$atts['id'] = !empty( $atts['id'] ) ? $atts['id'] : get_the_ID();
+	if (!$datetime) {
+		return null;
+	}
 
-		return plura_wp_datetime( $atts );
+	$timestamp = $datetime->getTimestamp();
 
-	}	
-	
+	// Format display value
+	if ($relative) {
+		$diff = human_time_diff($timestamp, time());
+
+		$suffix = $timestamp < time()
+			? apply_filters('plura_datetime_suffix_past', __('ago'))
+			: apply_filters('plura_datetime_suffix_future', __('from now'));
+
+		$suffix_html = sprintf('<span class="relative-suffix">%s</span>', esc_html($suffix));
+
+		$display = esc_html($diff) . ' ' . $suffix_html;
+	} else {
+		$display = date_i18n($format, $timestamp);
+	}
+
+	// Build attributes array
+	$atts = [
+		'class' => ['plura-wp-datetime'],
+		'data-date-month' => $datetime->format('F'),
+		'data-date-month-short' => $datetime->format('M'),
+		'datetime' => $datetime->format(DateTime::ATOM), // ISO 8601
+	];
+
+	// Merge additional classes if provided
+	if ($class !== null) {
+		$atts['class'] = array_merge(
+			$atts['class'],
+			is_array($class) ? $class : preg_split('/\s+/', trim($class))
+		);
+	}
+
+	return sprintf(
+		'<%1$s %2$s>%3$s</%1$s>',
+		$tag,
+		plura_attributes($atts),
+		$display
+	);
+}
+
+add_shortcode('plura-wp-datetime', function($args) {
+    $atts = shortcode_atts([
+        'date' => null,       // Date string or timestamp
+        'class' => null,      // Optional CSS class
+        'format' => 'l, F jS, Y g:i A',
+        'id' => null,         // Optional post ID
+        'source' => 'Y-m-d H:i:s',
+        'tag' => 'time',      // HTML wrapper tag
+        'relative' => false   // Use relative time format (e.g., "3 days ago")
+    ], $args);
+
+    $atts['id'] = $atts['id'] !== null ? (int) $atts['id'] : null;
+    $atts['relative'] = filter_var($atts['relative'], FILTER_VALIDATE_BOOLEAN);
+
+	if (empty($atts['date']) && empty($atts['id'])) {
+		if (is_single()) {
+			$atts['id'] = get_the_ID();
+		} else {
+			$atts['date'] = date_i18n($atts['source']);
+		}
+	}
+
+    return plura_wp_datetime(...$atts);
 });
 
-
-
-function plura_wp_datetime( $args = [] ) {
-
-	global $PLURA_WP_DATETIME_DEFAULTS;
-
-	$args = array_merge( $PLURA_WP_DATETIME_DEFAULTS, $args );
-
-	if( $args['id'] ) {
-
-		$date = get_the_date(  $args['source'] , $args['id'] );
-
-	} 
-
-	if( isset( $date ) || !empty( $args['date'] ) ) {
-
-		$datetime = DateTime::createFromFormat( $args['source'] , isset( $date ) ? $date : $args['date'] );
-
-	}
-
-	if( isset( $datetime ) && $datetime ) {
-
-		$a = [
-			'class' => ['plura-wp-datetime'],
-			'data-date-month' => $datetime->format('F'),
-			'data-date-month-short' => $datetime->format('M')
-		];
-
-		if( !empty( $args['class'] ) ) {
-
-			$a['class'] = array_merge( $a['class'], is_array( $args['class'] ) ? $args['class'] : plura_explode(',', $args['class'] ) );
-
-		}
-
-		return "<$args[tag] " . plura_attributes( $a ) . ">" . $datetime->format( $args['format'] ) . "</$args[tag]>";
-
-	}
-
-}
 
 
 
@@ -280,7 +339,7 @@ add_shortcode('plura-wp-nav-list', function( $args ) {
 
 	   		}
 
-	   		return "<div " . p_attributes( $atts ) . ">" . implode('', $html) . "</div>";
+	   		return "<div " . plura_attributes( $atts ) . ">" . implode('', $html) . "</div>";
 
 	   }
 
@@ -288,3 +347,79 @@ add_shortcode('plura-wp-nav-list', function( $args ) {
     }
 
 } );
+
+
+
+/**
+ * Generates a linked HTML element for WordPress posts or terms.
+ *
+ * @param string $html The inner HTML content to wrap in the link.
+ * @param WP_Post|WP_Term|null $obj The WordPress object to link to (post or term). If null or invalid, returns $html.
+ * @param array $obj_atts Additional attributes for the <a> element (merged with defaults).
+ * @param bool|string $target Target behavior:
+ *     - true (default): Adds target="_blank" only if the link is external to the current site.
+ *     - string: Adds target with the specified value (e.g., '_blank', '_self').
+ *     - false or empty: No target attribute added.
+ * @param bool $rel Whether to add rel="noopener noreferrer" if target is '_blank' (default: false).
+ *
+ * @return string The generated <a> tag wrapping the given HTML, or original HTML if $obj is invalid.
+ */
+function plura_wp_link(
+	string $html,
+	WP_Post|WP_Term|null $obj = null,
+	array $obj_atts = [],
+	bool|string $target = true,
+	bool $rel = false
+): string {
+	if (!$obj) {
+		return $html;
+	}
+
+	$atts = [
+		'class' => ['plura-wp-link'],
+	];
+
+	// Determine href and object-specific attributes
+	if ($obj instanceof WP_Post) {
+		$href = get_permalink($obj);
+		$atts = array_merge($atts, [
+			'title' => $obj->post_title,
+			'data-plura-wp-link-target-type' => 'post'
+		]);
+	} elseif ($obj instanceof WP_Term) {
+		$href = get_term_link($obj);
+		$atts = array_merge($atts, [
+			'title' => $obj->name,
+			'data-plura-wp-link-target-type' => 'term'
+		]);
+	} else {
+		return $html;
+	}
+
+	$atts['href'] = $href;
+
+	// Handle target logic
+	if ($target === true) {
+		$site_url = rtrim(home_url(), '/');
+		$link_url = rtrim($href, '/');
+
+		// If link does NOT start with the current site URL, treat as external
+		if (stripos($link_url, $site_url) !== 0) {
+			$atts['target'] = '_blank';
+		}
+	} elseif (is_string($target) && !empty($target)) {
+		$atts['target'] = $target;
+	}
+
+	// Handle rel="noopener noreferrer" when needed
+	if ($rel && isset($atts['target']) && $atts['target'] === '_blank') {
+		$atts['rel'] = 'noopener noreferrer';
+	}
+
+	// Merge additional attributes
+	if (!empty($obj_atts)) {
+		$atts = array_merge_recursive($atts, $obj_atts);
+	}
+
+	return sprintf('<a %s>%s</a>', plura_attributes($atts), $html);
+}

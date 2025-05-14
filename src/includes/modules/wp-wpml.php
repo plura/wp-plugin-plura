@@ -166,7 +166,8 @@ function plura_wpml_query( $query_args, $type = false ) {
 	
 	if( $type === 'terms' ) {
 
-		$query = get_terms( $query_args );
+		//$query = get_terms( $query_args );
+		$query = new WP_Term_Query( $query_args );
 
 	} else {
 

@@ -1,0 +1,127 @@
+/**
+ *
+ *	. Modules
+ *		- Posts
+ *		- Posts Carousel
+ *	 	- Post
+ *	 	- Post Timeline Datetime
+ *
+ * 
+ */
+
+:root {
+	--plura-wp-posts-gap: 30px;
+	--plura-wp-post-gap: calc( var(--cp-posts-gap) / 2 );
+	--plura-wp-posts-cols: 1;
+}
+
+@media (min-width: 768px) {
+
+	:root {
+		--plura-wp-posts-cols: 2;
+	}
+
+}
+
+@media (min-width: 991px) {
+
+	:root {
+		--plura-wp-posts-cols: 3;
+	}
+
+}
+
+@media (min-width: 991px) {
+
+	:root {
+		--plura-wp-posts-cols: 3;
+	}
+
+}
+
+
+@media (min-width: 1200px) {
+
+	:root {
+		--plura-wp-posts-cols: 4;
+	}
+
+}
+
+
+
+/* Modules: Posts */
+:is(.plura-wp-posts .plura-wp-post, .plura-wp-post.plura-wp-post-is-single) {
+	display: flex;
+	flex-direction: column;
+	/* gap: calc( var(--plura-globals-gap) / 3 ); */
+}
+
+.plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
+.plura-wp-post .plura-wp-link:not(.plura-wp-post-read-more) {
+    display: contents;
+}
+
+
+
+
+/* fancyapps carousel */
+.plura-wp-posts.plura-wp-f-carousel {
+	--f-carousel-spacing: var(--plura-wp-posts-gap);
+}
+
+
+
+
+/* Modules: Post Timeline Datetime */
+.plura-wp-post-timeline {
+    display: flex;
+    gap: calc( var(--plura-globals-gap) / 3 );
+}
+
+.plura-wp-post-timeline:has(.plura-wp-post-timeline-start + .plura-wp-post-timeline-end)::before {
+	content: '-';
+	order: 2;
+}
+
+.plura-wp-post-timeline:has(.plura-wp-post-timeline-start + .plura-wp-post-timeline-end) .plura-wp-post-timeline-end {
+	order: 3;
+}
+
+
+/* Layout: PrevNext */
+.plura-wp-prevnext-nav {
+	--plura-wp-prevnext-nav-gap: 40px;
+	display: flex;
+	justify-content: space-between;
+}
+
+.plura-wp-prevnext-nav .plura-wp-prevnext-nav-item {
+	width: calc( ( 100% - var(--plura-wp-prevnext-nav-gap) ) / 2 );
+}
+
+.plura-wp-prevnext-nav .plura-wp-prevnext-nav-item-next {
+	text-align: right;
+}
+
+.plura-wp-prevnext-nav:not(.has-prev) .plura-wp-prevnext-nav-item-next {
+	margin-left: auto;
+}
+
+
+
+
+
+/* FX: Sticky */
+.p-sticky {
+	position: fixed;
+	z-index: auto;
+}
+
+.p-sticky:not(.p-sticky-bottom) {
+	bottom: 0;
+}
+
+.p-sticky.p-sticky-bottom {
+	bottom: var(--p-sticky-bottom-pos);
+}

@@ -8,325 +8,322 @@
  * 	- plura_wp_breadcrumbs_nav_html		- get nav breadcrumbs html
  */
 
-/*$PLURA_WP_BREADCRUMBS_NAV_DEFAULTS = [
-	'class' => '',
-	'id' => '',	
-    'menu' => ''
-];
-
-$PLURA_WP_PREVNEXT_DEFAULTS = [
-	'class' => '',
-    'breadcrumbs' => 1,
-    'id' => '',
-    'menu' => ''
-];*/
-
-$GLOBALS['PLURA_WP_BREADCRUMBS_NAV_DEFAULTS'] = [
-	'class' => '',
-	'id' => '',	
-	'menu' => ''
-];
-
-$GLOBALS['PLURA_WP_PREVNEXT_DEFAULTS'] = [
-	'class' => '',
-	'breadcrumbs' => 1,
-	'id' => '',
-	'menu' => ''
-];
-
-
-add_shortcode('plura-wp-prevnext-nav', function( $args ) {
-
-    global $PLURA_WP_PREVNEXT_DEFAULTS;
-
-    $atts = shortcode_atts( $PLURA_WP_PREVNEXT_DEFAULTS, $args );
-
-    if( !empty( $atts['menu'] ) ) {
-
-        return plura_wp_prevnext_nav( $atts );
-
-    }
-
-} );
-
-
-
-function plura_wp_get_nav_by_title( $title ) {
-
-    $params = [
-        'post_status' => 'publish',
-        'post_type' => 'wp_navigation',
-        'title' => $title
-    ];
-
-    $query = new WP_Query( $params );
-
-    if( $query->have_posts() ) {
-
-        return parse_blocks( $query->posts[0]->post_content );
-
-    }
-
-    return false;
-
-}
 
 
 /**
- * 
- * @param  array $args {
- *                    
- *      parameters array                 
- *                     
- *		@type string  $class		returned html optional class
- *		@type int     $id 			optional id to be targeted. defaults to current ID via get_the_ID()
- *		@type string  $menu 		string identifying target menu
- * 
- * }
- * @return string returns prev/next navigation
+ * Retrieves navigation menu blocks by menu title
+ *
+ * @param string $title Title of the navigation menu to retrieve
+ * @return array[] Array of parsed block arrays (empty array if no blocks found)
  */
-function plura_wp_prevnext_nav( $args ) {
+function plura_wp_get_nav_by_title(string $title): array {
+    $query = new WP_Query([
+        'post_status'    => 'publish',
+        'post_type'      => 'wp_navigation',
+        'title'          => $title,
+        'posts_per_page' => 1,
+        'no_found_rows'  => true
+    ]);
 
-    $nav = plura_wp_get_nav_by_title( $args['menu'] );
-
-    if( $nav ) {
-
-        $prev_next = plura_wp_traverse_nav_block( $nav, $args['id'], ['prev', 'next'] );
-
-        if( !empty( $prev_next ) ) {
-
-        	$classes = array_merge( ['plura-wp-prevnext-nav'], !isset( $args['class'] ) ? [] : p_explode(' ', $args['class'] ) );
-
-        	$html = [];
-
-        	foreach( $prev_next as $k => $nav_item ) {
-
-
-        		$classes[] = 'has-' . $k;
-
-        		$nav_item_title_atts = ['class' => 'plura-wp-prevnext-nav-item-title'];
-
-        		$nav_item_title_link_atts = [
-        			'class' => ['plura-wp-prevnext-nav-item-link'],
-        			'href' => $nav_item['attrs']['url'],
-        			'title' => $nav_item['attrs']['label']
-        		];
-
-        		$item_html = "<a " . plura_attributes( $nav_item_title_link_atts ) . ">" . $nav_item['attrs']['label'] . "</a>";
-
-        		$item_html = ["<div " . plura_attributes( $nav_item_title_atts ) . ">" . $item_html . "</div>"];
-
-
-        		//add breadcrumbs
-        		if( isset( $nav_item['_path'] ) && plura_bool( $args['breadcrumbs'], true ) ) {
-
-        			$classes[] = 'has-breadcrumbs';
-
-        			$item_html[] = plura_wp_breadcrumbs_nav_html( $nav_item['_path'] );
- 
-        		}
-
-        		$nav_item_atts = ['class' => ['plura-wp-prevnext-nav-item', 'plura-wp-prevnext-nav-item-' . $k] ];
-
-        		$html[] = "<div " . plura_attributes( $nav_item_atts ) . ">" .  implode('', $item_html) . "</div>";
-        	
-        	}
-
-        	$atts = ['class' => $classes];
-
-        	return "<div " . plura_attributes( $atts ) . ">" . implode('', $html) . "</div>";
-
-        }
-
+    if (!$query->have_posts()) {
+        return [];
     }
 
+    return parse_blocks($query->posts[0]->post_content);
 }
 
 
 
 /**
- * traverses navigation, returning the active object and the objects immediately before
- * and after it. For the previous/next object, only those with non-dummy links (#) will
- * be accepted.
- * @param  array $nav  		'core/navigation' parsed blocks
- * @param  int $id   		current id, if none is given it will get_the_ID() instead
- * @param  array $keys  	desired return keys
- * @param  array $ref  		reference object for 'current', 'prev' and 'next' nav items
- * @param  array $path 		nav item 'breadcrumbs' path
- * @return array       		returns updated reference object
+ * Traverses navigation, returning the active object and adjacent non-dummy link items.
+ * Returns the active object along with objects immediately before/after it. For previous/next 
+ * objects, only items with non-dummy links (#) will be included.
+ * 
+ * @param array $nav Navigation blocks array from 'core/navigation'
+ * @param int|null $id Current post ID (uses get_the_ID() if null)
+ * @param array|string|null $keys Desired return keys (defaults to ['prev', 'next', 'current'])
+ * @param array|null $ref Reference array for storing traversal results
+ * @param array|null $path Current breadcrumb path for recursion
+ * @return array Updated reference array with requested navigation items
  */
-function plura_wp_traverse_nav_block( $nav, $id = null, $keys = null, $ref = null, $path = null ) {
+function plura_wp_traverse_nav_block(
+    array $nav,
+    ?int $id = null,
+    array|string|null $keys = null,
+    ?array $ref = null,
+    ?array $path = null
+): array {
+    $_id = $id ?: get_the_ID();
+    $_keys = ['prev', 'next', 'current'];
+    $_ref = $ref ?? [];
 
-	$_id = $id ? $id : get_the_ID();
+    foreach ($nav as $nav_item) {
+        if (!empty($nav_item['blockName']) && preg_match('/core\/navigation-(link|submenu)/', $nav_item['blockName'])) {
+            
+            // Set nav item path - only when in recursive path building mode
+            $_path = $path ?: [];
+            if ($path) {
+                $nav_item['_path'] = $_path;
+            }
 
-	$_keys = ['prev', 'next', 'current'];
+            // Check if current item matches ID
+            // This identifies if $nav_item is 'current' by comparing IDs
+            if (isset($nav_item['attrs']['id']) && $nav_item['attrs']['id'] === $_id) {
+                $_ref['current'] = $nav_item;
+            }
 
-    $_ref = $ref ? $ref : [];
+            // Handle prev/next navigation items:
+            // - Only if current doesn't exist or item isn't current
+            // - Exclude items with dummy links (#)
+            if ((!isset($_ref['current']) || $_ref['current'] !== $nav_item) && ($nav_item['attrs']['url'] ?? '#') !== '#') {
+               
+                // If current doesn't exist yet, track previous items
+                if (!isset($_ref['current'])) {
+                    $_ref['prev'] = $nav_item;
+                } 
+                // Once current exists, track next item (then break)
+                elseif (!isset($_ref['next'])) {
+                    $_ref['next'] = $nav_item;
+                    break;
+                }
+            }
 
-    foreach( $nav as $nav_item ) {
-
-        if( !empty( $nav_item['blockName'] ) && preg_match('/core\/navigation-(link|submenu)/' , $nav_item['blockName']) ) {
-
-
-			//set $nav_item path
-			$_path = $path ? $path : [];
-
-			if( $path ) {
-
-				$nav_item['_path'] = $_path;
-
-			}
-
-
-			//check if $nav_item is 'current'.
-			if( /*is_singular() &&*/ array_key_exists('id', $nav_item['attrs'] ) && $nav_item['attrs']['id'] === $_id ) {
-
-				$_ref['current'] = $nav_item;
-
-			}
-
-
-			//if 'current' does not exist or $nav_item is not 'current' save prev/next. Exclude nav items with 'dummy' links for prev/next
-			if( ( !array_key_exists('current', $_ref) || $_ref['current'] !== $nav_item ) &&  $nav_item['attrs']['url'] !== '#' ) {
-
-				//if current does not exist add a prev in each loop, until current is found
-				if( !array_key_exists('current', $_ref) ) {
-
-					$_ref['prev'] = $nav_item;
-
-				//if current already exists add a next
-				} elseif( !array_key_exists('next', $_ref) ) {
-
-					$_ref['next'] = $nav_item;
-
-					break;
-
-				}
-
-			}
-
-
-			//traverse submenu
-			if( $nav_item['blockName'] === 'core/navigation-submenu' ) {
-
-				if( !empty( $nav_item['innerBlocks'] ) ) {
-
-					$_ref = plura_wp_traverse_nav_block( $nav_item['innerBlocks'], $_id, $keys, $_ref, array_merge( $_path, [ $nav_item ] ) );
-
-				}
-
-			}
-
+            // Handle submenu recursion
+            if ($nav_item['blockName'] === 'core/navigation-submenu' && !empty($nav_item['innerBlocks'])) {
+                $_ref = plura_wp_traverse_nav_block(
+                    nav: $nav_item['innerBlocks'],
+                    id: $_id,
+                    keys: $keys,
+                    ref: $_ref,
+                    path: array_merge($_path, [$nav_item])
+                );
+            }
         }
-
     }
 
-    //remove undesired keys from final 'return' (ie. in prevnext only 'prev'/'next' are required)
-    if( !$path && ( is_array( $keys ) || is_string( $keys ) ) ) {
-
-    	if( is_string( $keys ) ) {
-
-    		$keys = [ $keys ];
-
-    	}
-
-    	//array diff returns the items not found of the first array in common with the second array
-    	//allowing to unset the 'undesired' key
-    	foreach( array_diff($_keys, $keys) as $key ) {
-
-    		unset( $_ref[ $key ] );
-
-    	}  	
-
+    // Filter results to only include requested keys
+    // Removes undesired keys from final return (e.g., only 'prev'/'next' for prevnext)
+    if (!$path && $keys) {
+        $filter_keys = is_string($keys) ? [$keys] : (array)$keys;
+        
+        // array_diff returns items from $_keys not present in $filter_keys
+        // allowing us to unset the undesired keys
+        foreach (array_diff($_keys, $filter_keys) as $key) {
+            unset($_ref[$key]);
+        }
     }
 
     return $_ref;
-
 }
 
 
 
-function plura_wp_breadcrumbs_nav_html( $nav_item_path, $args = null ) {
 
-	$crumbs_html = [];
+/**
+ * Generates previous/next navigation HTML
+ *
+ * @param string $menu String identifying target menu (required)
+ * @param string|null $class Optional CSS class(es) for the container
+ * @param bool $breadcrumbs Whether to include breadcrumbs (default: true)
+ * @param int|null $id Optional ID to target (defaults to current ID via get_the_ID())
+ * @return string|null Returns prev/next navigation HTML or null if no navigation found
+ */
+function plura_wp_prevnext_nav(
+    string $menu,
+    ?string $class = null,
+    bool $breadcrumbs = true,
+    ?int $id = null
+): ?string {
+    $nav = plura_wp_get_nav_by_title($menu);
 
-	foreach( $nav_item_path as $crumb ) {
-
-		$crumb_item_html = $crumb['attrs']['label'];
-
-		if( $crumb['attrs']['url'] !== '#' ) {
-
-			$crumb_item_link_atts = ['class' => 'plura-wp-breadcrumb-link', 'href' => $crumb['attrs']['url'], 'title' => $crumb['attrs']['label']];
-
-			$crumb_item_html = "<a " . plura_attributes( $crumb_item_link_atts ) . ">" . $crumb_item_html . "</a>";
-
-		}
-
-		$crumb_item_atts = ['class' => 'plura-wp-breadcrumb'];
-
-		$crumbs_html[] = "<li " . plura_attributes( $crumb_item_atts ) . ">" . $crumb_item_html . "</li>";
-
-	}
-
-	$atts = ['class' => ['plura-wp-breadcrumbs']];
-
-	if( !empty( $args['class'] ) ) {
-
-		$atts['class'] = array_merge( $atts['class'], is_array( $args['class'] ) ? $args['class'] : p_explode(' ', $args['class']) );
-
-	}
-
-	return "<div " . plura_attributes( $atts ) . "><ul class=\"plura-wp-breadcrumbs-group\">" . implode('', $crumbs_html) . "</ul></div>";
-
-}
-
-
-
-add_shortcode('plura-wp-breadcrumbs-nav', function( $args ) {
-
-    global $PLURA_WP_BREADCRUMBS_NAV_DEFAULTS;
-
-    $atts = shortcode_atts( $PLURA_WP_BREADCRUMBS_NAV_DEFAULTS, $args );
-
-    if( !empty( $atts['menu'] ) ) {
-
-    	if( empty( $atts['id'] ) ) {
-
-    		$atts['id'] = get_the_ID();
-
-    	} else {
-
-			//intval is used b/c ID var might be a string (ie. when using shortcodes)
-    		$atts['id'] = intval( $atts['id'] );
-
-    	}
-
-        return plura_wp_breadcrumbs_nav( $atts );
-
+    if (!$nav) {
+        return null;
     }
 
-} );
+    $prev_next = plura_wp_traverse_nav_block($nav, $id, ['prev', 'next']);
 
+    if (empty($prev_next)) {
+        return null;
+    }
 
+    $classes = ['plura-wp-prevnext-nav'];
+    if ($class) {
+        $classes = array_merge($classes, plura_explode(' ', $class));
+    }
 
-function plura_wp_breadcrumbs_nav( $args ) {
+    $html = [];
+    
+    foreach ($prev_next as $k => $nav_item) {
+        $classes[] = 'has-' . $k;
 
-	$nav = plura_wp_get_nav_by_title( $args['menu'] );
+        // Build link HTML
+        $link_html = sprintf(
+            '<a %s>%s</a>',
+            plura_attributes([
+                'class' => ['plura-wp-prevnext-nav-item-link'],
+                'href' => $nav_item['attrs']['url'],
+                'title' => $nav_item['attrs']['label']
+            ]),
+            htmlspecialchars($nav_item['attrs']['label'], ENT_QUOTES)
+        );
 
-	if( $nav ) {
+        $item_html = [
+            sprintf(
+                '<div %s>%s</div>',
+                plura_attributes(['class' => 'plura-wp-prevnext-nav-item-title']),
+                $link_html
+            )
+        ];
 
-		$id = !empty( $args['id'] ) ? $args['id'] :  null;
+        // Add breadcrumbs if available and enabled
+        if (isset($nav_item['_path']) && $breadcrumbs) {
+            $classes[] = 'has-breadcrumbs';
+            $item_html[] = plura_wp_breadcrumbs_nav_html($nav_item['_path']);
+        }
 
-	    $items = plura_wp_traverse_nav_block( $nav, $id, ['current'] );
+        $html[] = sprintf(
+            '<div %s>%s</div>',
+            plura_attributes([
+                'class' => [
+                    'plura-wp-prevnext-nav-item',
+                    'plura-wp-prevnext-nav-item-' . $k
+                ]
+            ]),
+            implode('', $item_html)
+        );
+    }
 
-	    if( !empty( $items ) && isset( $items['current']['_path'] ) ) {
-
-	    	return plura_wp_breadcrumbs_nav_html( $items['current']['_path'], $args );
-
-	    }
-
-	}
-
+    return sprintf(
+        '<div %s>%s</div>',
+        plura_attributes(['class' => $classes]),
+        implode('', $html)
+    );
 }
 
-?>
+add_shortcode('plura-wp-prevnext-nav', function(array $args): ?string {
+    $atts = shortcode_atts([
+        'menu' => '',
+        'class' => '',
+        'breadcrumbs' => 'true'
+    ], $args, 'plura-wp-prevnext-nav');
+
+    // Convert string boolean to real boolean
+    $atts['breadcrumbs'] = filter_var($atts['breadcrumbs'], FILTER_VALIDATE_BOOLEAN);
+
+    if (empty($atts['menu'])) {
+        return null;
+    }
+
+    return plura_wp_prevnext_nav(...$atts);
+});
+
+
+
+
+/**
+ * Generates breadcrumbs navigation for WordPress
+ *
+ * @param string $menu The menu title to use for breadcrumbs
+ * @param string|null $class CSS class for the breadcrumbs container
+ * @param int|null $id HTML ID for the breadcrumbs container
+ * @return string|null The breadcrumbs HTML or null if no valid path found
+ */
+function plura_wp_breadcrumbs_nav(
+    string $menu,
+    ?string $class = null,
+    ?int $id = null
+): ?string {
+    $nav = plura_wp_get_nav_by_title($menu);
+
+    if ($nav) {
+        $items = plura_wp_traverse_nav_block($nav, $id, ['current']);
+
+        if (!empty($items) && isset($items['current']['_path'])) {
+            return plura_wp_breadcrumbs_nav_html(
+                nav_item_path: $items['current']['_path'],
+                class: $class,
+                id: $id
+            );
+        }
+    }
+
+    return null;
+}
+
+add_shortcode('plura-wp-breadcrumbs-nav', function(array $args): ?string {
+    $atts = shortcode_atts([
+        'menu' => '',
+        'class' => '',
+        'id' => '0'
+    ], $args, 'plura-wp-breadcrumbs-nav');
+
+    // Convert ID to integer (0 becomes default in main function)
+    $atts['id'] = (int)$atts['id'];
+
+    if (empty($atts['menu'])) {
+        return null;
+    }
+
+    return plura_wp_breadcrumbs_nav(...$atts);
+});
+
+
+
+
+/**
+ * Generates HTML for breadcrumbs navigation
+ *
+ * @param array $nav_item_path The navigation item path array
+ * @param string|null $class Additional CSS class(es) for the breadcrumbs container
+ * @param int|null $id HTML ID for the breadcrumbs container
+ * @return string The generated breadcrumbs HTML
+ */
+function plura_wp_breadcrumbs_nav_html(
+    array $nav_item_path,
+    ?string $class = null,
+    ?int $id = null
+): string {
+    $crumbs_html = [];
+
+    foreach ($nav_item_path as $crumb) {
+        $label = htmlspecialchars($crumb['attrs']['label'], ENT_QUOTES);
+        $url = htmlspecialchars($crumb['attrs']['url'], ENT_QUOTES);
+
+        $label = ($url !== '#')
+            ? sprintf(
+                '<a %s>%s</a>',
+                plura_attributes([
+                    'class' => 'plura-wp-breadcrumb-link',
+                    'href' => $url,
+                    'title' => $label
+                ]),
+                $label
+              )
+            : $label;
+
+        $crumbs_html[] = sprintf(
+            '<li %s>%s</li>',
+            plura_attributes(['class' => 'plura-wp-breadcrumb']),
+            $label
+        );
+    }
+
+    $atts = ['class' => ['plura-wp-breadcrumbs']];
+    
+    if ($id) {
+        $atts['id'] = $id;
+    }
+
+    if ($class) {
+        $atts['class'] = array_merge(
+            $atts['class'],
+            is_array($class) ? $class : plura_explode(' ', $class)
+        );
+    }
+
+    return sprintf(
+        '<div %s><ul class="plura-wp-breadcrumbs-group">%s</ul></div>',
+        plura_attributes($atts),
+        implode('', $crumbs_html)
+    );
+}

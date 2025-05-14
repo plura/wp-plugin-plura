@@ -22,7 +22,32 @@ function plura_wp_init() {
 add_action('init', 'plura_wp_init');
 
 
-function plura_includes( array $modules, string $dir ) {
+/**
+ * Includes PHP module files from a given directory, only on the frontend.
+ *
+ * @param array<int, string> $modules List of module filenames (without `.php`).
+ * @param string $dir Absolute or relative directory path.
+ * 
+ * @return void
+ */
+function plura_includes(array $modules, string $dir): void {
+	if (is_admin()) {
+		return;
+	}
+
+	foreach ($modules as $module) {
+		$path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $module . '.php';
+
+		if (is_file($path)) {
+			include_once $path;
+		}
+	}
+}
+
+
+
+
+/* function plura_includes( array $modules, string $dir ) {
 
 	if( !is_admin() ) {
 
@@ -40,7 +65,7 @@ function plura_includes( array $modules, string $dir ) {
 
 	}
 
-}
+} */
 
 
 plura_includes( [
@@ -72,18 +97,6 @@ function plura_wp_styles() {
 		'restNonce' => wp_create_nonce('wp_rest')
 	];
 
-
-	if( plura_wpml() ) {
-
-		$plura_wp_data = array_merge( $plura_wp_data, [
-
-			'lang' => $sitepress->get_current_language()
-
-		]);
-
-	}
-
-
 	if( is_singular() ) {
 
 		$plura_wp_data = array_merge($plura_wp_data, [
@@ -102,29 +115,37 @@ function plura_wp_styles() {
 
 	}
 
+	if( plura_wpml() ) {
+
+		$plura_wp_data = array_merge( $plura_wp_data, [
+
+			'lang' => $sitepress->get_current_language()
+
+		]);
+
+	}
 
 	plura_wp_enqueue( scripts: [
 
 		'p',
 		
+		'base',
+
 		'fx',
 		'fx-infinitescroll',
 		'fx-sticky',
-		'wp-dynamic-grid',
-		'wp-cf7',
+
 		'wp-globals',
+		'wp-dynamic-grid',
 		'wp-posts',
 		'wp-prevnext',
 
-		'globals'
+		'wp-cf7'
 	
 	], basefile: __FILE__, prefix: 'plura-', cache: false );
 
-
 	wp_localize_script('plura-p', 'plura_wp_data', $plura_wp_data);
-
 
 }
 
 add_action( 'wp_enqueue_scripts', 'plura_wp_styles' );
-

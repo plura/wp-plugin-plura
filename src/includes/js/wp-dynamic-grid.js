@@ -129,9 +129,8 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 		const ui_grid_items = ui_grid.querySelectorAll('.plura-wp-post');
 
 		// Get number of rows needed (ensures holder gets proper height since items are absolutely positioned)
-		const rows = (!active || active.length > 0)
-			? Math.floor((!active ? ui_grid_items.length : active.length) / grid_cols) + 1
-			: 0;
+		const count = !active ? ui_grid_items.length : active.length;
+		const rows = count > 0 ? Math.ceil(count / grid_cols) : 0;
 
 		ui_grid_items.forEach((item, index) => {
 			const id = Number(item.dataset.id);

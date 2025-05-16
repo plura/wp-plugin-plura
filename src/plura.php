@@ -12,11 +12,11 @@ Domain Path: /languages
 
 // Your plugin code starts here
 
-function plura_wp_init() {
-    
-	// Initialization code
-	load_plugin_textdomain( 'plura', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' ); 
+function plura_wp_init()
+{
 
+	// Initialization code
+	load_plugin_textdomain('plura', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }
 
 add_action('init', 'plura_wp_init');
@@ -30,7 +30,8 @@ add_action('init', 'plura_wp_init');
  * 
  * @return void
  */
-function plura_includes(array $modules, string $dir): void {
+function plura_includes(array $modules, string $dir): void
+{
 	if (is_admin()) {
 		return;
 	}
@@ -44,31 +45,7 @@ function plura_includes(array $modules, string $dir): void {
 	}
 }
 
-
-
-
-/* function plura_includes( array $modules, string $dir ) {
-
-	if( !is_admin() ) {
-
-		foreach ($modules as $module) {
-
-			$path = $dir . "/" . $module . ".php";
-
-			if( file_exists( $path ) ) {
-	 
-	    		include_once( $path );
-
-			}
-
-		}
-
-	}
-
-} */
-
-
-plura_includes( [
+plura_includes([
 
 	'includes/p',
 	'includes/modules/apis',
@@ -83,69 +60,67 @@ plura_includes( [
 	'includes/modules/wp-revslider-egrid',
 	'includes/modules/wp-wpml'
 
-], dirname( __FILE__ ) );
+], dirname(__FILE__));
 
 
 
 
-function plura_wp_styles() {
+function plura_wp_styles()
+{
 
 	$plura_wp_data = [
 		'home' => home_url(),
-		'pluginURL' => plugin_dir_url( __FILE__ ), 
+		'pluginURL' => plugin_dir_url(__FILE__),
 		'restURL' => rest_url(),
 		'restNonce' => wp_create_nonce('wp_rest')
 	];
 
-	if( is_singular() ) {
+	if (is_singular()) {
 
 		$plura_wp_data = array_merge($plura_wp_data, [
 			'id' => get_queried_object()->ID,
 			'title' => get_queried_object()->post_title,
 			'type' => get_queried_object()->post_type,
-			'url' => get_permalink( get_queried_object()->ID )
+			'url' => get_permalink(get_queried_object()->ID)
 		]);
-
-	} else if( is_archive() ) {
+	} else if (is_archive()) {
 
 		$plura_wp_data = array_merge($plura_wp_data, [
 			'archive' => 1,
 			'type' => get_queried_object()->name
 		]);
-
 	}
 
-	if( plura_wpml() ) {
+	if (plura_wpml()) {
 
-		$plura_wp_data = array_merge( $plura_wp_data, [
+		$plura_wp_data = array_merge($plura_wp_data, [
 
 			'lang' => $sitepress->get_current_language()
 
 		]);
-
 	}
 
-	plura_wp_enqueue( scripts: [
+	plura_wp_enqueue(scripts: [
 
-		'p',
-		
-		'base',
+		__DIR__ . '/includes/js/p.js',
 
-		'fx',
-		'fx-infinitescroll',
-		'fx-sticky',
+		__DIR__ . '/includes/base.css',
 
-		'wp-globals',
-		'wp-dynamic-grid',
-		'wp-posts',
-		'wp-prevnext',
+		__DIR__ . '/includes/css/fx.css',
 
-		'wp-cf7'
-	
-	], basefile: __FILE__, prefix: 'plura-', cache: false );
+		__DIR__ . '/includes/js/fx-infinitescroll',
+		__DIR__ . '/includes/js/fx-sticky.js',
+		__DIR__ . '/includes/js/fx-text-toggle.js',
+
+		__DIR__ . '/includes/%s/wp-globals.%s',
+		__DIR__ . '/includes/%s/wp-dynamic-grid.%s',
+		__DIR__ . '/includes/js/wp-prevnext.js',
+
+		__DIR__ . '/includes/%s/wp-cf7.%s'
+
+	], prefix: 'plura-', cache: false);
 
 	wp_localize_script('plura-p', 'plura_wp_data', $plura_wp_data);
-
 }
 
-add_action( 'wp_enqueue_scripts', 'plura_wp_styles' );
+add_action('wp_enqueue_scripts', 'plura_wp_styles');

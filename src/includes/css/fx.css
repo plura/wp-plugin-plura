@@ -1,3 +1,14 @@
+/* Text Toggle */
+.plura-fx-text-toggle-part-hidden {
+	overflow: hidden;
+	max-height: 0;
+	transition: max-height 0.4s ease;
+}
+
+.plura-fx-text-toggle-wrapper.on .plura-fx-text-toggle-part-hidden {
+	max-height: var(--max-height);
+}
+
 
 
 /* Infinite Scroll */

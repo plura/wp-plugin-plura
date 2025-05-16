@@ -12,35 +12,106 @@
 
 
 
-/* Utils: Enqueue */
-function plura_wp_enqueue( $scripts, $basefile, $prefix = '', $dir = 'includes/', $deps = [], $cache = true ) {
+/**
+ * Enqueue multiple CSS or JS files using absolute paths or pattern-based paths.
+ *
+ * @param array  $scripts List of file paths or pattern paths (with optional options).
+ *                        Each item can be:
+ *                        - string path
+ *                        - string => array (with 'deps', 'handle', 'media' keys)
+ *                        - pattern path with "%s" (e.g. __DIR__ . '/%s/global.%s')
+ * @param bool   $cache   Whether to use filemtime for cache busting (true) or false to use timestamp on each load.
+ * @param string $prefix  String to prefix each handle with.
+ */
+function plura_wp_enqueue( array $scripts, bool $cache = true, string $prefix = '' ) {
+	foreach ( $scripts as $path => $options ) {
 
-	foreach($scripts as $key) {
-
-		foreach( ['css', 'js'] as $type ) {
-
-			$path = $dir . "{$type}/{$key}.{$type}"; 
-
-			if( file_exists( dirname( $basefile ) . "/" . $path ) ) {
-
-				if( $type === 'css' ) {
-
-					wp_enqueue_style( $prefix . $key, plugins_url( $path, $basefile ), $deps, $cache ? false : time() );
-
-				} else {
-
-					wp_enqueue_script( $prefix . $key, plugins_url( $path, $basefile ), $deps, $cache ? false : time() );
-				
-				}
-
-			}
-
+		if ( is_int( $path ) ) {
+			$path = $options;
+			$options = [];
 		}
 
-	}	
-
-
+		// Handle pattern like: /path/to/%s/script.%s (only for local files)
+		if ( strpos( $path, '%s' ) !== false ) {
+			foreach ( ['css', 'js'] as $type ) {
+				$file = sprintf( $path, $type, $type );
+				if ( file_exists( $file ) ) {
+					plura_wp_enqueue_asset( $type, $file, $options, $cache, $prefix );
+				}
+			}
+		} else {
+			$ext = pathinfo( parse_url( $path, PHP_URL_PATH ), PATHINFO_EXTENSION );
+			if ( in_array( $ext, ['css', 'js'], true ) ) {
+				$is_external = preg_match( '#^https?://#', $path ) || str_starts_with( $path, '//' );
+				if ( $is_external || file_exists( $path ) ) {
+					plura_wp_enqueue_asset( $ext, $path, $options, $cache, $prefix );
+				}
+			}
+		}
+	}
 }
+
+
+/**
+ * Enqueue a single CSS or JS file with optional dependencies and settings.
+ *
+ * @param string $type    Either 'css' or 'js'.
+ * @param string $file    Absolute path or URL to the file to enqueue.
+ * @param array  $options Optional settings:
+ *                        - 'handle' => custom handle (defaults to filename slug)
+ *                        - 'deps'   => array of dependencies
+ *                        - 'media'  => only for CSS (defaults to 'all')
+ * @param bool   $cache   Whether to use filemtime for version (true) or time() (false).
+ * @param string $prefix  Optional prefix for auto-generated handles.
+ */
+function plura_wp_enqueue_asset( string $type, string $file, array $options = [], bool $cache = true, string $prefix = '' ) {
+	$is_external = preg_match( '#^https?://#', $file ) || str_starts_with( $file, '//' );
+
+	$base_name = basename( parse_url( $file, PHP_URL_PATH ) );
+	$slug = sanitize_title( preg_replace( '/\.(css|js)$/', '', $base_name ) );
+
+	$handle = $prefix . ( $options['handle'] ?? $slug );
+	$deps   = $options['deps']   ?? [];
+	$media  = $options['media']  ?? 'all';
+	$ver    = $is_external ? false : ( $cache ? filemtime( $file ) : time() );
+	$url    = $is_external ? $file : plura_wp_file_url( $file );
+
+	if ( $type === 'css' && !wp_style_is( $handle, 'enqueued' ) ) {
+		wp_enqueue_style( $handle, $url, $deps, $ver, $media );
+	}
+	if ( $type === 'js' && !wp_script_is( $handle, 'enqueued' ) ) {
+		wp_enqueue_script( $handle, $url, $deps, $ver );
+	}
+}
+
+
+
+
+
+/**
+ * Convert an absolute file path (inside wp-content) to a corresponding URL.
+ *
+ * Uses WordPress internals to resolve the proper content URL.
+ *
+ * @param string $file Absolute file path (e.g., __DIR__ . '/js/script.js').
+ * @return string Corresponding URL to be used in wp_enqueue_*.
+ */
+function plura_wp_file_url( string $file ): string {
+	$wp_content_dir = wp_normalize_path( WP_CONTENT_DIR );
+	$wp_content_url = content_url();
+
+	$file_path = wp_normalize_path( $file );
+
+	if ( strpos( $file_path, $wp_content_dir ) === 0 ) {
+		$relative_path = ltrim( str_replace( $wp_content_dir, '', $file_path ), '/' );
+		return trailingslashit( $wp_content_url ) . $relative_path;
+	}
+
+	// Fallback: return original path (may not work if outside wp-content).
+	return $file;
+}
+
+
 
 
 

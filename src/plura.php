@@ -10,24 +10,16 @@ Text Domain: plura
 Domain Path: /languages
 */
 
-// Your plugin code starts here
-
-function plura_wp_init()
-{
-
-	// Initialization code
-	load_plugin_textdomain('plura', false, dirname(plugin_basename(__FILE__)) . '/languages');
-}
-
-add_action('init', 'plura_wp_init');
-
-
 /**
- * Includes PHP module files from a given directory, only on the frontend.
+ * Includes PHP module files from a given directory or as absolute paths, only on the frontend.
  *
- * @param array<int, string> $modules List of module filenames (without `.php`).
- * @param string $dir Absolute or relative directory path.
- * 
+ * Each item in the `$modules` array can either be:
+ * - a filename (without `.php`), relative to `$dir`
+ * - an absolute path to a `.php` file
+ *
+ * @param array<int, string> $modules List of module filenames or absolute paths.
+ * @param string $dir Base directory path to prepend to filenames (if not absolute).
+ *
  * @return void
  */
 function plura_includes(array $modules, string $dir): void
@@ -37,8 +29,13 @@ function plura_includes(array $modules, string $dir): void
 	}
 
 	foreach ($modules as $module) {
-		$path = rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $module . '.php';
+		// If it's an absolute path, use as-is; otherwise, build the path using $dir
+		$is_absolute = str_starts_with($module, '/') || preg_match('#^[a-zA-Z]:[\\/]{1}#', $module);
+		$path = $is_absolute
+			? $module
+			: rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $module . '.php';
 
+		// Include the file if it exists and is a regular file
 		if (is_file($path)) {
 			include_once $path;
 		}
@@ -61,6 +58,14 @@ plura_includes([
 	'includes/modules/wp-wpml'
 
 ], dirname(__FILE__));
+
+
+add_action('init', function() {
+
+	// Initialization code
+	load_plugin_textdomain('plura', false, dirname(plugin_basename(__FILE__)) . '/languages');
+
+});
 
 
 

@@ -1,47 +1,5 @@
 <?php
 
-function plura_curl(string $url, array $args, bool $json = false): array {
-    
-    $ch = curl_init();
-    
-    // Convert the body array to JSON if $json is true, otherwise URL-encode it
-    $post_fields = $json ? json_encode($args['body']) : http_build_query($args['body']);
-
-    
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
-    
-    // Set headers if provided
-    if (isset($args['headers'])) {
-        $headers = [];
-        foreach ($args['headers'] as $key => $value) {
-            $headers[] = "$key: $value";
-        }
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    }
-
-    // Execute the request
-    $response = curl_exec($ch);
-    
-    // Check for errors
-    if ($response === false) {
-        return [
-            'error' => curl_error($ch),
-            'body'  => ''
-        ];
-    }
-
-    curl_close($ch);
-
-    return [
-        'body' => $response
-    ];
-}
-
-
-
 
 function plura_data_to_sharepoint(array $data, string $client_id, string $client_secret, string $tenant_id, string $site_id, string $list_id): void {
     

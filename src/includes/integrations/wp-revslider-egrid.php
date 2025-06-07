@@ -12,7 +12,6 @@
 
 // REVOLUTION SLIDER
 
-
 $P_REVSLIDER = [
 	'alias' => '',
 	'img' => '',
@@ -400,6 +399,3 @@ $P_EGRID_DUMMY_POST = [
 	'post_category' => [],
 	'tags_input' => []
 ];
-
-
-?>

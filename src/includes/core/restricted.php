@@ -49,7 +49,7 @@ function sgl_restricted_area( $args ) {
 
 					$a = ['class' => ['p-restricted-area-data']];
 
-					$html[] = "<div " . p_attributes( $a ) . ">" . $data . "</div>";
+					$html[] = "<div " . plura_attributes( $a ) . ">" . $data . "</div>";
 
 				}
 
@@ -69,7 +69,7 @@ function sgl_restricted_area( $args ) {
 
 	}
 
-	return "<div " . p_attributes( $atts ) . ">" . implode('', $html) . "</div>";
+	return "<div " . plura_attributes( $atts ) . ">" . implode('', $html) . "</div>";
 
 }
 
@@ -95,7 +95,7 @@ function p_restricted_area_log() {
 
 	$atts = ['class' => ['p-restricted-area-log'] ];
 
-	return "<div " . p_attributes( $atts ) . ">" . implode('', $html) . "</div>";
+	return "<div " . plura_attributes( $atts ) . ">" . implode('', $html) . "</div>";
 
 }
 
@@ -105,7 +105,7 @@ function p_restricted_area_alert( $msg ) {
 
 	$atts = ['class' => 'p-restricted-area-alert'];
 
-	return "<div " . p_attributes( $atts ) . ">" . $msg . "</div>";
+	return "<div " . plura_attributes( $atts ) . ">" . $msg . "</div>";
 
 }
 

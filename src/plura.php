@@ -44,9 +44,9 @@ function plura_includes(array $modules, string $dir): void
 
 plura_includes([
 
-	'includes/core/p',
-	'includes/core/extra',
+	'includes/core/core',
 	'includes/core/navwalker',
+	'includes/core/p',
 	'includes/core/restricted',
 	'includes/core/wp',
 	'includes/core/wp-dynamic-grid',

@@ -44,18 +44,19 @@ function plura_includes(array $modules, string $dir): void
 
 plura_includes([
 
-	'includes/p',
-	'includes/modules/apis',
-	'includes/modules/extra',
-	'includes/modules/lottie',
-	'includes/modules/navwalker',
-	'includes/modules/restricted',
-	'includes/modules/wp',
-	'includes/modules/wp-dynamic-grid',
-	'includes/modules/wp-posts',
-	'includes/modules/wp-prevnext',
-	'includes/modules/wp-revslider-egrid',
-	'includes/modules/wp-wpml'
+	'includes/core/p',
+	'includes/core/extra',
+	'includes/core/navwalker',
+	'includes/core/restricted',
+	'includes/core/wp',
+	'includes/core/wp-dynamic-grid',
+	'includes/core/wp-posts',
+	'includes/core/wp-prevnext',
+
+	'includes/integrations/apis',
+	'includes/integrations/lottie',
+	'includes/integrations/wp-revslider-egrid',
+	'includes/integrations/wp-wpml'
 
 ], dirname(__FILE__));
 
@@ -107,21 +108,21 @@ function plura_wp_styles()
 
 	plura_wp_enqueue(scripts: [
 
-		__DIR__ . '/includes/js/p.js',
+		__DIR__ . '/assets/js/p.js',
 
-		__DIR__ . '/includes/base.css',
+		__DIR__ . '/assets/base.css',
 
-		__DIR__ . '/includes/css/fx.css',
+		__DIR__ . '/assets/css/fx.css',
 
-		__DIR__ . '/includes/js/fx-infinitescroll',
-		__DIR__ . '/includes/js/fx-sticky.js',
-		__DIR__ . '/includes/js/fx-text-toggle.js',
+		__DIR__ . '/assets/js/fx-infinitescroll',
+		__DIR__ . '/assets/js/fx-sticky.js',
+		__DIR__ . '/assets/js/fx-text-toggle.js',
 
-		__DIR__ . '/includes/%s/wp-globals.%s',
-		__DIR__ . '/includes/%s/wp-dynamic-grid.%s',
-		__DIR__ . '/includes/js/wp-prevnext.js',
+		__DIR__ . '/assets/%s/wp-globals.%s',
+		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
+		__DIR__ . '/assets/js/wp-prevnext.js',
 
-		__DIR__ . '/includes/%s/wp-cf7.%s'
+		__DIR__ . '/assets/%s/wp-cf7.%s'
 
 	], prefix: 'plura-', cache: false);
 

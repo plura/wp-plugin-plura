@@ -41,9 +41,10 @@ function plura_wp_enqueue( array $scripts, bool $cache = true, string $prefix = 
 			}
 		} else {
 			$ext = pathinfo( parse_url( $path, PHP_URL_PATH ), PATHINFO_EXTENSION );
+
 			if ( in_array( $ext, ['css', 'js'], true ) ) {
-				$is_external = preg_match( '#^https?://#', $path ) || str_starts_with( $path, '//' );
-				if ( $is_external || file_exists( $path ) ) {
+				// Only enqueue if it's a valid URL (http(s) or protocol-relative) or an existing local file
+				if ( preg_match( '#^(https?:)?//#', $path ) || file_exists( $path ) ) {
 					plura_wp_enqueue_asset( $ext, $path, $options, $cache, $prefix );
 				}
 			}
@@ -187,37 +188,6 @@ function plura_wp_ids(?WP_REST_Request $request = null): array {
 
 
 
-/*function plura_wp_enqueue( $scripts, $prefix = '' ) {
-
-	foreach($scripts as $key) {
-
-		foreach( ['css', 'js'] as $type ) {
-
-			$path = "includes/{$type}/{$key}.{$type}";
- 
-			if( file_exists( dirname( __FILE__, 3 ) . "/" . $path ) ) {
-
-				if( $type === 'css' ) {
-
-					wp_enqueue_style( $prefix . $key, plugins_url( $path, dirname( __FILE__, 2 ) ), [], time() );
-
-				} else {
-
-					wp_enqueue_script( $prefix . $key, plugins_url( $path, dirname( __FILE__, 2 ) ), [], time() );
-				
-				}
-
-			}
-
-		}
-
-	}
-
-} */
-
-
-
-
 /* Layout: Datetime */
 
 /**
@@ -337,6 +307,108 @@ add_shortcode('plura-wp-datetime', function($args) {
 
 
 
+/**
+ * Generates a linked HTML element for WordPress posts or terms.
+ *
+ * @param string $html The inner HTML content to wrap in the link.
+ * @param WP_Post|WP_Term|null $obj The WordPress object to link to (post or term). If null or invalid, returns $html.
+ * @param array $obj_atts Additional attributes for the <a> element (merged with defaults).
+ * @param bool|string $target Target behavior:
+ *     - true (default): Adds target="_blank" only if the link is external to the current site.
+ *     - string: Adds target with the specified value (e.g., '_blank', '_self').
+ *     - false or empty: No target attribute added.
+ * @param bool $rel Whether to add rel="noopener noreferrer" if target is '_blank' (default: false).
+ *
+ * @return string The generated <a> tag wrapping the given HTML, or original HTML if $obj is invalid.
+ */
+function plura_wp_link(
+	string $html,
+	WP_Post|WP_Term|null $obj = null,
+	array $obj_atts = [],
+	bool|string $target = true,
+	bool $rel = false
+): string {
+	if (!$obj) {
+		return $html;
+	}
+
+	$atts = [
+		'class' => ['plura-wp-link'],
+	];
+
+	// Determine href and object-specific attributes
+	if ($obj instanceof WP_Post) {
+		$href = get_permalink($obj);
+		$atts = array_merge($atts, [
+			'title' => $obj->post_title,
+			'data-plura-wp-link-target-type' => 'post'
+		]);
+	} elseif ($obj instanceof WP_Term) {
+		$href = get_term_link($obj);
+		$atts = array_merge($atts, [
+			'title' => $obj->name,
+			'data-plura-wp-link-target-type' => 'term'
+		]);
+	} else {
+		return $html;
+	}
+
+	$atts['href'] = $href;
+
+	// Handle target logic
+	if ($target === true) {
+		$site_url = rtrim(home_url(), '/');
+		$link_url = rtrim($href, '/');
+
+		// If link does NOT start with the current site URL, treat as external
+		if (stripos($link_url, $site_url) !== 0) {
+			$atts['target'] = '_blank';
+		}
+	} elseif (is_string($target) && !empty($target)) {
+		$atts['target'] = $target;
+	}
+
+	// Handle rel="noopener noreferrer" when needed
+	if ($rel && isset($atts['target']) && $atts['target'] === '_blank') {
+		$atts['rel'] = 'noopener noreferrer';
+	}
+
+	// Merge additional attributes
+	if (!empty($obj_atts)) {
+		$atts = array_merge_recursive($atts, $obj_atts);
+	}
+
+	return sprintf('<a %s>%s</a>', plura_attributes($atts), $html);
+}
+
+
+
+/**
+ * Returns the post thumbnail URL and size data for a given post.
+ *
+ * @param int|WP_Post $post Post ID or WP_Post object.
+ * @param string      $size Optional. Image size to retrieve. Default 'large'.
+ *
+ * @return array|false Array of image data (URL, width, height, is_intermediate) or false if no thumbnail found.
+ */
+function plura_wp_thumbnail( int|WP_Post $post, string $size = 'large' ): array|false {
+	$post = get_post( $post );
+
+	if ( ! $post instanceof WP_Post ) {
+		return false;
+	}
+
+	if ( has_post_thumbnail( $post ) ) {
+		return wp_get_attachment_image_src( get_post_thumbnail_id( $post ), $size );
+	}
+
+	return false;
+}
+
+
+
+
+
 /* Layout: Nav List */
 add_shortcode('plura-wp-nav-list', function( $args ) {
 
@@ -419,78 +491,3 @@ add_shortcode('plura-wp-nav-list', function( $args ) {
 
 } );
 
-
-
-/**
- * Generates a linked HTML element for WordPress posts or terms.
- *
- * @param string $html The inner HTML content to wrap in the link.
- * @param WP_Post|WP_Term|null $obj The WordPress object to link to (post or term). If null or invalid, returns $html.
- * @param array $obj_atts Additional attributes for the <a> element (merged with defaults).
- * @param bool|string $target Target behavior:
- *     - true (default): Adds target="_blank" only if the link is external to the current site.
- *     - string: Adds target with the specified value (e.g., '_blank', '_self').
- *     - false or empty: No target attribute added.
- * @param bool $rel Whether to add rel="noopener noreferrer" if target is '_blank' (default: false).
- *
- * @return string The generated <a> tag wrapping the given HTML, or original HTML if $obj is invalid.
- */
-function plura_wp_link(
-	string $html,
-	WP_Post|WP_Term|null $obj = null,
-	array $obj_atts = [],
-	bool|string $target = true,
-	bool $rel = false
-): string {
-	if (!$obj) {
-		return $html;
-	}
-
-	$atts = [
-		'class' => ['plura-wp-link'],
-	];
-
-	// Determine href and object-specific attributes
-	if ($obj instanceof WP_Post) {
-		$href = get_permalink($obj);
-		$atts = array_merge($atts, [
-			'title' => $obj->post_title,
-			'data-plura-wp-link-target-type' => 'post'
-		]);
-	} elseif ($obj instanceof WP_Term) {
-		$href = get_term_link($obj);
-		$atts = array_merge($atts, [
-			'title' => $obj->name,
-			'data-plura-wp-link-target-type' => 'term'
-		]);
-	} else {
-		return $html;
-	}
-
-	$atts['href'] = $href;
-
-	// Handle target logic
-	if ($target === true) {
-		$site_url = rtrim(home_url(), '/');
-		$link_url = rtrim($href, '/');
-
-		// If link does NOT start with the current site URL, treat as external
-		if (stripos($link_url, $site_url) !== 0) {
-			$atts['target'] = '_blank';
-		}
-	} elseif (is_string($target) && !empty($target)) {
-		$atts['target'] = $target;
-	}
-
-	// Handle rel="noopener noreferrer" when needed
-	if ($rel && isset($atts['target']) && $atts['target'] === '_blank') {
-		$atts['rel'] = 'noopener noreferrer';
-	}
-
-	// Merge additional attributes
-	if (!empty($obj_atts)) {
-		$atts = array_merge_recursive($atts, $obj_atts);
-	}
-
-	return sprintf('<a %s>%s</a>', plura_attributes($atts), $html);
-}

@@ -324,7 +324,7 @@ add_shortcode('plura-wp-datetime', function($args) {
 function plura_wp_link(
 	string $html,
 	WP_Post|WP_Term|null $obj = null,
-	array $obj_atts = [],
+	array $atts = [],
 	bool|string $target = true,
 	bool $rel = false
 ): string {
@@ -332,20 +332,20 @@ function plura_wp_link(
 		return $html;
 	}
 
-	$atts = [
+	$link_atts = [
 		'class' => ['plura-wp-link'],
 	];
 
 	// Determine href and object-specific attributes
 	if ($obj instanceof WP_Post) {
 		$href = get_permalink($obj);
-		$atts = array_merge($atts, [
+		$link_atts = array_merge($link_atts, [
 			'title' => $obj->post_title,
 			'data-plura-wp-link-target-type' => 'post'
 		]);
 	} elseif ($obj instanceof WP_Term) {
 		$href = get_term_link($obj);
-		$atts = array_merge($atts, [
+		$link_atts = array_merge($link_atts, [
 			'title' => $obj->name,
 			'data-plura-wp-link-target-type' => 'term'
 		]);
@@ -353,7 +353,7 @@ function plura_wp_link(
 		return $html;
 	}
 
-	$atts['href'] = $href;
+	$link_atts['href'] = $href;
 
 	// Handle target logic
 	if ($target === true) {
@@ -362,23 +362,24 @@ function plura_wp_link(
 
 		// If link does NOT start with the current site URL, treat as external
 		if (stripos($link_url, $site_url) !== 0) {
-			$atts['target'] = '_blank';
+			$link_atts['target'] = '_blank';
 		}
 	} elseif (is_string($target) && !empty($target)) {
-		$atts['target'] = $target;
+		$link_atts['target'] = $target;
 	}
 
 	// Handle rel="noopener noreferrer" when needed
-	if ($rel && isset($atts['target']) && $atts['target'] === '_blank') {
-		$atts['rel'] = 'noopener noreferrer';
+	if ($rel && isset($link_atts['target']) && $link_atts['target'] === '_blank') {
+		$link_atts['rel'] = 'noopener noreferrer';
 	}
 
 	// Merge additional attributes
-	if (!empty($obj_atts)) {
-		$atts = array_merge_recursive($atts, $obj_atts);
+	if (!empty($atts)) {
+		$link_atts = array_merge_recursive($link_atts, $atts);
 	}
 
-	return sprintf('<a %s>%s</a>', plura_attributes($atts), $html);
+	//return "<a " . plura_attributes($link_atts) . ">" . $html . "</a>";
+	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
 }
 
 

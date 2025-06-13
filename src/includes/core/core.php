@@ -18,10 +18,10 @@ function plura_attributes(array $atts, bool $prefix = false): string {
         }
         
         // Handle class arrays
-        if ($k === 'class' && is_array($v)) {
-            $v = implode(' ', $v);
+        if ($k === 'class') {
+            $v = implode(' ', (array) $v);
         }
-        
+
         // Normal key-value pairs
         $value = $k . '="' . htmlspecialchars((string)$v, ENT_QUOTES) . '"';
         

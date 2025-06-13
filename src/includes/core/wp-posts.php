@@ -121,9 +121,7 @@ function plura_wp_posts_query(
         $query_params['meta_query'] = $meta;
     }
 
-    if (has_filter('plura_wp_posts_query')) {
-        $query_params = apply_filters('plura_wp_posts_query', $query_params, $args);
-    }
+    $query_params = apply_filters('plura_wp_posts_query', $query_params, $args);
 
     return new WP_Query($query_params);
 }
@@ -818,9 +816,7 @@ function plura_wp_post_meta(
 		// Get value, allowing filter override (handles groups/complex values)
 		$value = get_field( $item_meta_key, $post->ID );
 
-		if ( has_filter( 'plura_wp_post_meta_item_value' ) ) {
-			$value = apply_filters( 'plura_wp_post_meta_item_value', $value, $post, $item_meta_key, $context );
-		}
+		$value = apply_filters( 'plura_wp_post_meta_item_value', $value, $post, $item_meta_key, $context );
 
 		// Optional custom sanitation
 		if ( $sanitize_cb ) {
@@ -877,4 +873,131 @@ function plura_wp_post_meta(
 	}
 
 	return $output;
+}
+
+
+
+
+
+
+/**
+ * Retrieves all taxonomy terms associated with a given post, optionally filtered by allowed taxonomies.
+ *
+ * @param int              $post_id             The ID of the post to get terms for.
+ * @param array|string     $allowed_taxonomies  Optional. A taxonomy name or array of names to filter which taxonomies are included.
+ *                                              If empty, all taxonomies for the post type will be included.
+ *
+ * @return array An associative array of taxonomies and their respective terms.
+ *               Example: [ 'category' => [ WP_Term, ... ], 'post_tag' => [ WP_Term, ... ] ]
+ */
+function plura_wp_post_terms_data( int|WP_Post $post, array|string $allowed_taxonomies = [] ): array {
+	if ( is_string( $allowed_taxonomies ) ) {
+		$allowed_taxonomies = [ $allowed_taxonomies ];
+	}
+
+	$post = get_post( $post );
+	if ( ! $post instanceof WP_Post ) {
+		return [];
+	}
+
+	$all_taxonomies = get_object_taxonomies( $post->post_type );
+	$taxonomies = !empty( $allowed_taxonomies )
+		? array_intersect( $all_taxonomies, $allowed_taxonomies )
+		: $all_taxonomies;
+
+	$all_terms = [];
+
+	foreach ( $taxonomies as $taxonomy ) {
+		$terms = get_the_terms( $post, $taxonomy );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			$all_terms[ $taxonomy ] = $terms;
+		}
+	}
+
+	return apply_filters( 'plura_wp_post_terms_data', $all_terms, $post );
+}
+
+
+
+/**
+ * Renders the taxonomy terms of a given post as HTML.
+ *
+ * @param int|WP_Post  $post                The post ID or WP_Post object.
+ * @param array|string $allowed_taxonomies  Optional. A taxonomy name or array of names to include. If empty, all taxonomies will be used.
+ * @param bool         $taxonomy            Optional. Whether to show taxonomy labels. Default true.
+ * @param bool         $link                Optional. Whether to wrap terms in links to their archive pages. Default true.
+ *
+ * @return string|null The generated HTML string of terms grouped by taxonomy, or null if there are no terms.
+ */
+function plura_wp_post_terms( int|WP_Post $post, array|string $allowed_taxonomies = [], bool $taxonomy = true, bool $link = true ): ?string {
+	$post = get_post( $post );
+	if ( ! $post instanceof WP_Post ) {
+		return null;
+	}
+
+	$terms_by_tax = plura_wp_post_terms_data( $post, $allowed_taxonomies );
+	if ( empty( $terms_by_tax ) ) {
+		return null;
+	}
+
+	$html = [];
+
+	foreach ( $terms_by_tax as $tax => $terms ) {
+		$taxdata = get_taxonomy( $tax );
+		if ( ! $taxdata ) {
+			continue;
+		}
+
+		$html_tax = [];
+
+		if ( $taxonomy ) {
+			$html_tax[] = sprintf(
+				'<div %s>%s</div>',
+				plura_attributes( ['class' => 'plura-wp-post-terms-tax-title'] ),
+				esc_html( $taxdata->label )
+			);
+		}
+
+		$html_tax_terms = [];
+
+		foreach ( $terms as $term ) {
+			$title = sprintf(
+				'<span %s>%s</span>',
+				plura_attributes(['class' => 'plura-wp-post-term-title']),
+				esc_html( $term->name )
+			);
+
+			if ( $link ) {
+				$title = plura_wp_link( html: $title, obj: $term, atts: ['class' => 'plura-wp-post-term-link'] );
+			}
+
+			$html_tax_terms[] = sprintf(
+				'<div %s>%s</div>',
+				plura_attributes(['class' => 'plura-wp-post-term', 'data-id' => $term->term_id]),
+				$title
+			);
+		}
+
+		$html_tax[] = sprintf(
+			'<div %s>%s</div>',
+			plura_attributes(['class' => 'plura-wp-post-terms-group']),
+			implode('', $html_tax_terms)
+		);
+
+		$html[] = sprintf(
+			'<div %s>%s</div>',
+			plura_attributes([
+				'class' => 'plura-wp-post-terms-taxonomy',
+				'data-taxonomy' => $taxdata->name,
+				'data-taxonomy-name' => $taxdata->label
+			]),
+			implode('', $html_tax)
+		);
+	}
+
+	return sprintf(
+		'<div %s>%s</div>',
+		plura_attributes(['class' => 'plura-wp-post-terms']),
+		implode('', $html)
+	);
 }

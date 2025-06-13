@@ -1,193 +1,179 @@
 <?php
 
-
 /**
- * get all the breadcrumbs for an object (post, page or term)
- * @param  boolean $object object (post, page or term)
- * @param  boolean $self   includes self as 'crumb'
- * @param  boolean $id     optional id attribute
- * @param  boolean $html   return type
- * @return object          returns an array
+ * Get all the breadcrumbs for a post, page, or term.
+ *
+ * @param ?int  $object Optional object ID (post or term). If null, uses the current queried object.
+ * @param bool  $self   Whether to include the object itself in the breadcrumbs.
+ * @param ?int  $id     Optional ID for the wrapper element (used in HTML output).
+ * @param bool  $html   Whether to return the output as HTML (true) or as an array (false).
+ * @return array|string Breadcrumb data array or HTML string depending on $html.
  */
-function plura_wp_breadcrumbs( $object = false, $self = false, $id = false, $html = true ) {
+function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id = null, bool $html = true ) {
 
 	$crumbs = [];
 
-	if( is_archive() && !$object ) {
+	if ( is_archive() && !$object ) {
 
-		$crumb = plura_wp_breadcrumbs_terms( get_queried_object()->term_id, get_queried_object()->taxonomy, $self );
+		$crumb = plura_wp_breadcrumbs_terms(
+			get_queried_object()->term_id,
+			get_queried_object()->taxonomy,
+			$self
+		);
 
-		if( $crumb ) {
-  
+		if ( $crumb ) {
 			$crumbs[] = $crumb;
-
 		}
 
 	} else {
 
-		if( $object && is_int( $object ) ) {
-
+		if ( $object && is_int( $object ) ) {
 			$object = get_post( $object );
-		
-		} else if(!$object) {
-
+		} elseif ( !$object ) {
 			$object = get_post();
-
 		}
 
-		if( ( is_single() && !$object ) || $object->post_type !== 'page' ) {
+		if ( ( is_single() && !$object ) || $object->post_type !== 'page' ) {
 
 			$post_taxonomies = get_object_taxonomies( $object );
 
-			if( !empty( $post_taxonomies ) ) {
-
+			if ( !empty( $post_taxonomies ) ) {
 				$terms = get_the_terms( $object, $post_taxonomies[0] );
 
-				if( !empty( $terms ) ) {
-
-					foreach( $terms as $term ) {
-
+				if ( !empty( $terms ) ) {
+					foreach ( $terms as $term ) {
 						$crumbs[] = plura_wp_breadcrumbs_terms( $term->term_id, $term->taxonomy, true );
-
 					}
-
 				}
-
 			}
 
-		} else if( ( is_page() && !$object ) || $object->post_type === 'page' ) {
+		} elseif ( ( is_page() && !$object ) || $object->post_type === 'page' ) {
 
 			$ancestors = get_ancestors( $object->ID, get_post_type(), 'post_type' );
 
-			if( !empty( $ancestors ) ) {
-
+			if ( !empty( $ancestors ) ) {
 				$group = [];
 
-				foreach( $ancestors as $ancestor ) {
-
+				foreach ( $ancestors as $ancestor ) {
 					$group[] = plura_wp_breadcrumb( $ancestor );
-
 				}
 
 				$crumbs[] = $group;
-
 			}
-
 		}
-
 	}
 
-
-	if( has_filter('plura_wp_breadcrumbs') ) {
-
-		$crumbs = apply_filters('plura_wp_breadcrumbs', $crumbs, $id );
-
+	if ( has_filter( 'plura_wp_breadcrumbs' ) ) {
+		$crumbs = apply_filters( 'plura_wp_breadcrumbs', $crumbs, $id );
 	}
 
-
-	if( !empty( $crumbs ) ) {
-
-		if( $html ) {
-
+	if ( !empty( $crumbs ) ) {
+		if ( $html ) {
 			$return = [];
 
-			if( !is_array( $crumbs[0] ) || !array_key_exists(0, $crumbs[0]) ) {
-
+			if ( !is_array( $crumbs[0] ) || !array_key_exists( 0, $crumbs[0] ) ) {
 				$crumbs = [ $crumbs ];
-
 			}
 
-			foreach( $crumbs as $group ) {
-
+			foreach ( $crumbs as $group ) {
 				$g = [];
 
-				foreach( $group as $crumb ) {
+				foreach ( $group as $crumb ) {
+					$classes = [ 'plura-wp-breadcrumb' ];
 
-					$classes = ['plura-wp-breadcrumb'];
-
-					if( !is_array( $crumb ) ) {
-
+					if ( !is_array( $crumb ) ) {
 						$c = $crumb;
-
-					} else { 
-
-						$classes[] = 'has-link';
-
-						$c = "<a href=\"" . $crumb['link'] . "\" title=\"" . $crumb['name'] . "\">" . $crumb['name'] . "</a>";
-
+					} else {
+						$c = plura_wp_link( html: $crumb['name'], obj: $crumb['obj'], atts: ['class' => 'plura-wp-breadcrumb-link']);
 					}
 
-					$atts = ['class' => implode(' ', $classes)];
-
-					$g[] = "<li " . plura_attributes( $atts ) . ">" . $c . "</li>";
-
+					$atts = [ 'class' => implode( ' ', $classes ) ];
+					$g[]  = '<li ' . plura_attributes( $atts ) . '>' . $c . '</li>';
 				}
 
-				$return[] = "<ul class=\"plura-wp-breadcrumbs-group\">" . implode('', $g) . "</ul>";
-
+				$return[] = '<ul class="plura-wp-breadcrumbs-group">' . implode( '', $g ) . '</ul>';
 			}
 
-			$atts = ['class' => 'plura-wp-breadcrumbs'];
+			$atts = [ 'class' => 'plura-wp-breadcrumbs' ];
 
-			if( $id ) {
-
+			if ( $id ) {
 				$atts['data-id'] = $id;
-
 			}
 
-			return "<div " . plura_attributes( $atts ) . ">" . implode('', $return) . "</div>";
-
+			return '<div ' . plura_attributes( $atts ) . '>' . implode( '', $return ) . '</div>';
 		}
 
 		return $crumbs;
-
 	}
-
 }
 
 
-function plura_wp_breadcrumbs_terms( $termID, $taxonomy, $include = false ) {
+
+/**
+ * Generates an array of breadcrumb items for a term and its ancestors.
+ *
+ * @param int     $term_id  The ID of the term.
+ * @param string  $taxonomy The taxonomy the term belongs to.
+ * @param bool    $include  Whether to include the term itself in the breadcrumbs.
+ * @return array            An array of breadcrumb items (as returned by plura_wp_breadcrumb).
+ */
+function plura_wp_breadcrumbs_terms( int $term_id, string $taxonomy, bool $include = false ): array {
 
 	$crumbs = [];
 
-	$ancestors = get_ancestors( $termID, $taxonomy );
+	$ancestors = get_ancestors( $term_id, $taxonomy );
 
-	if( !empty( $ancestors ) ) {
-
-		foreach( array_reverse( $ancestors ) as $ancestor ) {
-
+	if ( !empty( $ancestors ) ) {
+		foreach ( array_reverse( $ancestors ) as $ancestor ) {
 			$crumbs[] = plura_wp_breadcrumb( $ancestor, $taxonomy );
-
 		}
-
 	}
 
-	if( $include ) {
-
-		$crumbs[] = plura_wp_breadcrumb( $termID, $taxonomy );
-
+	if ( $include ) {
+		$crumbs[] = plura_wp_breadcrumb( $term_id, $taxonomy );
 	}
 
 	return $crumbs;
-
 }
 
 
-function plura_wp_breadcrumb( $id, $taxonomy = false ) {
+/**
+ * Generates a breadcrumb item for a term or a post/page.
+ *
+ * @param int|string $id        The post ID, term ID, or a plain string (used as label without link).
+ * @param string|false $taxonomy Optional. The taxonomy name if the ID refers to a term. Default false.
+ * @return array                An associative array with breadcrumb data.
+ */
+function plura_wp_breadcrumb( int|string $id, string|false $taxonomy = false ): array {
 
-	if( $taxonomy ) {
+	if ( $taxonomy ) {
+		$term = get_term( $id, $taxonomy );
 
-		return ['type' => 'term', 'link' => get_term_link( $id, $taxonomy ), 'name' => get_term( $id, $taxonomy )->name, 'id' => $id ];
-
-	} else if( !is_int( $id ) ) {
-
-		return ['type' => 'single', 'name' => $id, 'id' => $id];
-
+		return [
+			'type' => 'term',
+			'link' => get_term_link( $term ),
+			'name' => $term->name,
+			'id'   => $id,
+			'obj'  => $term
+		];
 	}
 
-	return ['type' => 'single', 'link' => get_permalink( $id ), 'name' => get_the_title( $id ) ];
+	if ( ! is_int( $id ) ) {
+		return [
+			'type' => 'single',
+			'name' => $id,
+		];
+	}
 
+	return [
+		'type' => 'single',
+		'link' => get_permalink( $id ),
+		'name' => get_the_title( $id ),
+		'id'   => $id,
+		'obj'  => get_post( $id )
+	];
 }
+
 
 function plura_wp_breadcrumbs_shortcode( $args ) {
 
@@ -270,13 +256,7 @@ function plura_p_tags_shortcode( $args ) {
 add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');
 
 
-$P_TITLE_ARGS = ['html' => 1];
-
-function plura_p_title( array $args = [] ) {
-
-	global $P_TITLE_ARGS;
-
-	$args = array_merge( $P_TITLE_ARGS, $args );
+function plura_wp_title( bool $html = true ) {
 
 	if( is_page() || is_single() ) {
 
@@ -297,13 +277,13 @@ function plura_p_title( array $args = [] ) {
 
 	}
 
-	if( has_filter('plura_p_title') ) {
+	if( has_filter('plura_wp_title') ) {
 
-		$text = apply_filters('plura_p_title', $text);
+		$text = apply_filters('plura_wp_title', $text);
 
 	}
 
-	if( $args['html'] ) {
+	if( $html ) {
 
 		return "<div class=\"p-title\">" . $text . "</div>";
 
@@ -313,13 +293,13 @@ function plura_p_title( array $args = [] ) {
 
 }
 
-add_shortcode('plura-p-title', function( $atts ) {
+add_shortcode('plura-wp-title', function( $atts ) {
 
-	global $P_TITLE_ARGS;
+	$args = shortcode_atts([
+		'html' => 1
+	], $atts);
 
-	$args = shortcode_atts($P_TITLE_ARGS, $atts);
-
-	return plura_p_title( $args );
+	return plura_wp_title( ...$args );
 
 });
 

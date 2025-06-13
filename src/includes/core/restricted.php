@@ -127,5 +127,3 @@ function p_restricted_user_valid( $user ) {
 	return true;
 
 }
-
-?>

@@ -114,7 +114,7 @@ function plura_wp_styles()
 
 		__DIR__ . '/assets/css/fx.css',
 
-		__DIR__ . '/assets/js/fx-infinitescroll',
+		__DIR__ . '/assets/js/fx-infinitescroll.js',
 		__DIR__ . '/assets/js/fx-sticky.js',
 		__DIR__ . '/assets/js/fx-text-toggle.js',
 

@@ -1,10 +1,12 @@
 /**
  *
+ *	. Global
  *	. Modules
  *		- Posts
  *		- Posts Carousel
  *	 	- Post
  *	 	- Post Timeline Datetime
+ *		- Terms
  *
  * 
  */
@@ -50,6 +52,12 @@
 
 
 
+
+
+
+
+
+
 /* Modules: Posts */
 :is(.plura-wp-posts .plura-wp-post, .plura-wp-post.plura-wp-post-is-single) {
 	display: flex;
@@ -57,10 +65,21 @@
 	/* gap: calc( var(--plura-globals-gap) / 3 ); */
 }
 
-.plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
+/* .plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
 .plura-wp-post .plura-wp-link:not(.plura-wp-post-read-more) {
     display: contents;
+} */
+
+
+
+
+/* Terms */
+.plura-wp-post-terms .plura-wp-post-terms-taxonomy p:empty {
+	/* display: none; */
 }
+
+
+
 
 
 

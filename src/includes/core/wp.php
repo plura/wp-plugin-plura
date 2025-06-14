@@ -308,27 +308,24 @@ add_shortcode('plura-wp-datetime', function($args) {
 
 
 /**
- * Generates a linked HTML element for WordPress posts or terms.
+ * Generates a linked HTML element for WordPress posts, terms, or URLs.
  *
- * @param string $html The inner HTML content to wrap in the link.
- * @param WP_Post|WP_Term|null $obj The WordPress object to link to (post or term). If null or invalid, returns $html.
- * @param array $obj_atts Additional attributes for the <a> element (merged with defaults).
- * @param bool|string $target Target behavior:
- *     - true (default): Adds target="_blank" only if the link is external to the current site.
- *     - string: Adds target with the specified value (e.g., '_blank', '_self').
- *     - false or empty: No target attribute added.
- * @param bool $rel Whether to add rel="noopener noreferrer" if target is '_blank' (default: false).
+ * Automatically adds `target="_blank"` for external URLs (not within the current site).
  *
- * @return string The generated <a> tag wrapping the given HTML, or original HTML if $obj is invalid.
+ * @param string                 $html   The inner HTML to wrap in the link.
+ * @param WP_Post|WP_Term|string|null $target A WP_Post, WP_Term, or external URL. If null/invalid, returns $html.
+ * @param array                  $atts   Optional attributes for the <a> tag.
+ * @param bool                   $rel    Whether to add rel="noopener noreferrer" if target="_blank".
+ *
+ * @return string The generated <a> tag wrapping the HTML, or the original HTML if no valid link target.
  */
 function plura_wp_link(
 	string $html,
-	WP_Post|WP_Term|null $obj = null,
+	WP_Post|WP_Term|string|null $target = null,
 	array $atts = [],
-	bool|string $target = true,
 	bool $rel = false
 ): string {
-	if (!$obj) {
+	if ( ! $target ) {
 		return $html;
 	}
 
@@ -337,49 +334,44 @@ function plura_wp_link(
 	];
 
 	// Determine href and object-specific attributes
-	if ($obj instanceof WP_Post) {
-		$href = get_permalink($obj);
-		$link_atts = array_merge($link_atts, [
-			'title' => $obj->post_title,
-			'data-plura-wp-link-target-type' => 'post'
-		]);
-	} elseif ($obj instanceof WP_Term) {
-		$href = get_term_link($obj);
-		$link_atts = array_merge($link_atts, [
-			'title' => $obj->name,
-			'data-plura-wp-link-target-type' => 'term'
-		]);
+	if ( $target instanceof WP_Post ) {
+		$href = get_permalink( $target );
+		$link_atts = array_merge( $link_atts, [
+			'title' => $target->post_title,
+			'data-plura-wp-link-target-type' => 'post',
+		] );
+	} elseif ( $target instanceof WP_Term ) {
+		$href = get_term_link( $target );
+		$link_atts = array_merge( $link_atts, [
+			'title' => $target->name,
+			'data-plura-wp-link-target-type' => 'term',
+		] );
+	} elseif ( is_string( $target ) && preg_match( '#^https?://#', $target ) ) {
+		$href = $target;
 	} else {
 		return $html;
 	}
 
 	$link_atts['href'] = $href;
 
-	// Handle target logic
-	if ($target === true) {
-		$site_url = rtrim(home_url(), '/');
-		$link_url = rtrim($href, '/');
-
-		// If link does NOT start with the current site URL, treat as external
-		if (stripos($link_url, $site_url) !== 0) {
-			$link_atts['target'] = '_blank';
-		}
-	} elseif (is_string($target) && !empty($target)) {
-		$link_atts['target'] = $target;
+	// Automatically add target="_blank" for external links (supports subdir installs)
+	$site_url = rtrim( home_url(), '/' );
+	$link_url = rtrim( $href, '/' );
+	if ( stripos( $link_url, $site_url ) !== 0 ) {
+		$link_atts['target'] = '_blank';
 	}
 
-	// Handle rel="noopener noreferrer" when needed
-	if ($rel && isset($link_atts['target']) && $link_atts['target'] === '_blank') {
+	// Merge user-defined attributes first
+	if ( ! empty( $atts ) ) {
+		$link_atts = array_merge_recursive( $link_atts, $atts );
+	}
+
+	// Add rel attribute if needed and final target is '_blank'
+	if ( $rel && ( $link_atts['target'] ?? '' ) === '_blank' ) {
 		$link_atts['rel'] = 'noopener noreferrer';
 	}
 
-	// Merge additional attributes
-	if (!empty($atts)) {
-		$link_atts = array_merge_recursive($link_atts, $atts);
-	}
-
-	//return "<a " . plura_attributes($link_atts) . ">" . $html . "</a>";
-	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
+	return sprintf( '<a %s>%s</a>', plura_attributes( $link_atts ), $html );
 }
 
 

@@ -84,7 +84,7 @@ function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id
 					if ( !is_array( $crumb ) ) {
 						$c = $crumb;
 					} else {
-						$c = plura_wp_link( html: $crumb['name'], obj: $crumb['obj'], atts: ['class' => 'plura-wp-breadcrumb-link']);
+						$c = plura_wp_link( html: $crumb['name'], target: $crumb['obj'], atts: ['class' => 'plura-wp-breadcrumb-link']);
 					}
 
 					$atts = [ 'class' => implode( ' ', $classes ) ];

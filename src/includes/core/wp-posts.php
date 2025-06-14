@@ -968,7 +968,7 @@ function plura_wp_post_terms( int|WP_Post $post, array|string $allowed_taxonomie
 			);
 
 			if ( $link ) {
-				$title = plura_wp_link( html: $title, obj: $term, atts: ['class' => 'plura-wp-post-term-link'] );
+				$title = plura_wp_link( html: $title, target: $term, atts: ['class' => 'plura-wp-post-term-link'] );
 			}
 
 			$html_tax_terms[] = sprintf(

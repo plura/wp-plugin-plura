@@ -101,7 +101,7 @@ function plura_wp_styles()
 
 		$plura_wp_data = array_merge($plura_wp_data, [
 
-			'lang' => $sitepress->get_current_language()
+			'lang' => plura_wpml_lang()
 
 		]);
 	}
@@ -117,6 +117,7 @@ function plura_wp_styles()
 		__DIR__ . '/assets/js/fx-infinitescroll.js',
 		__DIR__ . '/assets/js/fx-sticky.js',
 		__DIR__ . '/assets/js/fx-text-toggle.js',
+		__DIR__ . '/assets/js/utils-autoscroll.js',
 
 		__DIR__ . '/assets/%s/wp-globals.%s',
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',

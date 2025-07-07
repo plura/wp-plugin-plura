@@ -189,6 +189,21 @@ function plura_wpml_query( $query_args, $type = false ) {
 
 
 
+function plura_wpml_lang() {
+
+	global $sitepress;
+
+	if( plura_wpml() ) {
+
+		return $sitepress->get_current_language();
+
+	}
+
+	return false;
+
+}
+
+
 
 
 

@@ -1,19 +1,11 @@
-/**
- *
- *	. Global
- *	. Modules
- *		- Posts
- *		- Posts Carousel
- *	 	- Post
- *	 	- Post Timeline Datetime
- *		- Terms
- *
- * 
- */
-
 :root {
-	--plura-wp-posts-gap: 30px;
-	--plura-wp-post-gap: calc( var(--cp-posts-gap) / 2 );
+
+	--plura-wp-gap: 30px;
+
+
+	/* posts */
+	--plura-wp-posts-gap: var(--plura-wp-gap);
+	--plura-wp-post-gap: calc(var(--plura-wp-posts-gap) / 2);
 	--plura-wp-posts-cols: 1;
 }
 
@@ -50,26 +42,95 @@
 
 }
 
+@media (min-width: 1600px) {
+
+	:root {
+		--plura-wp-posts-cols: 5;
+	}
+
+}
 
 
 
+/**
+ *
+ *	. Global
+ *	. Modules
+ *		- Posts
+ *		- Posts Carousel
+ *	 	- Post
+ *	 	- Post Timeline Datetime
+ *		- Terms
+ *
+ * 
+ */
 
 
+*,
+*::after,
+*::before {
+	box-sizing: border-box;
+}
+
+
+
+/* Elements: Link */
+.plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more) {
+	display: contents;
+}
+
+
+/* Modules: Breadcrumbs */
+.plura-wp-breadcrumbs {
+	display: flex;
+	flex-direction: column;
+}
+
+.plura-wp-breadcrumbs ul.plura-wp-breadcrumbs-group {
+	list-style: none;
+	padding-left: 0;
+	padding-bottom: 0;
+}
+
+.plura-wp-breadcrumbs .plura-wp-breadcrumbs-group,
+.plura-wp-breadcrumbs .plura-wp-breadcrumbs-group .plura-wp-breadcrumb:not(:last-child) {
+	display: flex;
+	gap: calc(var(--plura-wp-posts-gap) / 6);
+}
+
+.plura-wp-breadcrumbs .plura-wp-breadcrumbs-group .plura-wp-breadcrumb:not(:last-child)::after {
+	content: '/';
+	display: block;
+}
 
 
 
 /* Modules: Posts */
-:is(.plura-wp-posts .plura-wp-post, .plura-wp-post.plura-wp-post-is-single) {
-	display: flex;
-	flex-direction: column;
-	/* gap: calc( var(--plura-globals-gap) / 3 ); */
+.plura-wp-posts {
+	display: grid;
+	grid-template-columns: repeat(var(--plura-wp-posts-cols), 1fr);
+	gap: var(--plura-wp-posts-gap);
 }
 
-/* .plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
-.plura-wp-post .plura-wp-link:not(.plura-wp-post-read-more) {
-    display: contents;
-} */
 
+
+/* Modules: Post */
+.plura-wp-post {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--plura-wp-posts-gap) / 3);
+	position: relative;
+	min-width: 0;
+}
+
+
+
+/* Post Meta */
+.plura-wp-post-meta {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--plura-wp-posts-gap) / 6);
+}
 
 
 
@@ -94,8 +155,8 @@
 
 /* Modules: Post Timeline Datetime */
 .plura-wp-post-timeline {
-    display: flex;
-    gap: calc( var(--plura-globals-gap) / 3 );
+	display: flex;
+	gap: calc(var(--plura-wp-posts-gap) / 3);
 }
 
 .plura-wp-post-timeline:has(.plura-wp-post-timeline-start + .plura-wp-post-timeline-end)::before {
@@ -116,7 +177,7 @@
 }
 
 .plura-wp-prevnext-nav .plura-wp-prevnext-nav-item {
-	width: calc( ( 100% - var(--plura-wp-prevnext-nav-gap) ) / 2 );
+	width: calc((100% - var(--plura-wp-prevnext-nav-gap)) / 2);
 }
 
 .plura-wp-prevnext-nav .plura-wp-prevnext-nav-item-next {

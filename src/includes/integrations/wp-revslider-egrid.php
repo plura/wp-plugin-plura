@@ -3,9 +3,9 @@
 /**
  * . Revolution Slider
  * 		- p_revslider
- * 		- p_revslider_bg_img
- * 		- p_revslider_bg_video
- * 		- p_revslider_bg_video_data
+ * 		- plura_wp_revslider_bg_img
+ * 		- plura_wp_revslider_bg_video
+ * 		- plura_wp_revslider_bg_video_data
  * . Essential Grid
  */
 
@@ -18,7 +18,7 @@ $P_REVSLIDER = [
 	'video' => ''
 ];
 
-function p_revslider( $args ) {
+function plura_wp_revslider( $args ) {
 
 	global $P_REVSLIDER;
 
@@ -28,7 +28,7 @@ function p_revslider( $args ) {
 
 		if( !empty( $atts['img'] ) && !empty( $atts['video'] ) ) {
 
-			if( p_revslider_bg_video( [], $atts['video'] ) ) {
+			if( plura_wp_revslider_bg_video( [], $atts['video'] ) ) {
 
 				$id = $atts['video'];
 
@@ -66,11 +66,11 @@ function p_revslider( $args ) {
 
 }
 
-add_shortcode('p-revslider', function( $args) {
+add_shortcode('plura-wp-revslider', function( $args) {
 
 	global $P_REVSLIDER;
 
-	return p_revslider( shortcode_atts( $P_REVSLIDER, $args ) );
+	return plura_wp_revslider( shortcode_atts( $P_REVSLIDER, $args ) );
 
 } );
 
@@ -89,9 +89,9 @@ add_shortcode('p-revslider', function( $args) {
  * 		add:
  * 		
  * 			//PLURA
- *		  	if( function_exists('p_revslider_bg_img') ) {
+ *		  	if( function_exists('plura_wp_revslider_bg_img') ) {
  *
- *				$img = p_revslider_bg_img( $img, $this->slider_id );
+ *				$img = plura_wp_revslider_bg_img( $img, $this->slider_id );
  *
  *			} 
  *			
@@ -100,14 +100,14 @@ add_shortcode('p-revslider', function( $args) {
  * @param  string $img 	revolution image src (if it exists) 
  * @return array|null
  */
-function p_revslider_bg_img( $imgData, $sliderID = false ) {
+function plura_wp_revslider_bg_img( $imgData, $sliderID = false ) {
 
 	$obj = get_queried_object();
 
 	//check if filter function exists
-    if( has_filter('p_revslider_bg_img') ) {
+    if( has_filter('plura_wp_revslider_bg_img') ) {
 
-		$data = apply_filters('p_revslider_bg_img', $imgData, intval( $sliderID ) );
+		$data = apply_filters('plura_wp_revslider_bg_img', $imgData, intval( $sliderID ) );
 
 		//if image data is returned
 		if( $data && is_array( $data ) ) {
@@ -177,7 +177,7 @@ function p_revslider_bg_img( $imgData, $sliderID = false ) {
  * 		add:
  * 		
  * 			//PLURA
- *		  	if( function_exists('p_revslider_bg_video') ) {
+ *		  	if( function_exists('plura_wp_revslider_bg_video') ) {
  *
  *				$this->add_html_background_video();
  *
@@ -194,9 +194,9 @@ function p_revslider_bg_img( $imgData, $sliderID = false ) {
  * 		add:
  *
  *			//PLURA
- *		 	if( function_exists('p_revslider_bg_video') ) {
+ *		 	if( function_exists('plura_wp_revslider_bg_video') ) {
  *
- *				$pvideo = p_revslider_bg_video( $data, $this->slider_id );
+ *				$pvideo = plura_wp_revslider_bg_video( $data, $this->slider_id );
  *
  * 				if( $pvideo ) {
  *
@@ -210,14 +210,14 @@ function p_revslider_bg_img( $imgData, $sliderID = false ) {
  * @return null
  */
 
-function p_revslider_bg_video( $vidData, $sliderID = false )  {
+function plura_wp_revslider_bg_video( $vidData, $sliderID = false )  {
 
 	//check if filter function exists
-    if( class_exists('ACF') && has_filter('p_revslider_bg_video') ) {
+    if( class_exists('ACF') && has_filter('plura_wp_revslider_bg_video') ) {
 
     	$obj = get_queried_object();
 
-    	$data = apply_filters('p_revslider_bg_video', $vidData, intval( $sliderID ) );
+    	$data = apply_filters('plura_wp_revslider_bg_video', $vidData, intval( $sliderID ) );
 
     	//if data is int
 		if( $data && ( is_int( $data ) || is_string( $data ) ) ) {
@@ -265,7 +265,7 @@ function p_revslider_bg_video( $vidData, $sliderID = false )  {
 
 			if( isset( $url ) ) {
 
-				return p_revslider_bg_video_data( $url );
+				return plura_wp_revslider_bg_video_data( $url );
 
 			}
 
@@ -278,7 +278,7 @@ function p_revslider_bg_video( $vidData, $sliderID = false )  {
 }
 
 
-function p_revslider_bg_video_data( $url ) {
+function plura_wp_revslider_bg_video_data( $url ) {
 
 	$data = [
 

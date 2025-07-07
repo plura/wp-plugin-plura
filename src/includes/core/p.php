@@ -1,23 +1,43 @@
 <?php
 
 /**
- * Get all the breadcrumbs for a post, page, or term.
+ * Generate breadcrumbs for a post, page, or term object.
  *
- * @param ?int  $object Optional object ID (post or term). If null, uses the current queried object.
- * @param bool  $self   Whether to include the object itself in the breadcrumbs.
- * @param ?int  $id     Optional ID for the wrapper element (used in HTML output).
- * @param bool  $html   Whether to return the output as HTML (true) or as an array (false).
- * @return array|string Breadcrumb data array or HTML string depending on $html.
+ * If no object is given, the function falls back to the current queried object.
+ * Supports posts, pages, and terms. If rendering HTML, adds classes to structure each breadcrumb group.
+ *
+ * @param WP_Post|WP_Term|int|null $object   Optional. Object to build breadcrumbs for (post, page, or term). Defaults to current queried object.
+ * @param bool                     $self     Optional. Whether to include the object itself as the final breadcrumb. Default false.
+ * @param string|null              $class    Optional. Additional class to add to the container <div>.
+ * @param bool                     $html     Optional. Whether to return rendered HTML. If false, returns array structure. Default true.
+ * @param string|null              $context  Optional. Context identifier, passed to the 'plura_wp_breadcrumbs' filter.
+ *
+ * @return string|array                      Rendered HTML string or array of breadcrumb groups depending on $html.
  */
-function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id = null, bool $html = true ) {
-
+function plura_wp_breadcrumbs( WP_Post|WP_Term|int|null $object = null, bool $self = false, ?string $class = null, bool $html = true, ?string $context = null ) {
 	$crumbs = [];
 
-	if ( is_archive() && !$object ) {
+	// Normalize $object
+	if ( is_null( $object ) ) {
+		$object = get_queried_object();
 
+	} elseif ( is_int( $object ) ) {
+		$_post = get_post( $object );
+		if ( $_post ) {
+			$object = $_post;
+		} else {
+			$object = null; // No term guessing
+		}
+
+	} elseif ( ! ( $object instanceof WP_Post || $object instanceof WP_Term ) ) {
+		$object = null;
+	}
+
+	// Handle term
+	if ( $object instanceof WP_Term ) {
 		$crumb = plura_wp_breadcrumbs_terms(
-			get_queried_object()->term_id,
-			get_queried_object()->taxonomy,
+			$object->term_id,
+			$object->taxonomy,
 			$self
 		);
 
@@ -25,31 +45,25 @@ function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id
 			$crumbs[] = $crumb;
 		}
 
-	} else {
+	// Handle post or page
+	} elseif ( $object instanceof WP_Post ) {
+		$post_type = $object->post_type;
 
-		if ( $object && is_int( $object ) ) {
-			$object = get_post( $object );
-		} elseif ( !$object ) {
-			$object = get_post();
-		}
+		if ( $post_type !== 'page' ) {
+			$taxonomies = get_object_taxonomies( $post_type );
 
-		if ( ( is_single() && !$object ) || $object->post_type !== 'page' ) {
+			if ( !empty( $taxonomies ) ) {
+				$terms = get_the_terms( $object, $taxonomies[0] );
 
-			$post_taxonomies = get_object_taxonomies( $object );
-
-			if ( !empty( $post_taxonomies ) ) {
-				$terms = get_the_terms( $object, $post_taxonomies[0] );
-
-				if ( !empty( $terms ) ) {
+				if ( !empty( $terms ) && !is_wp_error( $terms ) ) {
 					foreach ( $terms as $term ) {
 						$crumbs[] = plura_wp_breadcrumbs_terms( $term->term_id, $term->taxonomy, true );
 					}
 				}
 			}
 
-		} elseif ( ( is_page() && !$object ) || $object->post_type === 'page' ) {
-
-			$ancestors = get_ancestors( $object->ID, get_post_type(), 'post_type' );
+		} else {
+			$ancestors = get_ancestors( $object->ID, $post_type, 'post_type' );
 
 			if ( !empty( $ancestors ) ) {
 				$group = [];
@@ -63,49 +77,83 @@ function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id
 		}
 	}
 
-	if ( has_filter( 'plura_wp_breadcrumbs' ) ) {
-		$crumbs = apply_filters( 'plura_wp_breadcrumbs', $crumbs, $id );
-	}
+	// Ensure array-of-groups structure BEFORE applying filters
+/* 	if ( !is_array( $crumbs[0] ) || !array_key_exists( 0, $crumbs[0] ) ) {
+		$crumbs = [ $crumbs ];
+	} */
 
-	if ( !empty( $crumbs ) ) {
+	// Allow filtering
+	$crumbs = apply_filters( 'plura_wp_breadcrumbs', $crumbs, $object, $context );
+
+	// Render
+ 	if ( !empty( $crumbs ) ) {
 		if ( $html ) {
 			$return = [];
-
-			if ( !is_array( $crumbs[0] ) || !array_key_exists( 0, $crumbs[0] ) ) {
-				$crumbs = [ $crumbs ];
-			}
 
 			foreach ( $crumbs as $group ) {
 				$g = [];
 
-				foreach ( $group as $crumb ) {
+				foreach ( $group as $i => $crumb ) {
 					$classes = [ 'plura-wp-breadcrumb' ];
 
-					if ( !is_array( $crumb ) ) {
-						$c = $crumb;
-					} else {
-						$c = plura_wp_link( html: $crumb['name'], target: $crumb['obj'], atts: ['class' => 'plura-wp-breadcrumb-link']);
+					if ( $i === array_key_last( $group ) ) {
+						$classes[] = 'is-current';
 					}
 
-					$atts = [ 'class' => implode( ' ', $classes ) ];
-					$g[]  = '<li ' . plura_attributes( $atts ) . '>' . $c . '</li>';
+					if ( !is_array( $crumb ) ) {
+						$c = plura_wp_breadcrumb( $crumb );
+						if( !$c ) {
+							continue;
+						}
+					}
+					
+					$c = plura_wp_link(
+						html: $crumb['name'],
+						target: $crumb['obj'],
+						atts: [ 'class' => 'plura-wp-breadcrumb-link' ]
+					);
+
+					$g[] = sprintf( '<li %s>%s</li>', plura_attributes( [ 'class' => $classes ] ), $c );
 				}
 
-				$return[] = '<ul class="plura-wp-breadcrumbs-group">' . implode( '', $g ) . '</ul>';
+				$return[] = sprintf( '<ul %s>%s</ul>', plura_attributes( [ 'class' => 'plura-wp-breadcrumbs-group' ] ), implode( '', $g ) );
 			}
 
-			$atts = [ 'class' => 'plura-wp-breadcrumbs' ];
-
-			if ( $id ) {
-				$atts['data-id'] = $id;
-			}
+			$atts = [ 'class' => 'plura-wp-breadcrumbs' . ( $class ? " {$class}" : '' ) ];
 
 			return '<div ' . plura_attributes( $atts ) . '>' . implode( '', $return ) . '</div>';
 		}
 
 		return $crumbs;
-	}
+	} 
+
+	return '';
 }
+
+function plura_wp_breadcrumbs_shortcode( $args ) {
+	$atts = shortcode_atts([
+		'object'  => 0,
+		'self'    => 0,
+		'class'   => '',
+		'context' => ''
+	], $args );
+
+	// Normalize
+	$object  = is_numeric( $atts['object'] ) && (int) $atts['object'] > 0 ? (int) $atts['object'] : null;
+	$self    = (bool) $atts['self'];
+	$class   = trim( $atts['class'] ) ?: null;
+	$context = trim( $atts['context'] ) ?: null;
+
+	return plura_wp_breadcrumbs(
+		object: $object,
+		self: $self,
+		class: $class,
+		html: true,
+		context: $context
+	);
+}
+
+add_shortcode( 'plura-wp-breadcrumbs', 'plura_wp_breadcrumbs_shortcode' );
 
 
 
@@ -118,7 +166,6 @@ function plura_wp_breadcrumbs( ?int $object = null, bool $self = false, ?int $id
  * @return array            An array of breadcrumb items (as returned by plura_wp_breadcrumb).
  */
 function plura_wp_breadcrumbs_terms( int $term_id, string $taxonomy, bool $include = false ): array {
-
 	$crumbs = [];
 
 	$ancestors = get_ancestors( $term_id, $taxonomy );
@@ -144,50 +191,42 @@ function plura_wp_breadcrumbs_terms( int $term_id, string $taxonomy, bool $inclu
  * @param string|false $taxonomy Optional. The taxonomy name if the ID refers to a term. Default false.
  * @return array                An associative array with breadcrumb data.
  */
-function plura_wp_breadcrumb( int|string $id, string|false $taxonomy = false ): array {
+function plura_wp_breadcrumb( WP_Post|WP_Term|int|string $object ): ?array {
+	if ( is_int( $object ) ) {
+		$object = get_post( $object );
 
-	if ( $taxonomy ) {
-		$term = get_term( $id, $taxonomy );
+		if ( ! $object ) {
+			return null;
+		}
+	}
 
+	if ( $object instanceof WP_Term ) {
 		return [
 			'type' => 'term',
-			'link' => get_term_link( $term ),
-			'name' => $term->name,
-			'id'   => $id,
-			'obj'  => $term
+			'link' => get_term_link( $object ),
+			'name' => $object->name,
+			'id'   => $object->term_id,
+			'obj'  => $object
 		];
-	}
-
-	if ( ! is_int( $id ) ) {
+	} else if ( $object instanceof WP_Post ) {
 		return [
-			'type' => 'single',
-			'name' => $id,
+			'type' => 'post',
+			'link' => get_permalink( $object ),
+			'name' => get_the_title( $object ),
+			'id'   => $object->ID,
+			'obj'  => $object
+		];
+	} else if ( is_string( $object ) ) {
+		return [
+			'type' => 'string',
+			'name' => $object
 		];
 	}
 
-	return [
-		'type' => 'single',
-		'link' => get_permalink( $id ),
-		'name' => get_the_title( $id ),
-		'id'   => $id,
-		'obj'  => get_post( $id )
-	];
+	return null;
 }
 
 
-function plura_wp_breadcrumbs_shortcode( $args ) {
-
-	$atts = shortcode_atts([
-		'id' => 0,
-		'object' => 0,
-		'self' => 0
-	], $args);
-
-	return plura_wp_breadcrumbs( $atts['object'], $atts['self'], $atts['id'] );
-
-}
-
-add_shortcode('plura-wp-breadcrumbs', 'plura_wp_breadcrumbs_shortcode');
 
 
 
@@ -256,52 +295,97 @@ function plura_p_tags_shortcode( $args ) {
 add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');
 
 
-function plura_wp_title( bool $html = true ) {
-
-	if( is_page() || is_single() ) {
-
-		$text = get_the_title();
-
-	} else if( is_archive() ) {
-
-		//https://www.binarymoon.co.uk/2017/02/hide-archive-title-prefix-wordpress/
-		$title_parts = explode( ': ', get_the_archive_title(), 2 );
-
-		$text = $title_parts[1];
-
+/**
+ * Returns the title (post or term) as plain text or wrapped in HTML.
+ *
+ * @param WP_Post|WP_Term|int $object   Post/term object or post ID.
+ * @param string|false        $tag      Tag to wrap title in. Use false for plain text.
+ * @param bool                $link     Whether to wrap the title in a link.
+ * @param string|null         $context  Optional filter context.
+ * @return string|null                  Title HTML or plain string, or null if invalid.
+ */
+function plura_wp_title(
+	WP_Term|WP_Post|int $object,
+	string|false $tag = 'h3',
+	bool $link = false,
+	?string $context = null
+): ?string {
+	if ( is_int( $object ) ) {
+		$object = get_post( $object );
 	}
 
-	if( empty($text) ) {
-
-		$text = 'no title';
-
+	if ( ! ( $object instanceof WP_Post || $object instanceof WP_Term ) ) {
+		return null;
 	}
 
-	if( has_filter('plura_wp_title') ) {
+	$text = apply_filters(
+		'plura_wp_title',
+		$object instanceof WP_Post ? $object->post_title : $object->name,
+		$object,
+		$context
+	);
 
-		$text = apply_filters('plura_wp_title', $text);
-
+	if ( empty( $text ) ) {
+		return null;
 	}
 
-	if( $html ) {
-
-		return "<div class=\"p-title\">" . $text . "</div>";
-
+	if ( $tag !== false ) {
+		$type = $object instanceof WP_Post ? 'post' : 'term';
+		$html = sprintf(
+			'<%1$s %3$s>%2$s</%1$s>',
+			tag_escape( $tag ),
+			esc_html( $text ),
+			plura_attributes([ 'class' => [ 'plura-wp-title', "plura-wp-{$type}-title" ] ])
+		);
+	} else {
+		$html = esc_html( $text );
 	}
 
-	return $text;
+	if ( $link ) {
+		$html = plura_wp_link(
+			html: $html,
+			target: $object,
+			title: $text
+		);
+	}
 
+	return $html;
 }
 
-add_shortcode('plura-wp-title', function( $atts ) {
+/**
+ * Shortcode [plura-wp-title] to render the current post/term title.
+ *
+ * @param array $atts {
+ *     @type int|string   $object   Post ID or a string like 'current' (default: current post).
+ *     @type string|false $tag      Tag name (h2, h3, etc.) or "false"/"0" to disable wrapping.
+ *     @type bool|string  $link     Whether to wrap the title in a link.
+ *     @type string|null  $context  Optional context string for filtering.
+ * }
+ * @return string|null
+ */
+function plura_wp_title_shortcode( array $atts ): ?string {
+	$atts = shortcode_atts([
+		'object'  => get_the_ID(),
+		'tag'     => 'h3',
+		'link'    => false,
+		'context' => null,
+	], $atts );
 
-	$args = shortcode_atts([
-		'html' => 1
-	], $atts);
+	$object  = is_numeric( $atts['object'] ) ? intval( $atts['object'] ) : get_the_ID();
+	$link    = filter_var( $atts['link'], FILTER_VALIDATE_BOOLEAN );
+	$context = $atts['context'] ?: null;
 
-	return plura_wp_title( ...$args );
+	$tag = strtolower( trim( $atts['tag'] ) );
+	$tag = in_array( $tag, ['false', '0', ''], true ) ? false : $tag;
 
-});
+	return plura_wp_title(
+		object: $object,
+		tag: $tag,
+		link: $link,
+		context: $context
+	);
+}
+add_shortcode( 'plura-wp-title', 'plura_wp_title_shortcode' );
 
 
 

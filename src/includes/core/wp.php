@@ -485,6 +485,7 @@ function plura_wp_image(int|WP_Post $attachment, string $size = 'large', array $
 }
 
 
+
 /**
  * Renders a gallery of image attachments from various possible sources.
  *

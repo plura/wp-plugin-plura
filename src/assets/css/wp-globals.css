@@ -74,8 +74,16 @@
 
 
 
+/* Globals */
+img {
+	display: block;
+}
+
+
+
 /* Elements: Link */
-.plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more) {
+.plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
+.plura-wp-post .plura-wp-link:not(.plura-wp-post-read-more) {
 	display: contents;
 }
 
@@ -87,6 +95,7 @@
 }
 
 .plura-wp-breadcrumbs ul.plura-wp-breadcrumbs-group {
+	--plura-wp-breadcrumb-gap: calc(var(--plura-wp-posts-gap) / 6);
 	list-style: none;
 	padding-left: 0;
 	padding-bottom: 0;
@@ -95,7 +104,7 @@
 .plura-wp-breadcrumbs .plura-wp-breadcrumbs-group,
 .plura-wp-breadcrumbs .plura-wp-breadcrumbs-group .plura-wp-breadcrumb:not(:last-child) {
 	display: flex;
-	gap: calc(var(--plura-wp-posts-gap) / 6);
+	gap: var(--plura-wp-breadcrumb-gap);
 }
 
 .plura-wp-breadcrumbs .plura-wp-breadcrumbs-group .plura-wp-breadcrumb:not(:last-child)::after {
@@ -204,4 +213,11 @@
 
 .p-sticky.p-sticky-bottom {
 	bottom: var(--p-sticky-bottom-pos);
+}
+
+
+
+/* Component */
+.plura-wp-component {
+	position: relative;
 }

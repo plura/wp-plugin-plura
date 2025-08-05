@@ -48,6 +48,7 @@ plura_includes([
 	'includes/core/navwalker',
 	'includes/core/p',
 	'includes/core/restricted',
+	'includes/core/utils',
 	'includes/core/wp',
 	'includes/core/wp-dynamic-grid',
 	'includes/core/wp-posts',
@@ -120,6 +121,7 @@ function plura_wp_styles()
 		__DIR__ . '/assets/js/utils-autoscroll.js',
 
 		__DIR__ . '/assets/%s/wp-globals.%s',
+		__DIR__ . '/assets/%s/wp-globals-theme.css',
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
 		__DIR__ . '/assets/js/wp-prevnext.js',
 

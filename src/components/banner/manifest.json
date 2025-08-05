@@ -1,0 +1,17 @@
+{
+	"html": "index.html",
+	"scripts": {
+		"https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js": {
+			"handle": "gsap"
+		},
+		"https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js": {
+			"handle": "gsap-splittext"
+		},
+		"assets/js/init.js": {
+			"handle": "init"
+		},
+		"assets/css/style.css": {
+			"handle": "style"
+		}
+	}
+}

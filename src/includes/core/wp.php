@@ -394,60 +394,58 @@ function plura_wp_link(
 
 
 /**
- * Retrieves image data for a given image attachment.
+ * Returns image data array for a given attachment ID or object.
  *
- * Returns an array of image information, including `src`, `width`, `height`, `alt`, `id`, and `title`.
- * Useful for generating <img>, <picture>, or other custom image markup.
+ * Includes src, width, height, alt, srcset, and sizes for responsive rendering.
  *
- * @param int|WP_Post $attachment Attachment ID or WP_Post object. Must be an image.
- * @param string      $size       Image size to retrieve. Defaults to 'large'.
- *
- * @return array|null             Associative array of image data or null if invalid.
+ * @param int|WP_Post $attachment Image ID or post object.
+ * @param string      $size       Image size to retrieve.
+ * @return array|null             Array with keys: src, width, height, alt, srcset, sizes — or null if invalid.
  */
-function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array
-{
-	$attachment = get_post($attachment);
+function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array {
+	$post = get_post($attachment);
 
-	if (
-		! $attachment instanceof WP_Post ||
-		'attachment' !== $attachment->post_type ||
-		! wp_attachment_is_image($attachment)
-	) {
+	if (! $post || 'attachment' !== $post->post_type || ! wp_attachment_is_image($post->ID)) {
 		return null;
 	}
 
-	$src_data = wp_get_attachment_image_src($attachment->ID, $size);
+	$src_data = wp_get_attachment_image_src($post->ID, $size);
 
 	if (! $src_data) {
 		return null;
 	}
 
 	return [
-		'src'    => esc_url($src_data[0]),
-		'width'  => (int) $src_data[1],
-		'height' => (int) $src_data[2],
-		'alt'    => esc_attr(get_post_meta($attachment->ID, '_wp_attachment_image_alt', true) ?: get_the_title($attachment)),
-		'id'     => $attachment->ID,
-		'title'  => esc_html(get_the_title($attachment)),
+		'src'    => $src_data[0],
+		'width'  => $src_data[1],
+		'height' => $src_data[2],
+		'alt'    => trim(get_post_meta($post->ID, '_wp_attachment_image_alt', true)),
+		'srcset' => wp_get_attachment_image_srcset($post->ID, $size),
+		'sizes'  => wp_get_attachment_image_sizes($post->ID, $size),
 	];
 }
-
 
 
 /**
  * Generates an <img> HTML tag for a given image attachment.
  *
  * Uses `plura_wp_image_data()` to retrieve the image info and builds the final HTML <img> tag.
+ * Includes srcset, sizes, and loading attributes for responsive rendering.
  * The default class 'plura-wp-image' is always included.
  *
- * @param int|WP_Post $attachment Attachment ID or WP_Post object. Must be an image.
- * @param string      $size       Image size to retrieve. Defaults to 'large'.
- * @param array       $atts       Optional HTML attributes. 'class' can be a string or an array.
+ * @param int|WP_Post     $attachment Attachment ID or WP_Post object. Must be an image.
+ * @param string          $size       Image size to retrieve. Defaults to 'large'.
+ * @param array           $atts       Optional HTML attributes. 'class' can be a string or an array.
+ * @param string|false    $loading    Optional loading strategy (e.g., 'lazy', 'eager'). Use false to disable.
  *
- * @return string|null            HTML <img> tag or null if image is invalid.
+ * @return string|null                HTML <img> tag or null if image is invalid.
  */
-function plura_wp_image(int|WP_Post $attachment, string $size = 'large', array $atts = []): ?string
-{
+function plura_wp_image(
+	int|WP_Post $attachment,
+	string $size = 'large',
+	array $atts = [],
+	string|false $loading = 'lazy'
+): ?string {
 	$data = plura_wp_image_data($attachment, $size);
 
 	if (! $data) {
@@ -455,18 +453,12 @@ function plura_wp_image(int|WP_Post $attachment, string $size = 'large', array $
 	}
 
 	// Handle 'class' attribute: string or array
-	if (isset($atts['class'])) {
-		$classes = is_array($atts['class'])
-			? $atts['class']
-			: explode(' ', $atts['class']);
-
-		$atts['class'] = array_filter(array_map('trim', $classes));
-	} else {
-		$atts['class'] = [];
-	}
+	$atts['class'] = isset($atts['class'])
+		? array_filter(array_map('trim', is_array($atts['class']) ? $atts['class'] : explode(' ', $atts['class'])))
+		: [];
 
 	// Ensure default class is included
-	if (! in_array('plura-wp-image', $atts['class'], true)) {
+	if (!in_array('plura-wp-image', $atts['class'], true)) {
 		array_unshift($atts['class'], 'plura-wp-image');
 	}
 
@@ -478,11 +470,69 @@ function plura_wp_image(int|WP_Post $attachment, string $size = 'large', array $
 		'alt'    => $data['alt'],
 	], $atts);
 
+	// Add responsive attributes
+	if (!empty($data['srcset'])) {
+		$atts['srcset'] = $data['srcset'];
+	}
+	if (!empty($data['sizes'])) {
+		$atts['sizes'] = $data['sizes'];
+	}
+
+	// Add loading attribute if not set and $loading is enabled
+	if ($loading !== false && !isset($atts['loading'])) {
+		$atts['loading'] = $loading;
+	}
+
 	return sprintf(
 		'<img %s />',
 		plura_attributes($atts)
 	);
 }
+
+/**
+ * Shortcode [plura-wp-image] to render an image using plura_wp_image().
+ *
+ * Supported attributes:
+ * - attachment (int)      : Attachment ID (required)
+ * - size (string)         : Image size (default: 'large')
+ * - class (string)        : CSS classes (space-separated)
+ * - alt (string)          : Alt text override
+ * - loading (string|false): 'lazy', 'eager', or 'false' to disable (default: 'lazy')
+ *
+ * Any additional attributes will be passed through to the image element.
+ */
+add_shortcode('plura-wp-image', function ($args) {
+	$atts = shortcode_atts([
+		'attachment' => 0,
+		'size'       => 'large',
+		'class'      => '',
+		'alt'        => '',
+		'loading'    => 'lazy',
+	], $args);
+
+	$atts['attachment'] = (int) $atts['attachment'];
+
+	if (! $atts['attachment']) {
+		return '';
+	}
+
+	// Extract known parameters
+	$attachment = $atts['attachment'];
+	$size       = $atts['size'];
+	$loading    = strtolower(trim($atts['loading']));
+
+	// Normalize loading value
+	$loading = match ($loading) {
+		'false', '0', '' => false,
+		default          => $loading,
+	};
+
+	// Remove handled keys from $atts before passing as HTML attributes
+	unset($atts['attachment'], $atts['size'], $atts['loading']);
+
+	return plura_wp_image($attachment, $size, $atts, $loading);
+});
+
 
 
 

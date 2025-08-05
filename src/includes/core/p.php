@@ -106,7 +106,7 @@ function plura_wp_breadcrumbs( WP_Post|WP_Term|int|null $object = null, bool $se
 							continue;
 						}
 					}
-					
+
 					$c = plura_wp_link(
 						html: $crumb['name'],
 						target: $crumb['obj'],
@@ -299,15 +299,21 @@ add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');
  * Returns the title (post or term) as plain text or wrapped in HTML.
  *
  * @param WP_Post|WP_Term|int $object   Post/term object or post ID.
- * @param string|false        $tag      Tag to wrap title in. Use false for plain text.
- * @param bool                $link     Whether to wrap the title in a link.
- * @param string|null         $context  Optional filter context.
- * @return string|null                  Title HTML or plain string, or null if invalid.
+ *
+ * @param string|false        $tag      Optional. HTML tag to wrap the title in. Default 'h3'.
+ *                                      Pass false to return plain text only.
+ * @param bool                $link     Optional. Whether to wrap the title in a link to the post or term archive. Default false.
+ * @param array|string|null   $class    Optional. Additional CSS classes to add to the tag. Can be string or array. Default null.
+ *
+ * @param string|null         $context  Optional. Filter context for `plura_wp_title`. Default null.
+ *
+ * @return string|null                  The rendered title HTML or plain string, or null if the object is invalid.
  */
 function plura_wp_title(
 	WP_Term|WP_Post|int $object,
 	string|false $tag = 'h3',
 	bool $link = false,
+	array|string|null $class = null,
 	?string $context = null
 ): ?string {
 	if ( is_int( $object ) ) {
@@ -331,11 +337,23 @@ function plura_wp_title(
 
 	if ( $tag !== false ) {
 		$type = $object instanceof WP_Post ? 'post' : 'term';
+
+		$classes = [ 'plura-wp-title', "plura-wp-{$type}-title" ];
+
+		if ( $class ) {
+			$classes = array_merge(
+				$classes,
+				array_filter(
+					array_map( 'trim', is_array( $class ) ? $class : explode( ' ', $class ) )
+				)
+			);
+		}
+
 		$html = sprintf(
 			'<%1$s %3$s>%2$s</%1$s>',
 			tag_escape( $tag ),
 			esc_html( $text ),
-			plura_attributes([ 'class' => [ 'plura-wp-title', "plura-wp-{$type}-title" ] ])
+			plura_attributes([ 'class' => $classes ])
 		);
 	} else {
 		$html = esc_html( $text );
@@ -352,11 +370,12 @@ function plura_wp_title(
 	return $html;
 }
 
+
 /**
  * Shortcode [plura-wp-title] to render the current post/term title.
  *
  * @param array $atts {
- *     @type int|string   $object   Post ID or a string like 'current' (default: current post).
+ *     @type int|string   $object   Post/term ID or a string like 'current' (default: current post or term).
  *     @type string|false $tag      Tag name (h2, h3, etc.) or "false"/"0" to disable wrapping.
  *     @type bool|string  $link     Whether to wrap the title in a link.
  *     @type string|null  $context  Optional context string for filtering.
@@ -365,13 +384,24 @@ function plura_wp_title(
  */
 function plura_wp_title_shortcode( array $atts ): ?string {
 	$atts = shortcode_atts([
-		'object'  => get_the_ID(),
+		'object'  => null,
 		'tag'     => 'h3',
 		'link'    => false,
 		'context' => null,
 	], $atts );
 
-	$object  = is_numeric( $atts['object'] ) ? intval( $atts['object'] ) : get_the_ID();
+	// Determine the object: explicit ID, current post, or current term
+	if ( is_numeric( $atts['object'] ) ) {
+		$object = intval( $atts['object'] );
+	} else {
+		$queried_object = get_queried_object();
+		if ( $queried_object instanceof WP_Post || $queried_object instanceof WP_Term ) {
+			$object = $queried_object;
+		} else {
+			return '';
+		}
+	}
+
 	$link    = filter_var( $atts['link'], FILTER_VALIDATE_BOOLEAN );
 	$context = $atts['context'] ?: null;
 

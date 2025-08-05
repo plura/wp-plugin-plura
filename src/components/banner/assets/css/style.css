@@ -1,0 +1,51 @@
+/* css code */
+.plura-wp-component-banner {
+	--plura-wp-component-banner-breadcrumbs-h: calc( var(--plura-wp-gap) * 2 );
+	--plura-wp-component-banner-title-h: calc( 100% - var(--plura-wp-component-banner-breadcrumbs-h) );
+	height: 400px;
+	overflow: hidden;
+	position: relative;
+}
+
+.plura-wp-component-banner::before {
+	background-color: rgba(0, 0, 0, .6);
+	backdrop-filter: blur(2px);
+	content: '';
+	height: 100%;
+	left: 0;
+	position: absolute;
+	top: 0;
+	width: 100%;
+	z-index: 2;
+}
+
+.plura-wp-component-banner .plura-wp-image.plura-wp-post-featured-image {
+	left: 50%;
+    position: absolute;
+    top: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 1;
+}
+
+.plura-wp-component-banner :is(.plura-wp-title, .plura-wp-breadcrumbs) {
+	position: absolute;
+	right: calc( ( 100dvw - var(--plura-wp-globals-theme-width) ) / 2 );
+	width: var(--plura-wp-globals-theme-width);
+	z-index: 3;
+}
+
+.plura-wp-component-banner .plura-wp-title {
+	align-items: flex-end;
+	bottom: var(--plura-wp-component-banner-breadcrumbs-h);
+	height: var(--plura-wp-component-banner-title-h);
+	display: flex;
+	justify-content: flex-end;
+	padding-bottom: 0;
+	text-align: right;
+}
+
+.plura-wp-component-banner .plura-wp-breadcrumbs {
+	align-items: flex-end;
+	bottom: 0;
+	height: var(--plura-wp-component-banner-breadcrumbs-h);
+}

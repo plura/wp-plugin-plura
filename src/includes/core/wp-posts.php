@@ -185,8 +185,6 @@ function plura_wp_posts_query(
 
 	$query_params = apply_filters('plura_wp_posts_query', $query_params, $args);
 
-	//if($type !== 'rg_object') print_r($query_params);
-
 	return new WP_Query($query_params);
 }
 

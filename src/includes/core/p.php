@@ -168,16 +168,16 @@ add_shortcode( 'plura-wp-breadcrumbs', 'plura_wp_breadcrumbs_shortcode' );
 function plura_wp_breadcrumbs_terms( int $term_id, string $taxonomy, bool $include = false ): array {
 	$crumbs = [];
 
-	$ancestors = get_ancestors( $term_id, $taxonomy );
+	$ancestors = get_ancestors( $term_id, $taxonomy, 'taxonomy' );
 
 	if ( !empty( $ancestors ) ) {
 		foreach ( array_reverse( $ancestors ) as $ancestor ) {
-			$crumbs[] = plura_wp_breadcrumb( $ancestor, $taxonomy );
+			$crumbs[] = plura_wp_breadcrumb( get_term( $ancestor, $taxonomy ) );
 		}
 	}
 
 	if ( $include ) {
-		$crumbs[] = plura_wp_breadcrumb( $term_id, $taxonomy );
+		$crumbs[] = plura_wp_breadcrumb( get_term( $term_id, $taxonomy ) );
 	}
 
 	return $crumbs;

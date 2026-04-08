@@ -185,6 +185,8 @@ function plura_wp_posts_query(
 
 	$query_params = apply_filters('plura_wp_posts_query', $query_params, $args);
 
+	//if($type !== 'rg_object') print_r($query_params);
+
 	return new WP_Query($query_params);
 }
 
@@ -402,7 +404,7 @@ function plura_wp_posts(
 		}
 
 		$html = array_map(
-			fn($post) => plura_wp_post(
+			fn($post, $index) => plura_wp_post(
 				context: $context,
 				datetime_format: $datetime_format,
 				post: $post,
@@ -412,9 +414,11 @@ function plura_wp_posts(
 				timeline_datetime_source: $timeline_datetime_source,
 				timeline_end_key: $timeline_end_key,
 				timeline_start_key: $timeline_start_key,
-				wrap: true
+				wrap: true,
+				index: $index
 			),
-			$posts
+			$posts,
+			range(0, max(0, count($posts) - 1))
 		);
 
 		if (! $wrap) {
@@ -557,7 +561,7 @@ add_shortcode('plura-wp-posts-related', function (array $args): string {
 		'order' => '',
 		'rand' => '0',
 		'read_more' => '1',
-		'tag' => '',
+		'context' => 'related',
 		'timeline' => null,
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
 		'timeline_datetime_source' => 'Y-m-d H:i:s',
@@ -628,6 +632,7 @@ add_shortcode('plura-wp-posts-related', function (array $args): string {
  * @param string       $timeline_start_key        Meta key for timeline start date.
  *
  * @param string|null  $context                   Optional context tag used for filters (e.g. 'archive', 'homepage').
+ * @param int|null     $index                     Optional index for the post in a list.
  *
  * @return string HTML markup of the rendered post.
  */
@@ -649,7 +654,8 @@ function plura_wp_post(
 	string $timeline_start_key = '',
 
 	// Filter / scope
-	?string $context = null
+	?string $context = null,
+	?int $index = null
 ): string {
 	if (is_int($post)) {
 		$post = get_post($post);
@@ -776,7 +782,8 @@ function plura_wp_post(
 			$ordered_content,     // content for filtering
 			$post,
 			$context,
-			$ordered_content      // original content
+			$index,
+			$ordered_content,      // original content
 		);
 		$ordered_content = ($filtered_content !== $ordered_content) ? $filtered_content : $ordered_content;
 	}
@@ -1155,8 +1162,8 @@ function plura_wp_post_meta(
 			$label_html = '';
 			$attr       = ['class' => 'plura-wp-post-meta-item'];
 
-			if (is_string($item_key)) {
-				$attr['data-type'] = $item_key;
+			if (is_string($item_key) || ( is_array($meta_item) && isset($meta_item['type']) ) ) {
+				$attr['data-type'] = is_string($item_key) ? $item_key : $meta_item['type'];
 			}
 
 			if ($item_label && $label && $label_as_data_attr) {

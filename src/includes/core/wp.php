@@ -369,15 +369,24 @@ function plura_wp_link(
 	}
 
 	$link_atts['href'] = $href;
-
+	
 	// Automatically add target="_blank" for external links (supports subdir installs)
-	$site_url = rtrim(home_url(), '/');
-	$link_url = rtrim($href, '/');
-	// If link does NOT start with the current site URL, treat as external
-	if (stripos($link_url, $site_url) !== 0) {
+	$site_parts = parse_url(home_url());
+	$link_parts = parse_url($href);
+
+	$site_host = strtolower($site_parts['host'] ?? '');
+	$site_path = rtrim($site_parts['path'] ?? '', '/');
+
+	$link_host = strtolower($link_parts['host'] ?? '');
+	$link_path = rtrim($link_parts['path'] ?? '', '/');
+
+	// External if: different host, OR same host but path doesn't start with site base path
+	$is_external = $link_host !== $site_host
+		|| ($site_path !== '' && stripos($link_path, $site_path) !== 0);
+
+	if ($is_external) {
 		$link_atts['target'] = '_blank';
 	}
-
 	// Merge user-defined attributes first
 	if (! empty($atts)) {
 		$link_atts = array_merge_recursive($link_atts, $atts);
@@ -402,7 +411,8 @@ function plura_wp_link(
  * @param string      $size       Image size to retrieve.
  * @return array|null             Array with keys: src, width, height, alt, srcset, sizes — or null if invalid.
  */
-function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array {
+function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array
+{
 	$post = get_post($attachment);
 
 	if (! $post || 'attachment' !== $post->post_type || ! wp_attachment_is_image($post->ID)) {
@@ -535,41 +545,56 @@ add_shortcode('plura-wp-image', function ($args) {
 
 
 
-
 /**
- * Renders a gallery of image attachments from various possible sources.
+ * Render a gallery of image attachments from explicit IDs and/or a post’s meta/ACF field.
  *
- * Accepts ACF-style arrays, image IDs, posts with featured images, or direct image attachments.
+ * Precedence of sources:
+ *  1) Featured image from $source when $source_featured_image is true
+ *  2) Explicit attachment IDs from $ids
+ *  3) Images returned by the $source_key meta/ACF field on $source
  *
- * @param array|int|string|WP_Post $source                   The source of images (e.g., array of image IDs or ACF field key).
- * @param string                   $source_key               Optional. Used if $source is an ACF field key (post ID or key).
- * @param bool                     $unique                   Optional. Remove duplicate image IDs. Default true.
- * @param bool                     $source_featured_image    Optional. Whether to prepend the source post's featured image. Default false.
- * @param string|null              $context                  Optional context string used in filters.
+ * @param array<int,int>|null	$ids                     Explicit attachment IDs; null or [] to skip.
+ *
+ * @param int|WP_Post|null		$source                  Post ID/object to read from; null to skip.
+ * @param string|null			$source_key              Meta/ACF field key on $source; null/'' to skip.
+ * @param bool					$source_featured_image   Prepend the featured image of $source if available. Default false.
+ *
+ * @param bool					$unique                  Remove duplicate image IDs. Default true.
+ * @param string|null			$class                   Additional CSS class(es) as a space-delimited string.
+ *
+ * @param string|null			$context                 Optional context string passed to filters.
  *
  * @return string HTML markup of the rendered gallery, or an empty string if no images found.
+ *
+ * Filters:
+ *  - plura_wp_gallery( array $image_ids, int|WP_Post|null $source, ?string $source_key, ?string $context )
  */
 function plura_wp_gallery(
-	array|int|string|WP_Post $source,
-	string $source_key = '',
-	bool $unique = true,
+	?array $ids = null,
+	int|WP_Post|null $source = null,
+	?string $source_key = null,
 	bool $source_featured_image = false,
+	bool $unique = true,
+	?string $class = null,
 	?string $context = null
 ): string {
 	$items = [];
-	$ids = [];
+	$image_ids = [];
 
 	// Step 1: Get featured image ID from the source post, if requested
-	if (
-		$source_featured_image &&
-		(is_numeric($source) || $source instanceof WP_Post)
-	) {
-		$items[] = is_numeric($source) ? (int) $source : $source->ID;
+	if ($source_featured_image && $source) {
+		$items[] = $source instanceof WP_Post ? (int) $source->ID : (int) $source;
 	}
 
-	// Step 2: Resolve source if it's an ACF field key
-	if (is_string($source_key) && (is_numeric($source) || $source instanceof WP_Post)) {
-		$field_value = get_field($source_key, is_numeric($source) ? (int) $source : $source->ID);
+	// Step 1.5: Merge explicit IDs (if any)
+	if (!empty($ids)) {
+		$items = array_merge($items, (array) $ids);
+	}
+
+	// Step 2: Resolve source if it's an ACF/meta field on a post
+	if ($source_key && $source) {
+		$post_id = $source instanceof WP_Post ? (int) $source->ID : (int) $source;
+		$field_value = get_field($source_key, $post_id);
 		$items = array_merge($items, (array) (is_array($field_value) ? $field_value : []));
 	}
 
@@ -580,33 +605,32 @@ function plura_wp_gallery(
 		} elseif (is_array($item) && isset($item['ID'])) {
 			$id = (int) $item['ID'];
 		} elseif ($item instanceof WP_Post) {
-			$id = $item->ID;
+			$id = (int) $item->ID;
 		} else {
 			continue;
 		}
 
 		if (wp_attachment_is_image($id)) {
-			$ids[] = $id;
+			$image_ids[] = $id;
 		} else {
 			$thumb_id = get_post_thumbnail_id($id);
 			if ($thumb_id && wp_attachment_is_image($thumb_id)) {
-				$ids[] = $thumb_id;
+				$image_ids[] = (int) $thumb_id;
 			}
 		}
 	}
 
 	// Step 4: Remove duplicates if requested
 	if ($unique) {
-		$ids = array_unique($ids);
+		$image_ids = array_unique($image_ids);
 	}
 
 	// Step 4.5: Filter image IDs before rendering the gallery
-	$ids = apply_filters('plura_wp_gallery', $ids, $source, $source_key, $context);
+	$image_ids = apply_filters('plura_wp_gallery', $image_ids, $source, $source_key, $context);
 
 	// Step 5: Render gallery HTML
 	$html = [];
-
-	foreach (array_filter($ids) as $id) {
+	foreach (array_filter($image_ids) as $id) {
 		$thumb = plura_wp_image_data($id, 'medium');
 		$html[] = sprintf(
 			'<div %s>%s</div>',
@@ -616,11 +640,15 @@ function plura_wp_gallery(
 	}
 
 	if (!empty($html)) {
-		$atts = ['class' => 'plura-wp-gallery'];
+		$classes_extra = $class
+			? array_filter(array_map('trim', explode(' ', trim((string) $class))), 'strlen')
+			: [];
+
+		$classes = array_values(array_unique(array_merge(['plura-wp-gallery'], $classes_extra)));
 
 		return sprintf(
 			'<div %s>%s</div>',
-			plura_attributes($atts),
+			plura_attributes(['class' => $classes]),
 			implode("\n", $html)
 		);
 	}
@@ -628,47 +656,61 @@ function plura_wp_gallery(
 	return '';
 }
 
+
 /**
- * Registers the [plura-wp-gallery] shortcode to render an image gallery.
+ * Shortcode: [plura-wp-gallery]
  *
- * This shortcode pulls images from a specified ACF field key of a given post.
- * Optionally, it can prepend the post’s featured image to the gallery.
+ * Renders a gallery using explicit IDs and/or a post’s ACF/meta field.
  *
  * Attributes:
- * - source (int, optional): Post ID to fetch images from. Defaults to current post if inside a loop.
- * - source_key (string, required): ACF field key containing the gallery/image data.
- * - source_featured_image (bool, optional): Whether to prepend the post’s featured image. Accepts true/false. Default: false.
- *
- * Examples:
- * [plura-wp-gallery source="123" source_key="gallery"]
- * [plura-wp-gallery source_key="images" source_featured_image="true"]
+ *  - ids (csv|array, optional)              Explicit attachment IDs (e.g., "12,34,56") or an array of ints.
+ *  - source (int, optional)                 Post ID to pull from. If omitted and inside The Loop, uses current post.
+ *  - source_key (string, optional)          Meta/ACF field key on the source post that returns images (IDs/objects).
+ *  - source_featured_image (bool, optional) Prepend the source post’s featured image. Default: false.
+ *  - unique (bool, optional)                Remove duplicate image IDs. Default: true.
+ *  - class (string, optional)               Additional CSS class(es) for the wrapper (space-separated).
+ *  - context (string, optional)             Arbitrary context string forwarded to filters.
  */
 add_shortcode('plura-wp-gallery', function ($args) {
 	$atts = shortcode_atts([
+		'ids' => null,
 		'source' => null,
 		'source_key' => '',
 		'source_featured_image' => false,
-	], $args);
+		'unique' => true,
+		'class' => '',
+		'context' => null,
+	], $args, 'plura-wp-gallery');
 
-	$source = is_numeric($atts['source']) ? (int) $atts['source'] : (is_singular() ? get_the_ID() : 0);
+	// Parse ids (CSV or array)
+	$explicit_ids = [];
+	if (!empty($atts['ids'])) {
+		$explicit_ids = is_array($atts['ids'])
+			? array_map('intval', $atts['ids'])
+			: wp_parse_id_list($atts['ids']);
+	}
+
+	// Resolve source (int|WP_Post|null) with singular fallback
+	$source = is_numeric($atts['source']) ? (int) $atts['source'] : (is_singular() ? get_the_ID() : null);
 
 	$add_featured_image = filter_var($atts['source_featured_image'], FILTER_VALIDATE_BOOLEAN);
+	$unique = filter_var($atts['unique'], FILTER_VALIDATE_BOOLEAN);
 
-	//echo 'add_featured_image: ' . $add_featured_image . '| source: '. $source;
-
-	if ($source && ($add_featured_image || !empty($atts['source_key']))) {
-
+	// Only render when we actually have something to show
+	if (!empty($explicit_ids) || ($source && ($add_featured_image || !empty($atts['source_key'])))) {
 		return plura_wp_gallery(
+			ids: !empty($explicit_ids) ? $explicit_ids : null,
 			source: $source,
-			source_key: $atts['source_key'],
-			source_featured_image: $add_featured_image
+			source_key: $atts['source_key'] ?: null,
+			source_featured_image: $add_featured_image,
+			unique: $unique,
+			class: ($atts['class'] !== '') ? $atts['class'] : null,
+			context: $atts['context'] ?: null
 		);
 	}
 
 	return '';
 });
-
-
 
 
 

@@ -229,9 +229,6 @@ function plura_wpml_essential_grid($posts, $alias, $label = false) {
 
     $html = do_shortcode('[ess_grid alias="' . $alias . '" posts="' . implode(',', $ids) . '"]');
 
-    return "<div " . p_attributes( $atts ) . ">" . $html . "</div>";    
+    return "<div " . plura_attributes( $atts ) . ">" . $html . "</div>";    
 
 }
-
-
-?>

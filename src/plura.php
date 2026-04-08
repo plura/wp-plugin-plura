@@ -56,10 +56,11 @@ plura_includes([
 
 	'includes/integrations/apis',
 	'includes/integrations/lottie',
+	'includes/integrations/wp-cf7',
 	'includes/integrations/wp-revslider-egrid',
 	'includes/integrations/wp-wpml'
 
-], dirname(__FILE__));
+], __DIR__ );
 
 
 add_action('init', function() {
@@ -133,3 +134,4 @@ function plura_wp_styles()
 }
 
 add_action('wp_enqueue_scripts', 'plura_wp_styles');
+

@@ -71,6 +71,7 @@ function plura_wp_enqueue(array $scripts, bool $cache = true, string $prefix = '
  *                        - 'handle' => custom handle (defaults to filename slug)
  *                        - 'deps'   => array of dependencies
  *                        - 'media'  => only for CSS (defaults to 'all')
+ *                        - 'module' => true to add type="module" to the script tag
  * @param bool   $cache   Whether to use filemtime for version (true) or time() (false).
  * @param string $prefix  Optional prefix for auto-generated handles.
  */
@@ -92,6 +93,20 @@ function plura_wp_enqueue_asset(string $type, string $file, array $options = [],
 	}
 	if ($type === 'js' && !wp_script_is($handle, 'enqueued')) {
 		wp_enqueue_script($handle, $url, $deps, $ver);
+
+		if (!empty($options['module'])) {
+			static $module_handles = [];
+
+			if (empty($module_handles)) {
+				add_filter('script_loader_tag', function (string $tag, string $h) use (&$module_handles): string {
+					return isset($module_handles[$h])
+						? str_replace('<script ', '<script type="module" ', $tag)
+						: $tag;
+				}, 10, 2);
+			}
+
+			$module_handles[$handle] = true;
+		}
 	}
 }
 

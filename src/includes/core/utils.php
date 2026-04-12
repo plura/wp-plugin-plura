@@ -176,18 +176,27 @@ function plura_img2svg(string $html, string $base_path = '', bool $wrap = false)
 		$img = $imgs->item($i);
 		$src = $img->getAttribute('src');
 
-		// Skip external URLs
-		if (preg_match('#^(https?:)?//#', $src)) {
-			continue;
-		}
-
 		// Only process .svg files
-		if (strtolower(pathinfo($src, PATHINFO_EXTENSION)) !== 'svg') {
+		if (strtolower(pathinfo(parse_url($src, PHP_URL_PATH), PATHINFO_EXTENSION)) !== 'svg') {
 			continue;
 		}
 
-		// Normalize and prepend base path
-		$svg_path = rtrim($base_path, '/') . '/' . ltrim($src, '/');
+		// Resolve src to a filesystem path
+		if (preg_match('#^(https?:)?//#', $src)) {
+			// Absolute URL: map back to filesystem if it points to this site's wp-content
+			$content_url = rtrim(wp_normalize_path(content_url()), '/');
+			$content_dir = rtrim(wp_normalize_path(WP_CONTENT_DIR), '/');
+			$normalized_src = rtrim(wp_normalize_path($src), '/');
+
+			if (stripos($normalized_src, $content_url) === 0) {
+				$svg_path = $content_dir . substr($normalized_src, strlen($content_url));
+			} else {
+				continue; // Truly external — skip
+			}
+		} else {
+			// Relative path: prepend base_path
+			$svg_path = rtrim($base_path, '/') . '/' . ltrim($src, '/');
+		}
 
 		if (!file_exists($svg_path)) {
 			continue;

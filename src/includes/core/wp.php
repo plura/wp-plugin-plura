@@ -420,11 +420,13 @@ function plura_wp_link(
 /**
  * Returns image data array for a given attachment ID or object.
  *
- * Includes src, width, height, alt, srcset, and sizes for responsive rendering.
+ * For raster images, includes src, width, height, alt, srcset, and sizes.
+ * For SVGs, returns only src and alt — width/height are unreliable from WordPress
+ * and srcset/sizes are not applicable to vector images.
  *
  * @param int|WP_Post $attachment Image ID or post object.
- * @param string      $size       Image size to retrieve.
- * @return array|null             Array with keys: src, width, height, alt, srcset, sizes — or null if invalid.
+ * @param string      $size       Image size to retrieve (ignored for SVGs).
+ * @return array|null             Image data array or null if invalid.
  */
 function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array
 {
@@ -440,11 +442,20 @@ function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?
 		return null;
 	}
 
+	$alt = trim(get_post_meta($post->ID, '_wp_attachment_image_alt', true));
+
+	if ($post->post_mime_type === 'image/svg+xml') {
+		return [
+			'src' => $src_data[0],
+			'alt' => $alt,
+		];
+	}
+
 	return [
 		'src'    => $src_data[0],
 		'width'  => $src_data[1],
 		'height' => $src_data[2],
-		'alt'    => trim(get_post_meta($post->ID, '_wp_attachment_image_alt', true)),
+		'alt'    => $alt,
 		'srcset' => wp_get_attachment_image_srcset($post->ID, $size),
 		'sizes'  => wp_get_attachment_image_sizes($post->ID, $size),
 	];
@@ -487,13 +498,13 @@ function plura_wp_image(
 		array_unshift($atts['class'], 'plura-wp-image');
 	}
 
-	// Merge image data into attributes
-	$atts = array_merge([
+	// Merge image data into attributes (width/height absent for SVGs)
+	$atts = array_merge(array_filter([
 		'src'    => $data['src'],
-		'width'  => $data['width'],
-		'height' => $data['height'],
+		'width'  => $data['width']  ?? null,
+		'height' => $data['height'] ?? null,
 		'alt'    => $data['alt'],
-	], $atts);
+	], fn($v) => $v !== null), $atts);
 
 	// Add responsive attributes
 	if (!empty($data['srcset'])) {

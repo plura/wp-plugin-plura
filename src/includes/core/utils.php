@@ -10,10 +10,11 @@
  * @param string      $id        Optional ID to assign to the wrapper element.
  * @param bool        $img2svg   Whether to replace <img> tags with inline SVG sources.
  * @param string|null $context   Optional context string for filters and logic.
+ * @param string|null $class     Optional additional CSS class(es) for the wrapper element.
  *
  * @return string The rendered HTML output or a comment if errors occur.
  */
-function plura_wp_component(string $manifest, string $id = '', bool $img2svg = true, ?string $context = null): string
+function plura_wp_component(string $manifest, string $id = '', bool $img2svg = true, ?string $context = null, ?string $class = null): string
 {
 	// If not an absolute path or URL, treat as relative to theme directory
 	if (!preg_match('#^([a-z]+:)?//#i', $manifest) && !str_starts_with($manifest, '/')) {
@@ -105,8 +106,15 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
 	// Build wrapper
 	$attributes = [
 		'id'    => $id,
-		'class' => 'plura-wp-component',
+		'class' => ['plura-wp-component'],
 	];
+
+	if ($class) {
+		$attributes['class'] = array_merge(
+			$attributes['class'],
+			array_filter(array_map('trim', explode(' ', $class)))
+		);
+	}
 
 	// Run do_shortcode to process any shortcodes inside the component HTML
 	return sprintf('<div %s>%s</div>', plura_attributes($attributes), do_shortcode($html));
@@ -128,13 +136,15 @@ add_shortcode('plura-wp-component', function ($atts) {
 		'id'       => '',
 		'img2svg'  => true,
 		'context'  => null,
+		'class'    => null,
 	], $atts);
 
 	return plura_wp_component(
 		$atts['manifest'],
 		$atts['id'],
 		filter_var($atts['img2svg'], FILTER_VALIDATE_BOOLEAN),
-		$atts['context'] !== null ? (string) $atts['context'] : null
+		$atts['context'] !== null ? (string) $atts['context'] : null,
+		$atts['class'] !== null ? (string) $atts['class'] : null
 	);
 });
 

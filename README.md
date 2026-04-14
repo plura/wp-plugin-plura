@@ -273,34 +273,62 @@ echo plura_wp_dynamic_grid(
 
 ## Components
 
-### `plura_wp_component()`
+A component is a self-contained directory that bundles its own HTML, scripts, styles, and optional PHP logic. The plugin renders it via a manifest JSON file that declares what to load.
 
-Renders a manifest-based component from a JSON file. The manifest declares an HTML file and optional scripts to enqueue.
+### Directory structure
 
-```php
-echo plura_wp_component(
-    manifest: get_stylesheet_directory() . '/components/hero/manifest.json',
-    id: 'hero',
-    img2svg: true,
-    context: 'homepage'
-);
+```
+components/
+  hero/
+    manifest.json   required — declares html file and scripts/styles to enqueue
+    index.html      required — the component markup (shortcodes are processed)
+    index.php       optional — included before rendering; use for data setup
+    assets/
+      js/init.js
+      css/style.css
 ```
 
-**Manifest format:**
+### Manifest format
+
 ```json
 {
     "html": "index.html",
     "scripts": {
-        "hero.js": { "deps": ["jquery"] }
+        "assets/js/init.js":  { "handle": "hero-init" },
+        "assets/css/style.css": { "handle": "hero-style" },
+        "https://cdn.example.com/lib.js": { "handle": "lib", "deps": ["jquery"] }
     }
 }
 ```
 
-Shortcodes in the HTML file are processed. Local `<img src="*.svg">` tags are inlined if `img2svg` is enabled. Relative asset paths are resolved to absolute URLs.
+Script keys are relative paths (resolved from the manifest directory), absolute paths, or external URLs. Each entry supports `handle`, `deps`, and `module` (see [Asset Management](#asset-management)).
+
+### `plura_wp_component()`
+
+```php
+echo plura_wp_component(
+    manifest: get_stylesheet_directory() . '/components/hero/manifest.json',
+    id:       'hero',         // optional — sets id="" on the wrapper
+    img2svg:  true,           // replace local <img src="*.svg"> with inline SVG
+    context:  'homepage',     // passed to filters
+    class:    'is-full-width' // extra CSS classes on the wrapper
+);
+```
+
+The wrapper renders as `<div class="plura-wp-component [extra]" id="...">`. Relative asset URLs inside the HTML are resolved to absolute URLs automatically. Shortcodes in the HTML file are processed.
+
+If an `index.php` file exists in the component directory it is included before rendering — useful for registering shortcodes or preparing data specific to that component.
+
+**Shortcode:**
+```
+[plura-wp-component manifest="components/hero/manifest.json" id="hero" class="is-full-width"]
+```
+
+Relative manifest paths are resolved from the active theme directory.
 
 **Filters:**
-- `plura_wp_component_manifest` — Override the manifest path.
-- `plura_wp_component_manifest_data` — Override the manifest data array.
+- `plura_wp_component_manifest` — Override the manifest path before it is loaded.
+- `plura_wp_component_manifest_data` — Override the manifest data array after it is parsed.
 
 ---
 

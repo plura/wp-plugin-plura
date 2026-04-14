@@ -135,9 +135,11 @@ echo plura_wp_image(
 );
 ```
 
+SVG attachments render without `width`, `height`, `srcset`, or `sizes` — those are unreliable/inapplicable for vector images. Size SVGs via CSS.
+
 ### `plura_wp_image_data()`
 
-Returns image metadata as an array (`src`, `width`, `height`, `alt`, `srcset`, `sizes`) without rendering HTML.
+Returns image metadata as an array without rendering HTML. For raster images: `src`, `width`, `height`, `alt`, `srcset`, `sizes`. For SVGs: `src` and `alt` only.
 
 ### `plura_wp_gallery()`
 
@@ -178,8 +180,21 @@ echo plura_wp_link(
     html: '<img src="...">',
     target: $post,       // WP_Post, WP_Term, or URL string
     atts: ['class' => 'card-link'],
-    rel: true            // adds rel="noopener noreferrer" when blank
+    rel: true,           // adds rel="noopener noreferrer" when blank
+    context: 'archive'
 );
+```
+
+**Filters:**
+- `plura_wp_link_atts` — Filters the attributes array before the tag is built. Receives `$link_atts`, `$target`, and `$context`.
+
+```php
+add_filter('plura_wp_link_atts', function(array $atts, $target, ?string $context): array {
+    if ($context === 'archive') {
+        $atts['class'][] = 'card-link';
+    }
+    return $atts;
+}, 10, 3);
 ```
 
 ---
@@ -300,13 +315,16 @@ plura_wp_enqueue(
     scripts: [
         __DIR__ . '/assets/main.css',
         __DIR__ . '/assets/main.js',
-        __DIR__ . '/assets/%s/theme.%s',  // resolves to theme.css + theme.js
+        __DIR__ . '/assets/%s/theme.%s',                          // resolves to theme.css + theme.js
         'https://cdn.example.com/lib.js' => ['deps' => ['jquery']],
+        __DIR__ . '/assets/js/app.js'    => ['module' => true],   // loaded as type="module"
     ],
     prefix: 'mytheme-',
     cache: true
 );
 ```
+
+Pass `'module' => true` in a script's options to add `type="module"` to its `<script>` tag. Module scripts are automatically deferred by the browser.
 
 ---
 
@@ -396,7 +414,7 @@ Adds support for inline Lottie animations via a shortcode.
 |---|---|
 | `plura_attributes(array $atts)` | Converts an attribute array to an HTML attribute string. Handles boolean attributes and class arrays. |
 | `plura_wp_enqueue_asset()` | Enqueues a single CSS or JS file with optional deps, handle, and version. |
-| `plura_img2svg(string $html)` | Replaces local `<img src="*.svg">` tags with inline SVG markup. |
+| `plura_img2svg(string $html)` | Replaces `<img src="*.svg">` tags with inline SVG markup. Accepts relative paths (resolved via `$base_path`) and absolute URLs pointing to the current site's wp-content directory. |
 | `plura_rel2url(string $html, string $base_url)` | Converts relative paths to absolute URLs in `<img>`, `<script>`, `<link>`, and `<source>` tags. |
 | `plura_curl(string $url, array $args)` | HTTP POST via cURL with optional JSON body encoding. |
 | `plura_explode(string $sep, string $str)` | `explode()` with automatic trimming of each element. |

@@ -338,20 +338,25 @@ add_shortcode('plura-wp-datetime', function ($args) {
  *
  * Automatically adds `target="_blank"` for external URLs (not within the current site).
  *
- * @param string                 $html    The inner HTML to wrap in the link.
- * @param WP_Post|WP_Term|string|null $target A WP_Post, WP_Term, or external URL. If null/invalid, returns $html.
- * @param array                  $atts    Optional attributes for the <a> tag.
- * @param bool                   $rel     Whether to add rel="noopener noreferrer" if target="_blank".
- * @param string|null            $title   Optional. Title attribute for the link (shown on hover). Defaults to post/term title.
+ * @param string                      $html    The inner HTML to wrap in the link.
+ * @param WP_Post|WP_Term|string|null $target  A WP_Post, WP_Term, or external URL. If null/invalid, returns $html.
+ * @param array                       $atts    Optional attributes for the <a> tag.
+ * @param bool                        $rel     Whether to add rel="noopener noreferrer" if target="_blank".
+ * @param string|null                 $title   Optional. Title attribute for the link. Defaults to post/term title.
+ * @param string|null                 $context Optional context string passed to the plura_wp_link_atts filter.
  *
  * @return string The generated <a> tag wrapping the HTML, or the original HTML if no valid link target.
+ *
+ * Filters:
+ *  - plura_wp_link_atts( array $link_atts, WP_Post|WP_Term|string $target, ?string $context )
  */
 function plura_wp_link(
 	string $html,
 	WP_Post|WP_Term|string|null $target = null,
 	array $atts = [],
 	bool $rel = false,
-	?string $title = null
+	?string $title = null,
+	?string $context = null
 ): string {
 	if (! $target) {
 		return $html;
@@ -411,6 +416,8 @@ function plura_wp_link(
 	if ($rel && ($link_atts['target'] ?? '') === '_blank') {
 		$link_atts['rel'] = 'noopener noreferrer';
 	}
+
+	$link_atts = apply_filters('plura_wp_link_atts', $link_atts, $target, $context);
 
 	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
 }

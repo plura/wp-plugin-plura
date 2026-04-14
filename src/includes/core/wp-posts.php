@@ -731,7 +731,8 @@ function plura_wp_post(
 			html: $read_more_label,
 			target: $post,
 			atts: ['class' => 'plura-wp-post-read-more'],
-			title: $title_text ?? null
+			title: $title_text ?? null,
+			context: $context
 		);
 	}
 
@@ -739,7 +740,7 @@ function plura_wp_post(
 	$img = plura_wp_post_featured_image(post: $post, context: $context);
 	if ($img) {
 		$content['featured-image'] = ($link === 0)
-			? plura_wp_link(html: $img, target: $post, title: $title_text ?? null)
+			? plura_wp_link(html: $img, target: $post, title: $title_text ?? null, context: $context)
 			: $img;
 	}
 
@@ -801,7 +802,7 @@ function plura_wp_post(
 
 	// Full block link
 	return ($link === 1)
-		? plura_wp_link(html: $html, target: $post, atts: $atts, title: $title_text ?? null)
+		? plura_wp_link(html: $html, target: $post, atts: $atts, title: $title_text ?? null, context: $context)
 		: sprintf('<div %s>%s</div>', plura_attributes($atts), $html);
 }
 

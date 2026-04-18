@@ -56,11 +56,16 @@ plura_includes([
 
 	'includes/integrations/apis',
 	'includes/integrations/lottie',
-	'includes/integrations/wp-cf7',
-	'includes/integrations/wp-revslider-egrid',
-	'includes/integrations/wp-wpml'
 
-], __DIR__ );
+], __DIR__);
+
+$plura_integrations = [];
+
+if (class_exists('WPCF7'))                                       $plura_integrations[] = 'includes/integrations/wp-cf7';
+if (class_exists('RevSlider') || class_exists('Essential_Grid')) $plura_integrations[] = 'includes/integrations/wp-revslider-egrid';
+if (class_exists('SitePress'))                                   $plura_integrations[] = 'includes/integrations/wp-wpml';
+
+plura_includes($plura_integrations, __DIR__);
 
 
 add_action('init', function() {
@@ -99,7 +104,7 @@ function plura_wp_styles()
 		]);
 	}
 
-	if (plura_wpml()) {
+	if (function_exists('plura_wpml') && plura_wpml()) {
 
 		$plura_wp_data = array_merge($plura_wp_data, [
 
@@ -126,9 +131,13 @@ function plura_wp_styles()
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
 		__DIR__ . '/assets/js/wp-prevnext.js',
 
-		__DIR__ . '/assets/%s/wp-cf7.%s'
-
 	], prefix: 'plura-', cache: false);
+
+	if (class_exists('WPCF7')) {
+		plura_wp_enqueue(scripts: [
+			__DIR__ . '/assets/%s/wp-cf7.%s'
+		], prefix: 'plura-', cache: false);
+	}
 
 	wp_localize_script('plura-p', 'plura_wp_data', $plura_wp_data);
 }

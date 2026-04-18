@@ -42,7 +42,7 @@ function plura_includes(array $modules, string $dir): void
 	}
 }
 
-plura_includes([
+$plura_modules = [
 
 	'includes/core/core',
 	'includes/core/navwalker',
@@ -57,15 +57,13 @@ plura_includes([
 	'includes/integrations/apis',
 	'includes/integrations/lottie',
 
-], __DIR__);
+];
 
-$plura_integrations = [];
+if (class_exists('WPCF7'))                                       $plura_modules[] = 'includes/integrations/wp-cf7';
+if (class_exists('RevSlider') || class_exists('Essential_Grid')) $plura_modules[] = 'includes/integrations/wp-revslider-egrid';
+if (class_exists('SitePress'))                                   $plura_modules[] = 'includes/integrations/wp-wpml';
 
-if (class_exists('WPCF7'))                                       $plura_integrations[] = 'includes/integrations/wp-cf7';
-if (class_exists('RevSlider') || class_exists('Essential_Grid')) $plura_integrations[] = 'includes/integrations/wp-revslider-egrid';
-if (class_exists('SitePress'))                                   $plura_integrations[] = 'includes/integrations/wp-wpml';
-
-plura_includes($plura_integrations, __DIR__);
+plura_includes($plura_modules, __DIR__);
 
 
 add_action('init', function() {
@@ -113,7 +111,7 @@ function plura_wp_styles()
 		]);
 	}
 
-	plura_wp_enqueue(scripts: [
+	$plura_scripts = [
 
 		__DIR__ . '/assets/js/p.js',
 
@@ -131,13 +129,13 @@ function plura_wp_styles()
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
 		__DIR__ . '/assets/js/wp-prevnext.js',
 
-	], prefix: 'plura-', cache: false);
+	];
 
 	if (class_exists('WPCF7')) {
-		plura_wp_enqueue(scripts: [
-			__DIR__ . '/assets/%s/wp-cf7.%s'
-		], prefix: 'plura-', cache: false);
+		$plura_scripts[] = __DIR__ . '/assets/%s/wp-cf7.%s';
 	}
+
+	plura_wp_enqueue(scripts: $plura_scripts, prefix: 'plura-', cache: false);
 
 	wp_localize_script('plura-p', 'plura_wp_data', $plura_wp_data);
 }

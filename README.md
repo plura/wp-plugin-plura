@@ -59,6 +59,25 @@ echo plura_wp_post(
 - `plura_wp_post_atts` — Filters the wrapper attributes (`class`, `data-*`).
 - `plura_wp_post_title` — Filters the title text before rendering.
 
+### `plura_wp_post_meta()`
+
+Renders one or more post meta fields as HTML. Accepts a single key string, an indexed array of keys, an associative array of display keys → meta keys, or an array of item configs with optional `label`, `sanitize_callback`, and `raw_html`.
+
+```php
+echo plura_wp_post_meta(
+    post: $post,
+    meta: [
+        ['key' => 'position', 'label' => 'Position'],
+        ['key' => 'department', 'label' => 'Department', 'sanitize_callback' => 'strtoupper'],
+    ],
+    context: 'team-card'
+);
+```
+
+**Filters:**
+- `plura_wp_post_meta` — Filters the `$meta` array before the loop. Receives `$meta`, `WP_Post`, and `$context`. Use to remove, reorder, or inject items.
+- `plura_wp_post_meta_item_value` — Filters each resolved value before rendering. Receives `$value`, `WP_Post`, `$item_meta_key`, and `$context`.
+
 ### `plura_wp_posts()`
 
 Renders a collection of posts. Runs its own query unless `$posts` is provided.

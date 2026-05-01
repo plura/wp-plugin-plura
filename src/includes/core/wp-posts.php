@@ -1122,6 +1122,7 @@ function plura_wp_post_meta(
 	}
 
 	$meta   = (array) $meta;
+	$meta   = apply_filters('plura_wp_post_meta', $meta, $post, $context);
 	$output = [];
 
 	foreach ($meta as $item_key => $meta_item) {

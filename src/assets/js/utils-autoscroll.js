@@ -7,6 +7,8 @@ function pluraAutoScroller({
 } = {}) {
 
 	let isScrolling = true;
+	let isRunning = false;
+	let isDestroyed = false;
 	let lastFrame = null;
 	let velocity = 0;
 
@@ -29,21 +31,34 @@ function pluraAutoScroller({
 		? window.innerHeight
 		: target.clientHeight;
 	const doScrollBy = (pixels) => {
+		// behavior: 'instant' avoids the page's own `scroll-behavior: smooth` CSS
+		// hijacking these per-frame calls into competing browser-native animations
 		if (isWindow) {
-			window.scrollBy({ top: pixels });
+			window.scrollBy({ top: pixels, behavior: 'instant' });
 		} else {
-			target.scrollBy({ top: pixels });
+			target.scrollBy({ top: pixels, behavior: 'instant' });
 		}
 	};
 
 	const maxSpeed = speed;
-	const accel = 300;
+	const accelTime = 1 / 3; // seconds to reach maxSpeed, scales accel so easing feels consistent across speeds
+	const accel = maxSpeed / accelTime;
 
 	const scrollStep = (timestamp) => {
+		if (isDestroyed) {
+			isRunning = false;
+			return;
+		}
+
+		isRunning = true;
+
 		if (!lastFrame) lastFrame = timestamp;
 
-		const delta = timestamp - lastFrame;
+		const rawDelta = timestamp - lastFrame;
 		lastFrame = timestamp;
+		// cap the per-frame delta so a stalled main thread (heavy scroll-linked
+		// JS on some sites) can't produce one huge catch-up jump on resume
+		const delta = Math.min(rawDelta, 50);
 
 		if (isScrolling) {
 			if (easing) {
@@ -69,20 +84,37 @@ function pluraAutoScroller({
 			requestAnimationFrame(scrollStep);
 		} else {
 			lastFrame = null;
+			isRunning = false;
 		}
+	};
+
+	const isEditableTarget = (el) => {
+		if (!el) return false;
+		const tag = el.tagName;
+		return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 	};
 
 	const toggleScroll = (e) => {
+		if (isEditableTarget(e.target)) return;
+
 		if (e.key === toggleKey || (toggleKey === ' ' && e.code === 'Space')) {
 			e.preventDefault(); // 👈 fix the browser’s default Space scroll
 			isScrolling = !isScrolling;
-			requestAnimationFrame(scrollStep);
+			if (!isRunning) requestAnimationFrame(scrollStep);
 		}
 	};
 
-	setTimeout(() => {
+	const timerId = setTimeout(() => {
 		requestAnimationFrame(scrollStep);
 	}, delay);
 
 	window.addEventListener('keydown', toggleScroll);
+
+	return {
+		destroy() {
+			isDestroyed = true;
+			clearTimeout(timerId);
+			window.removeEventListener('keydown', toggleScroll);
+		}
+	};
 }

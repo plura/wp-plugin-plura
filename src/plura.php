@@ -11,20 +11,26 @@ Domain Path: /languages
 */
 
 /**
- * Includes PHP module files from a given directory or as absolute paths, only on the frontend.
+ * Includes PHP module files from a given directory or as absolute paths.
  *
  * Each item in the `$modules` array can either be:
  * - a filename (without `.php`), relative to `$dir`
  * - an absolute path to a `.php` file
  *
+ * `$admin` defaults to false, preserving the frontend-only behaviour this function has
+ * always had — note plura_wp_enqueue()'s `$admin` defaults to the opposite. Pass true
+ * when the modules register post types, taxonomies or shortcodes: wp-admin needs those
+ * registered too, or they vanish from the dashboard.
+ *
  * @param array<int, string> $modules List of module filenames or absolute paths.
  * @param string $dir Base directory path to prepend to filenames (if not absolute).
+ * @param bool $admin Whether to include the modules in the admin area.
  *
  * @return void
  */
-function plura_includes(array $modules, string $dir): void
+function plura_includes(array $modules, string $dir, bool $admin = false): void
 {
-	if (is_admin()) {
+	if (!$admin && is_admin()) {
 		return;
 	}
 

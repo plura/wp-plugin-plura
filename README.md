@@ -466,3 +466,25 @@ Adds support for inline Lottie animations via a shortcode.
 | `plura_curl(string $url, array $args)` | HTTP POST via cURL with optional JSON body encoding. |
 | `plura_explode(string $sep, string $str)` | `explode()` with automatic trimming of each element. |
 | `plura_bool($value)` | Checks whether a value is a boolean-like string (`'true'`, `'1'`, `'false'`, `'0'`, etc.). |
+
+---
+
+## Versioning
+
+The `Version:` header in `src/plura.php` is the single source of truth, and every release is tagged `vX.Y.Z` in git. Sites still reporting `1.0.0` predate this scheme, so their actual state is unknown.
+
+While the plugin is pre-1.0, the version number tells you whether a deploy is safe:
+
+| Bump | When | Deploy |
+|---|---|---|
+| **Patch** `0.5.0 → 0.5.1` | Bug fixes and backward-compatible additions (new function, filter, shortcode, option) | Upload without reviewing sites |
+| **Minor** `0.5.1 → 0.6.0` | Anything that can change an existing site: removed/renamed function, changed parameter or default, changed markup or classes, changed filter arguments | Check each site before uploading |
+| **Major** `0.x → 1.0.0` | The public API is considered stable (e.g. on moving to standard plugin deployment); from then on, breaking changes bump major | — |
+
+Markup and class changes count as breaking because theme CSS targets them.
+
+### Releasing
+
+1. Bump `Version:` in `src/plura.php` and commit.
+2. Tag it: `git tag -a v0.6.0 -m "<summary; list breaking changes on minor bumps>"`.
+3. Push with `git push --follow-tags`, then deploy.

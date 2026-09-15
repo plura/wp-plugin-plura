@@ -3,7 +3,7 @@
 Plugin Name: Plura
 Plugin URI:  https://plura.pt
 Description: Plura enhances your WordPress site with a suite of powerful features designed to improve functionality and user experience.
-Version:     0.5.0
+Version:     0.10.3
 Author:      Plura
 Author URI:  https://plura.pt
 Text Domain: plura

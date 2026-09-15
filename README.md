@@ -471,20 +471,22 @@ Adds support for inline Lottie animations via a shortcode.
 
 ## Versioning
 
-The `Version:` header in `src/plura.php` is the single source of truth, and every release is tagged `vX.Y.Z` in git. Sites still reporting `1.0.0` predate this scheme, so their actual state is unknown.
+The `Version:` header in `src/plura.php` is the single source of truth, and every release is tagged `vX.Y.Z` in git. Tags before `v0.10.3` were added retroactively from the commit history, so their headers still read `1.0.0`. A site reporting `1.0.0` is on one of those; comparing its files against the tags tells which. Don't release `1.0.0` while any such site remains.
 
 While the plugin is pre-1.0, the version number tells you whether a deploy is safe:
 
 | Bump | When | Deploy |
 |---|---|---|
-| **Patch** `0.5.0 → 0.5.1` | Bug fixes and backward-compatible additions (new function, filter, shortcode, option) | Upload without reviewing sites |
-| **Minor** `0.5.1 → 0.6.0` | Anything that can change an existing site: removed/renamed function, changed parameter or default, changed markup or classes, changed filter arguments | Check each site before uploading |
+| **Patch** `0.10.3 → 0.10.4` | Bug fixes and backward-compatible additions (new function, filter, shortcode, option) | Upload without reviewing sites |
+| **Minor** `0.10.4 → 0.11.0` | Anything that can change an existing site: removed/renamed function, changed parameter or default, changed markup or classes, changed filter arguments | Check each site before uploading |
 | **Major** `0.x → 1.0.0` | The public API is considered stable (e.g. on moving to standard plugin deployment); from then on, breaking changes bump major | — |
 
 Markup and class changes count as breaking because theme CSS targets them.
 
 ### Releasing
 
+Bump once per deploy, not per commit.
+
 1. Bump `Version:` in `src/plura.php` and commit.
-2. Tag it: `git tag -a v0.6.0 -m "<summary; list breaking changes on minor bumps>"`.
+2. Tag it: `git tag -a v0.11.0 -m "<summary; list breaking changes on minor bumps>"`.
 3. Push with `git push --follow-tags`, then deploy.

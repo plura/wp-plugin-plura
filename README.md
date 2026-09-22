@@ -406,7 +406,7 @@ On singulars it adds `id`, `title`, `type` and `url`. On archives it adds `archi
 **Filters:**
 - `plura_wp_data` — Filters the whole payload. Add site-specific keys here rather than rebuilding it.
 
-> Changed in 0.12.0: on taxonomy archives `type` held the *term name*, on author archives it was empty, and date archives fataled on PHP 8. Site code comparing `plura_wp_data.type` against a term name needs updating.
+> Changed in 0.12.0: on taxonomy archives `type` held the *term name*, on author archives it was empty, and date archives emitted a PHP warning with `type` left null. Site code comparing `plura_wp_data.type` against a term name needs updating.
 
 ---
 

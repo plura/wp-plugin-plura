@@ -83,10 +83,10 @@ add_action('init', function() {
 
 
 /**
- * Builds the page-context payload localized to front-end JS as `plura_wp_data`.
+ * Builds the payload localized onto the plugin's base script as `plura_wp_data`.
  *
- * Reads the main query, so it only carries context from the 'wp' action onwards —
- * called earlier, on 'init' say, it returns the base keys alone.
+ * Reads the main query, so it must run at 'wp' or later — earlier it yields the
+ * base keys alone.
  *
  * @return array<string, mixed> Base site/plugin keys, plus singular or archive context.
  */

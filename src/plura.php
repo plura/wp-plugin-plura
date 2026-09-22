@@ -3,7 +3,7 @@
 Plugin Name: Plura
 Plugin URI:  https://plura.pt
 Description: Plura enhances your WordPress site with a suite of powerful features designed to improve functionality and user experience.
-Version:     0.11.0
+Version:     0.12.0
 Author:      Plura
 Author URI:  https://plura.pt
 Text Domain: plura
@@ -92,20 +92,53 @@ function plura_wp_styles()
 		'restNonce' => wp_create_nonce('wp_rest')
 	];
 
+	$object = get_queried_object();
+
 	if (is_singular()) {
 
 		$plura_wp_data = array_merge($plura_wp_data, [
-			'id' => get_queried_object()->ID,
-			'title' => get_queried_object()->post_title,
-			'type' => get_queried_object()->post_type,
-			'url' => get_permalink(get_queried_object()->ID)
+			'id' => $object->ID,
+			'title' => $object->post_title,
+			'type' => $object->post_type,
+			'url' => get_permalink($object->ID)
 		]);
 	} else if (is_archive()) {
 
-		$plura_wp_data = array_merge($plura_wp_data, [
-			'archive' => 1,
-			'type' => get_queried_object()->name
-		]);
+		// Each archive kind hands back a different queried object — post type, term or
+		// user, and none at all on date archives — so 'type' has to be resolved per kind
+		// to keep meaning the post type slug, the way it does on singulars.
+		$archive = ['archive' => 1];
+
+		if ($object instanceof WP_Post_Type) {
+
+			$archive['type'] = $object->name;
+
+		} else if ($object instanceof WP_Term) {
+
+			$taxonomy = get_taxonomy($object->taxonomy);
+
+			// First object type only, matching plura_p_date_archive()
+			if ($taxonomy && !empty($taxonomy->object_type)) {
+				$archive['type'] = $taxonomy->object_type[0];
+			}
+
+			$archive['taxonomy'] = $object->taxonomy;
+			$archive['term'] = $object->term_id;
+
+		} else if ($object instanceof WP_User) {
+
+			$archive['author'] = $object->ID;
+
+		} else if (is_date()) {
+
+			$archive['date'] = array_filter([
+				'year' => (int) get_query_var('year'),
+				'month' => (int) get_query_var('monthnum'),
+				'day' => (int) get_query_var('day')
+			]);
+		}
+
+		$plura_wp_data = array_merge($plura_wp_data, $archive);
 	}
 
 	if (function_exists('plura_wpml') && plura_wpml()) {

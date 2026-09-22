@@ -386,6 +386,25 @@ Pass `'module' => true` in a script's options to add `type="module"` to its `<sc
 
 ---
 
+## Page Context
+
+`plura_wp_data` is localized onto the `plura-p` script and describes the current request to front-end JS. Always present: `home`, `pluginURL`, `restURL`, `restNonce`, plus `lang` when WPML is active.
+
+On singulars it adds `id`, `title`, `type` and `url`. On archives it adds `archive: 1` plus whatever identifies the kind:
+
+| Archive | Keys |
+|---|---|
+| Post type — `/events/` | `type` |
+| Taxonomy — `/category/news/` | `type`, `taxonomy`, `term` |
+| Author | `author` (user ID) |
+| Date | `date: { year, month?, day? }` |
+
+`type` always means the post type slug, on singulars and archives alike. The blog index, search results and 404s get the base keys only.
+
+> Changed in 0.12.0: on taxonomy archives `type` held the *term name*, on author archives it was empty, and date archives fataled on PHP 8. Site code comparing `plura_wp_data.type` against a term name needs updating.
+
+---
+
 ## REST API
 
 | Endpoint | Method | Description |

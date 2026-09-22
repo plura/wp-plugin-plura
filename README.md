@@ -401,7 +401,7 @@ On singulars it adds `id`, `title`, `type` and `url`. On archives it adds `archi
 
 `type` always means the post type slug, on singulars and archives alike. The blog index, search results and 404s get the base keys only.
 
-`plura_wp_data()` returns the same array in PHP, so server-side code can read the page context without re-deriving it. It reads the main query, so call it from `wp` onwards — earlier it returns the base keys only.
+`plura_wp_data()` builds that array and is callable from `init` onwards. The base keys are always present; the context keys fill in from `wp` onwards, once WordPress has parsed the request — before that `get_queried_object()` and the conditional tags have nothing to report.
 
 **Filters:**
 - `plura_wp_data` — Filters the whole payload. Add site-specific keys here rather than rebuilding it.

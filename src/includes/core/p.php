@@ -296,48 +296,125 @@ add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');
 
 
 /**
- * Returns the title (post or term) as plain text or wrapped in HTML.
+ * Resolves the current date archive's title and permalink from the query vars.
  *
- * @param WP_Post|WP_Term|int $object   Post/term object or post ID.
+ * Built from the query vars rather than core's `get_the_date()` approach, which
+ * reads the global $post and so only gives the right answer inside the loop.
+ *
+ * @return array{0: string, 1: string}|null Title text and archive URL, or null if no year is set.
+ */
+function plura_wp_date_archive_title(): ?array {
+	$year  = (int) get_query_var( 'year' );
+	$month = (int) get_query_var( 'monthnum' );
+	$day   = (int) get_query_var( 'day' );
+
+	if ( ! $year ) {
+		return null;
+	}
+
+	if ( $day ) {
+		return [
+			date_i18n( get_option( 'date_format' ), mktime( 0, 0, 0, $month, $day, $year ) ),
+			get_day_link( $year, $month, $day ),
+		];
+	}
+
+	// Month/year formats stay in the 'default' textdomain on purpose, so they
+	// pick up WordPress core's existing translations instead of needing our own.
+	if ( $month ) {
+		return [
+			date_i18n( _x( 'F Y', 'monthly archives date format' ), mktime( 0, 0, 0, $month, 1, $year ) ),
+			get_month_link( $year, $month ),
+		];
+	}
+
+	return [
+		date_i18n( _x( 'Y', 'yearly archives date format' ), mktime( 0, 0, 0, 1, 1, $year ) ),
+		get_year_link( $year ),
+	];
+}
+
+
+/**
+ * Returns a title (post, term, or archive) as plain text or wrapped in HTML.
+ *
+ * With no $object, resolves from the current request: the queried object on
+ * singulars and taxonomy/post type/author archives, and the query vars on date
+ * archives, which have no queried object. Titles are always bare — no
+ * "Category:"/"Archives:" prefix, unlike core's `get_the_archive_title()`.
+ *
+ * @param WP_Post|WP_Term|WP_Post_Type|WP_User|int|null $object  Optional. Post, term, post type or user object,
+ *                                                               or a post ID. Default null (resolve from the request).
  *
  * @param string|false        $tag      Optional. HTML tag to wrap the title in. Default 'h3'.
  *                                      Pass false to return plain text only.
- * @param bool                $link     Optional. Whether to wrap the title in a link to the post or term archive. Default false.
+ * @param bool                $link     Optional. Whether to wrap the title in a link to the post, term or archive. Default false.
  * @param array|string|null   $class    Optional. Additional CSS classes to add to the tag. Can be string or array. Default null.
  *
  * @param string|null         $context  Optional. Filter context for `plura_wp_title`. Default null.
  *
- * @return string|null                  The rendered title HTML or plain string, or null if the object is invalid.
+ * @return string|null                  The rendered title HTML or plain string, or null if nothing resolved.
  */
 function plura_wp_title(
-	WP_Term|WP_Post|int $object,
+	WP_Post|WP_Term|WP_Post_Type|WP_User|int|null $object = null,
 	string|false $tag = 'h3',
 	bool $link = false,
 	array|string|null $class = null,
 	?string $context = null
 ): ?string {
+	// Only an omitted $object falls back to the request — an ID that resolves to
+	// nothing must stay a miss, not silently become the current page.
+	$from_request = ( $object === null );
+
 	if ( is_int( $object ) ) {
 		$object = get_post( $object );
+	} elseif ( $from_request ) {
+		$object = get_queried_object();
 	}
 
-	if ( ! ( $object instanceof WP_Post || $object instanceof WP_Term ) ) {
+	$target = null;
+
+	if ( $object instanceof WP_Post ) {
+		$type   = 'post';
+		$text   = $object->post_title;
+		$target = $object;
+
+	} elseif ( $object instanceof WP_Term ) {
+		$type   = 'term';
+		$text   = $object->name;
+		$target = $object;
+
+	} elseif ( $object instanceof WP_Post_Type ) {
+		$type   = 'post-type';
+		$text   = $object->labels->name;
+		$target = get_post_type_archive_link( $object->name );
+
+	} elseif ( $object instanceof WP_User ) {
+		$type   = 'author';
+		$text   = $object->display_name;
+		$target = get_author_posts_url( $object->ID );
+
+	} elseif ( $from_request && is_date() ) {
+		$date = plura_wp_date_archive_title();
+
+		if ( ! $date ) {
+			return null;
+		}
+
+		$type              = 'date';
+		[ $text, $target ] = $date;
+
+	} else {
 		return null;
 	}
 
-	$text = apply_filters(
-		'plura_wp_title',
-		$object instanceof WP_Post ? $object->post_title : $object->name,
-		$object,
-		$context
-	);
+	$text = apply_filters( 'plura_wp_title', $text, $object, $context, $type );
 
 	if ( empty( $text ) ) {
 		return null;
 	}
 
 	if ( $tag !== false ) {
-		$type = $object instanceof WP_Post ? 'post' : 'term';
-
 		$classes = [ 'plura-wp-title', "plura-wp-{$type}-title" ];
 
 		if ( $class ) {
@@ -362,7 +439,7 @@ function plura_wp_title(
 	if ( $link ) {
 		$html = plura_wp_link(
 			html: $html,
-			target: $object,
+			target: $target,
 			title: $text
 		);
 	}
@@ -372,10 +449,10 @@ function plura_wp_title(
 
 
 /**
- * Shortcode [plura-wp-title] to render the current post/term title.
+ * Shortcode [plura-wp-title] to render a post, term or archive title.
  *
  * @param array $atts {
- *     @type int|string   $object   Post/term ID or a string like 'current' (default: current post or term).
+ *     @type int|string   $object   Post ID, or anything non-numeric to resolve the current request (default).
  *     @type string|false $tag      Tag name (h2, h3, etc.) or "false"/"0" to disable wrapping.
  *     @type bool|string  $link     Whether to wrap the title in a link.
  *     @type string|null  $context  Optional context string for filtering.
@@ -390,17 +467,8 @@ function plura_wp_title_shortcode( array $atts ): ?string {
 		'context' => null,
 	], $atts );
 
-	// Determine the object: explicit ID, current post, or current term
-	if ( is_numeric( $atts['object'] ) ) {
-		$object = intval( $atts['object'] );
-	} else {
-		$queried_object = get_queried_object();
-		if ( $queried_object instanceof WP_Post || $queried_object instanceof WP_Term ) {
-			$object = $queried_object;
-		} else {
-			return '';
-		}
-	}
+	// An explicit ID, otherwise null so plura_wp_title() resolves the request itself
+	$object = is_numeric( $atts['object'] ) ? intval( $atts['object'] ) : null;
 
 	$link    = filter_var( $atts['link'], FILTER_VALIDATE_BOOLEAN );
 	$context = $atts['context'] ?: null;

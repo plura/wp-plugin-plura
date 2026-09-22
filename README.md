@@ -124,14 +124,25 @@ $query = plura_wp_posts_query(
 
 ### `plura_wp_title()`
 
-Renders a title for a post or term. Works on both `WP_Post` and `WP_Term`.
+Renders a title for a post, term, or archive. Accepts `WP_Post`, `WP_Term`, `WP_Post_Type`, `WP_User`, or a post ID.
 
 ```php
 echo plura_wp_title(object: $post, tag: 'h2', link: true, context: 'banner');
 ```
 
+With no `$object` it resolves from the current request — the queried object on singulars and on taxonomy, post type and author archives, and the query vars on date archives (which have no queried object):
+
+```php
+echo plura_wp_title();                   // current post, term, CPT archive, author or date archive
+echo do_shortcode('[plura-wp-title]');
+```
+
+Titles are always bare — no `Category:` / `Archives:` prefix, unlike core's `get_the_archive_title()`. Add one through the filter if you want it.
+
+The wrapper carries `plura-wp-title` plus a per-type class: `plura-wp-post-title`, `plura-wp-term-title`, `plura-wp-post-type-title`, `plura-wp-author-title` or `plura-wp-date-title`.
+
 **Filters:**
-- `plura_wp_title` — Filters the title text.
+- `plura_wp_title` — Filters the title text. Args: `$text`, `$object`, `$context`, `$type`. `$object` is `null` on date archives; `$type` tells the sources apart.
 
 ### `plura_wp_post_title()`
 
@@ -396,7 +407,7 @@ Both endpoints are public (`permission_callback: '__return_true'`).
 | `[plura-wp-post-title]` | `plura_wp_post_title()` |
 | `[plura-wp-post-featured-image]` | `plura_wp_post_featured_image()` |
 | `[plura-wp-post-timeline-datetime]` | `plura_wp_post_timeline_datetime()` |
-| `[plura-wp-title]` | `plura_wp_title()` — works on posts and terms |
+| `[plura-wp-title]` | `plura_wp_title()` — works on posts, terms and archives |
 | `[plura-wp-image]` | `plura_wp_image()` |
 | `[plura-wp-gallery]` | `plura_wp_gallery()` |
 | `[plura-wp-datetime]` | `plura_wp_datetime()` |

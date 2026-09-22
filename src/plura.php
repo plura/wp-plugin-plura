@@ -3,7 +3,7 @@
 Plugin Name: Plura
 Plugin URI:  https://plura.pt
 Description: Plura enhances your WordPress site with a suite of powerful features designed to improve functionality and user experience.
-Version:     0.12.0
+Version:     0.12.1
 Author:      Plura
 Author URI:  https://plura.pt
 Text Domain: plura
@@ -82,10 +82,17 @@ add_action('init', function() {
 
 
 
-function plura_wp_styles()
+/**
+ * Builds the page-context payload localized to front-end JS as `plura_wp_data`.
+ *
+ * Reads the main query, so it only carries context from the 'wp' action onwards —
+ * called earlier, on 'init' say, it returns the base keys alone.
+ *
+ * @return array<string, mixed> Base site/plugin keys, plus singular or archive context.
+ */
+function plura_wp_data(): array
 {
-
-	$plura_wp_data = [
+	$data = [
 		'home' => home_url(),
 		'pluginURL' => plugin_dir_url(__FILE__),
 		'restURL' => rest_url(),
@@ -96,7 +103,7 @@ function plura_wp_styles()
 
 	if (is_singular()) {
 
-		$plura_wp_data = array_merge($plura_wp_data, [
+		$data = array_merge($data, [
 			'id' => $object->ID,
 			'title' => $object->post_title,
 			'type' => $object->post_type,
@@ -138,17 +145,20 @@ function plura_wp_styles()
 			]);
 		}
 
-		$plura_wp_data = array_merge($plura_wp_data, $archive);
+		$data = array_merge($data, $archive);
 	}
 
 	if (function_exists('plura_wpml') && plura_wpml()) {
 
-		$plura_wp_data = array_merge($plura_wp_data, [
-
-			'lang' => plura_wpml_lang()
-
-		]);
+		$data = array_merge($data, ['lang' => plura_wpml_lang()]);
 	}
+
+	return apply_filters('plura_wp_data', $data);
+}
+
+
+function plura_wp_styles()
+{
 
 	$plura_scripts = [
 
@@ -176,7 +186,7 @@ function plura_wp_styles()
 
 	plura_wp_enqueue(scripts: $plura_scripts, prefix: 'plura-', cache: false);
 
-	wp_localize_script('plura-p', 'plura_wp_data', $plura_wp_data);
+	wp_localize_script('plura-p', 'plura_wp_data', plura_wp_data());
 }
 
 add_action('wp_enqueue_scripts', 'plura_wp_styles');

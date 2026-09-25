@@ -133,6 +133,7 @@ echo plura_wp_terms(
     taxonomy: 'product_cat',
     parent: 0,            // top-level terms only
     image: true,          // default
+    link: 1,              // 0 = link image and title, 1 = the whole tile is the link, -1 = no links
     context: 'shop'
 );
 ```
@@ -156,7 +157,15 @@ Pass `$terms` to render terms you already have — query arguments are ignored, 
 
 ### `plura_wp_term()`
 
-Renders a single term. The image and title sit inside one link; nested children follow it, outside the link.
+Renders a single term. `$link` works as in `plura_wp_post()`:
+
+| `$link` | Markup |
+|---|---|
+| `0` (default) | `<div class="plura-wp-term"><a class="plura-wp-link">image + title</a></div>` |
+| `1` | `<a class="plura-wp-link plura-wp-term">image + title</a>` — the whole tile is the link |
+| `-1` | `<div class="plura-wp-term">image + title</div>` |
+
+Unlike posts, `0` puts the image and title in one link rather than two. Nested children never sit inside a link: they follow it, and under `1`, where the term itself is the link, they follow the term.
 
 **Filters:**
 - `plura_wp_term` — Receives the entry array (`featured-image`, `title`, `children`), `WP_Term`, `$context`, and `$index`.

@@ -112,7 +112,8 @@ function plura_wp_terms_query(
  * @param string         $class    Additional CSS class(es) for the wrapper.
  * @param array          $data     Additional data-* attributes for the wrapper.
  * @param bool           $image    Whether to show each term's featured image. Default true.
- * @param bool           $link     Whether to link each term to its archive. Default true.
+ * @param int            $link     How terms link to their archives, as in plura_wp_term(): 0 = image and title (default),
+ *                                 1 = the whole term, -1 = no links.
  * @param string|null    $label    Optional label added as a data-label attribute to the wrapper.
  * @param bool           $wrap     Whether to wrap the terms in a <div> container. Default true.
  *
@@ -140,7 +141,7 @@ function plura_wp_terms(
 	string $class = '',
 	array $data = [],
 	bool $image = true,
-	bool $link = true,
+	int $link = 0,
 	?string $label = null,
 	bool $wrap = true,
 
@@ -231,6 +232,8 @@ function plura_wp_terms(
 		$atts['data-label'] = $label;
 	}
 
+	$atts['data-link-type'] = $link;
+
 	if (! empty($context)) {
 		$atts['data-context'] = $context;
 	}
@@ -275,7 +278,7 @@ add_shortcode('plura-wp-terms', function ($args) {
 		'class' => '',
 		'image' => true,
 		'label' => '',
-		'link' => true,
+		'link' => 0,
 		'wrap' => true,
 
 		// Filter / scope
@@ -285,8 +288,8 @@ add_shortcode('plura-wp-terms', function ($args) {
 	// Type casting and preprocessing
 	$atts['depth'] = (int) $atts['depth'];
 	$atts['limit'] = (int) $atts['limit'];
+	$atts['link'] = (int) $atts['link'];
 	$atts['image'] = filter_var($atts['image'], FILTER_VALIDATE_BOOLEAN);
-	$atts['link'] = filter_var($atts['link'], FILTER_VALIDATE_BOOLEAN);
 	$atts['wrap'] = filter_var($atts['wrap'], FILTER_VALIDATE_BOOLEAN);
 
 	$atts['taxonomy'] = array_filter(array_map('trim', explode(',', $atts['taxonomy'])));
@@ -320,8 +323,11 @@ add_shortcode('plura-wp-terms', function ($args) {
  *
  * @param string         $class   Optional CSS class(es) for the wrapper element.
  * @param bool           $image   Whether to include the featured image. Default true.
- * @param bool           $link    Whether to link the term to its archive. Default true.
- * @param bool           $wrap    Whether to wrap output in a container.
+ * @param int            $link    Defines how links are applied:
+ *                                0 = link the image and title, as one link (default),
+ *                                1 = make the wrapper itself the link,
+ *                               -1 = disable all links.
+ * @param bool           $wrap    Whether to wrap output in a container (or full link if $link === 1).
  *
  * @param int            $depth   Levels to show, counting this term: 1 = no children (default), 0 = all.
  * @param WP_Term[]|null $terms   Terms to find the children in. Default null (queried).
@@ -337,7 +343,7 @@ function plura_wp_term(
 	// General output
 	string $class = '',
 	bool $image = true,
-	bool $link = true,
+	int $link = 0,
 	bool $wrap = true,
 
 	// Hierarchy
@@ -400,23 +406,25 @@ function plura_wp_term(
 
 	$atts = apply_filters('plura_wp_term_atts', $atts, $term, $context);
 
-	// Children hold their own links, and links can't nest, so they stay outside the term's
+	// Children hold their own links, and links can't nest, so they stay outside the term's —
+	// after the wrapper itself when $link === 1 makes it the link
 	$children = $content['children'] ?? '';
 	unset($content['children']);
 
 	$html = implode('', $content);
 
-	if ($link && $html !== '') {
+	if ($link === 0 && $html !== '') {
 		$html = plura_wp_link(html: $html, target: $term, context: $context);
 	}
 
-	$html .= $children;
-
 	if (! $wrap) {
-		return $html;
+		return $html . $children;
 	}
 
-	return sprintf('<div %s>%s</div>', plura_attributes($atts), $html);
+	// Full block link
+	return ($link === 1)
+		? plura_wp_link(html: $html, target: $term, atts: $atts, context: $context) . $children
+		: sprintf('<div %s>%s</div>', plura_attributes($atts), $html . $children);
 }
 
 

@@ -597,6 +597,10 @@ add_shortcode('plura-wp-image', function ($args) {
  *
  * @param string|null			$context                 Optional context string passed to filters.
  *
+ * @param string				$item_class              Additional CSS class(es) for each item, space-delimited
+ *                                                       (e.g. 'f-carousel__slide', which Fancybox's stylesheet sizes slides by).
+ * @param string				$size                    Image size displayed in each item. Default 'large'.
+ *
  * @return string HTML markup of the rendered gallery, or an empty string if no images found.
  *
  * Filters:
@@ -609,7 +613,11 @@ function plura_wp_gallery(
 	bool $source_featured_image = false,
 	bool $unique = true,
 	?string $class = null,
-	?string $context = null
+	?string $context = null,
+
+	// Display
+	string $item_class = '',
+	string $size = 'large'
 ): string {
 	$items = [];
 	$image_ids = [];
@@ -662,13 +670,19 @@ function plura_wp_gallery(
 	$image_ids = apply_filters('plura_wp_gallery', $image_ids, $source, $source_key, $context);
 
 	// Step 5: Render gallery HTML
+	$item_atts = ['class' => ['plura-wp-gallery-item']];
+
+	if (! empty($item_class)) {
+		$item_atts['class'] = array_merge($item_atts['class'], plura_explode(' ', $item_class));
+	}
+
 	$html = [];
 	foreach (array_filter($image_ids) as $id) {
 		$thumb = plura_wp_image_data($id, 'medium');
 		$html[] = sprintf(
 			'<div %s>%s</div>',
-			plura_attributes(['class' => 'plura-wp-gallery-item', 'data-thumb-src' => $thumb['src'] ?? null]),
-			plura_wp_image($id)
+			plura_attributes(array_merge($item_atts, ['data-thumb-src' => $thumb['src'] ?? null])),
+			plura_wp_image($id, $size)
 		);
 	}
 
@@ -703,6 +717,8 @@ function plura_wp_gallery(
  *  - unique (bool, optional)                Remove duplicate image IDs. Default: true.
  *  - class (string, optional)               Additional CSS class(es) for the wrapper (space-separated).
  *  - context (string, optional)             Arbitrary context string forwarded to filters.
+ *  - item_class (string, optional)          Additional CSS class(es) for each item (space-separated).
+ *  - size (string, optional)                Image size displayed in each item. Default: 'large'.
  */
 add_shortcode('plura-wp-gallery', function ($args) {
 	$atts = shortcode_atts([
@@ -713,6 +729,8 @@ add_shortcode('plura-wp-gallery', function ($args) {
 		'unique' => true,
 		'class' => '',
 		'context' => null,
+		'item_class' => '',
+		'size' => 'large',
 	], $args, 'plura-wp-gallery');
 
 	// Parse ids (CSV or array)
@@ -738,7 +756,9 @@ add_shortcode('plura-wp-gallery', function ($args) {
 			source_featured_image: $add_featured_image,
 			unique: $unique,
 			class: ($atts['class'] !== '') ? $atts['class'] : null,
-			context: $atts['context'] ?: null
+			context: $atts['context'] ?: null,
+			item_class: $atts['item_class'],
+			size: $atts['size']
 		);
 	}
 

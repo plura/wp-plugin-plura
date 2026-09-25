@@ -249,9 +249,13 @@ echo plura_wp_gallery(
     source_key: 'gallery_field',
     source_featured_image: true,
     class: 'project-gallery',
-    context: 'single'
+    context: 'single',
+    item_class: 'f-carousel__slide',   // added to each .plura-wp-gallery-item
+    size: 'medium'                     // displayed image size; default 'large'
 );
 ```
+
+`item_class` puts a carousel's slide class in the markup — Fancybox's Carousel stylesheet sizes slides through `.f-carousel__slide`, so pointing its `classes.slide` option at `.plura-wp-gallery-item` isn't enough. `size` sets the displayed image only; each item's `data-thumb-src` (for Fancybox Thumbs) stays `medium`.
 
 **Filters:**
 - `plura_wp_gallery` — Filters the resolved array of image IDs before rendering.

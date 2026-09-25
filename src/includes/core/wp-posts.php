@@ -1409,30 +1409,3 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 		implode('', $html)
 	);
 }
-
-
-/**
- * Returns the HTML for a term title or just the plain text.
- *
- * @param WP_Term        $term     The term object.
- * @param string|false   $tag      HTML tag to use (e.g. h3). False to return plain text.
- *
- * @return string|null             Title HTML or plain text, or null if invalid.
- */
-function plura_wp_term_title(WP_Term $term, string|false $tag = 'h3'): ?string
-{
-	if (empty($term->name)) {
-		return null;
-	}
-
-	if ($tag === false) {
-		return esc_html($term->name);
-	}
-
-	return sprintf(
-		'<%1$s %3$s>%2$s</%1$s>',
-		tag_escape($tag),
-		esc_html($term->name),
-		plura_attributes(['class' => 'plura-wp-term-title'])
-	);
-}

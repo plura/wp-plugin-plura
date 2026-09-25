@@ -59,6 +59,7 @@ $plura_modules = [
 	'includes/core/wp-dynamic-grid',
 	'includes/core/wp-posts',
 	'includes/core/wp-prevnext',
+	'includes/core/wp-terms',
 
 	'includes/integrations/apis',
 	'includes/integrations/lottie',

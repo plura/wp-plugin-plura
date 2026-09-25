@@ -120,6 +120,64 @@ $query = plura_wp_posts_query(
 
 ---
 
+## Term Rendering
+
+The taxonomy counterparts of the post functions. `plura_wp_post_terms()` lists one post's terms; these list a taxonomy's.
+
+### `plura_wp_terms()`
+
+Renders a list of terms, each as its featured image and title linked to the term archive. Runs its own query unless `$terms` is provided.
+
+```php
+echo plura_wp_terms(
+    taxonomy: 'product_cat',
+    parent: 0,            // top-level terms only
+    image: true,          // default
+    context: 'shop'
+);
+```
+
+`$parent` picks where the list starts and `$depth` how many levels nest beneath it:
+
+| Call | Result |
+|---|---|
+| no `$parent` | Every term, all levels in one flat list |
+| `parent: 0` | Top-level terms only |
+| `parent: 12` | Direct children of term 12 |
+| `depth: 0` | The whole tree, each term's children nested inside it |
+| `parent: 12, depth: 2` | Term 12's children, with their own children nested |
+
+In a tree, `$limit` counts top-level terms, and with no `$parent` any term whose parent isn't listed starts the tree (e.g. a post filed under *Shirts* but not *Clothing*). Nested lists are `.plura-wp-terms` inside their parent's `.plura-wp-term`.
+
+Pass `$terms` to render terms you already have — query arguments are ignored, but `$parent`, `$depth` and `$limit` still apply. Pass `output: 'objects'` to return the top-level `WP_Term[]` instead of HTML.
+
+**Filters:**
+- `plura_wp_terms_atts` — Filters the wrapper element attributes. Receives `$atts`, `WP_Term[]`, and `$context`.
+
+### `plura_wp_term()`
+
+Renders a single term. The image and title sit inside one link; nested children follow it, outside the link.
+
+**Filters:**
+- `plura_wp_term` — Receives the entry array (`featured-image`, `title`, `children`), `WP_Term`, `$context`, and `$index`.
+- `plura_wp_term_atts` — Filters the wrapper attributes. Receives `$atts`, `WP_Term`, and `$context`.
+
+### `plura_wp_term_featured_image()`
+
+Renders a term's image as an `<img>` tag. Uses the term's `featured_image` meta (e.g. an ACF image field of that name), falling back to the featured image of the newest post in the term — so taxonomies with no image field of their own still get one. That post's image goes through `plura_wp_post_featured_image()`, so any fallback a site gives posts applies too.
+
+**Filters:**
+- `plura_wp_term_featured_image` — Filters the final `<img>` HTML (or `null`). Receives `$html`, `WP_Term`, `$size`, `$atts`, `$context`, and the `WP_Post` the image was borrowed from (`null` when it is the term's own).
+
+### `plura_wp_terms_query()`
+
+Builds and returns a `WP_Term_Query`. `$params` carries site-specific arguments for the filter to act on.
+
+**Filters:**
+- `plura_wp_terms_query` — Filters the raw `WP_Term_Query` args array before the query runs. Receives `$query_params` and the arguments the function was called with.
+
+---
+
 ## Titles
 
 ### `plura_wp_title()`
@@ -431,6 +489,7 @@ Both endpoints are public (`permission_callback: '__return_true'`).
 | `[plura-wp-post-title]` | `plura_wp_post_title()` |
 | `[plura-wp-post-featured-image]` | `plura_wp_post_featured_image()` |
 | `[plura-wp-post-timeline-datetime]` | `plura_wp_post_timeline_datetime()` |
+| `[plura-wp-terms]` | `plura_wp_terms()` — `parent="current"` lists the children of the term archive being viewed |
 | `[plura-wp-title]` | `plura_wp_title()` — works on posts, terms and archives |
 | `[plura-wp-image]` | `plura_wp_image()` |
 | `[plura-wp-gallery]` | `plura_wp_gallery()` |

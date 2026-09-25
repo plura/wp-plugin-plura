@@ -456,7 +456,7 @@ function plura_wp_posts(
 			$atts = array_merge_recursive($atts, $data);
 		}
 
-		$atts = apply_filters('plura_wp_posts_atts', $atts, $posts);
+		$atts = apply_filters('plura_wp_posts_atts', $atts, $posts, $context);
 
 		return sprintf(
 			'<div %s>%s</div>',

@@ -99,7 +99,7 @@ echo plura_wp_posts(
 Pass `output: 'objects'` to return raw `WP_Post[]` instead of HTML.
 
 **Filters:**
-- `plura_wp_posts_atts` — Filters the wrapper element attributes.
+- `plura_wp_posts_atts` — Filters the wrapper element attributes. Receives `$atts`, `WP_Post[]`, and `$context`.
 
 ### `plura_wp_posts_query()`
 

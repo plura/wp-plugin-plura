@@ -20,46 +20,6 @@ add_filter('body_class', function ($classes) {
 	return array_merge($classes, $c);
 });
 
-/* POST FEATURED IMAGE */
-
-// get object featured image
-// if no post thumbnail is found, it searches an acf field
-function plura_wpml_featured_image($postID, $acf_field = false, $size = 'large')
-{
-	$id = plura_wpml_featured_image_id($postID);
-
-	if ($id) {
-		foreach (['large', 'full', 'medium', 'thumbnail'] as $imgsize) {
-			$img = wp_get_attachment_image_src($id, $imgsize);
-
-			if ($img) {
-				return $img;
-			}
-		}
-	}
-
-	return false;
-}
-
-// get object featured image id
-// if no post thumbnail is found, it searches an acf field
-function plura_wpml_featured_image_id($postID, $acf_field = false)
-{
-	if (has_post_thumbnail($postID)) {
-		return get_post_thumbnail_id($postID);
-	} elseif ($acf_field) {
-		$gallery = get_field($acf_field, $postID);
-
-		if ($gallery) {
-			return $gallery[0]['ID'];
-		}
-	}
-
-	return false;
-}
-
-/* WPML */
-
 /**
  * Checks whether WPML is active.
  *

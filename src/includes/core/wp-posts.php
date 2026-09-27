@@ -1043,15 +1043,17 @@ function plura_wp_post_title(
 
 
 /**
- * Shortcode [plura-wp-post-title] to render the current post title.
+ * Shortcode [plura-wp-post-title]: renders plura_wp_post_title().
  *
- * @param array $atts {
- *     @type int         $id      Post ID. Defaults to current post.
- *     @type bool|string $link    Whether to link the title (true, false, "0", "1").
- *     @type string      $tag     HTML tag to use (e.g. h2, h3). Use "false" or "0" to disable.
- *     @type string      $context Optional filter context.
- * }
- * @return string|null
+ * Attributes:
+ * - id:      Post ID. Default the current post.
+ * - link:    Whether to link the title. Default false.
+ * - tag:     Wrapping tag (h2, h3, ...), or "false"/"0" for plain text. Default 'h3'.
+ * - context: Filter context.
+ *
+ * @param array $atts Shortcode attributes.
+ *
+ * @return string|null Title HTML, or null if the post has no title.
  */
 function plura_wp_post_title_shortcode(array $atts): ?string
 {
@@ -1247,16 +1249,17 @@ function plura_wp_post_featured_image(
 }
 
 /**
- * Shortcode [plura-wp-post-featured-image] to render the current post featured image.
+ * Shortcode [plura-wp-post-featured-image]: renders plura_wp_post_featured_image().
  *
- * @param array $atts {
- *     @type int         $id      Post ID. Defaults to current post.
- *     @type string      $size    Image size. Defaults to 'large'.
- *     @type string      $class   CSS class to apply to <img>.
- *     @type string|null $context Optional context tag for filters.
- * }
+ * Attributes:
+ * - id:      Post ID. Default the current post.
+ * - size:    Image size. Default 'large'.
+ * - class:   CSS class(es) for the <img>.
+ * - context: Filter context.
  *
- * @return string|null
+ * @param array $atts Shortcode attributes.
+ *
+ * @return string|null Image HTML, or null if the post has no featured image.
  */
 function plura_wp_post_featured_image_shortcode(array $atts): ?string
 {

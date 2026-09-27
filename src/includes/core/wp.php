@@ -579,15 +579,17 @@ function plura_wp_title(
 
 
 /**
- * Shortcode [plura-wp-title] to render a post, term or archive title.
+ * Shortcode [plura-wp-title]: renders plura_wp_title().
  *
- * @param array $atts {
- *     @type int|string   $object   Post ID, or anything non-numeric to resolve the current request (default).
- *     @type string|false $tag      Tag name (h2, h3, etc.) or "false"/"0" to disable wrapping.
- *     @type bool|string  $link     Whether to wrap the title in a link.
- *     @type string|null  $context  Optional context string for filtering.
- * }
- * @return string|null
+ * Attributes:
+ * - object:  Post ID. Omit, or pass anything non-numeric, to resolve the current request.
+ * - tag:     Wrapping tag (h2, h3, ...), or "false"/"0" for plain text. Default 'h3'.
+ * - link:    Whether to link the title. Default false.
+ * - context: Filter context.
+ *
+ * @param array $atts Shortcode attributes.
+ *
+ * @return string|null Title HTML, or null if nothing resolved.
  */
 function plura_wp_title_shortcode( array $atts ): ?string {
 	$atts = shortcode_atts([

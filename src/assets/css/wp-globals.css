@@ -19,12 +19,6 @@
 	}
 }
 
-@media (min-width: 991px) {
-	:root {
-		--plura-wp-posts-cols: 3;
-	}
-}
-
 @media (min-width: 1200px) {
 	:root {
 		--plura-wp-posts-cols: 4;
@@ -114,11 +108,6 @@ img {
 	gap: calc(var(--plura-wp-posts-gap) / 6);
 }
 
-/* Terms */
-.plura-wp-post-terms .plura-wp-post-terms-taxonomy p:empty {
-	/* display: none; */
-}
-
 /* fancyapps carousel */
 .plura-wp-posts.plura-wp-f-carousel {
 	--f-carousel-spacing: var(--plura-wp-posts-gap);
@@ -170,9 +159,4 @@ img {
 
 .p-sticky.p-sticky-bottom {
 	bottom: var(--p-sticky-bottom-pos);
-}
-
-/* Component */
-.plura-wp-component {
-	position: relative;
 }

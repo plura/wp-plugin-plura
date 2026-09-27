@@ -175,6 +175,7 @@ function plura_wp_styles()
 
 		__DIR__ . '/assets/%s/wp-globals.%s',
 		__DIR__ . '/assets/%s/wp-globals-theme.css',
+		__DIR__ . '/assets/%s/wp-component.%s',
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
 		__DIR__ . '/assets/js/wp-prevnext.js',
 	];

@@ -1,0 +1,8 @@
+/**
+ * Components (wp-component.php): the wrapper plura_wp_component() renders around every component.
+ * Each component's own styles ship with it, listed in its manifest.json.
+ */
+
+.plura-wp-component {
+	position: relative;
+}

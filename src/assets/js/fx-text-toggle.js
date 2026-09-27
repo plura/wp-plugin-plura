@@ -15,7 +15,7 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 
 	// Update CSS variable --max-height based on inner hidden content
 	const updateHeights = () => {
-		target.forEach(element => {
+		target.forEach((element) => {
 			const wrapper = element.querySelector(`.${PRFX}-wrapper`);
 			const inner = wrapper?.querySelector(`.${PRFX}-part-hidden .${PRFX}-part-inner`);
 			if (wrapper && inner) {
@@ -27,15 +27,12 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 
 	// Refresh DOM structure
 	const refresh = () => {
-		target.forEach(element => {
+		target.forEach((element) => {
 			// Skip if already initialized
 			if (element.querySelector(`.${PRFX}-wrapper`)) return;
 
 			// Wrap text node in <p> if needed
-			if (
-				element.childNodes.length === 1 &&
-				element.firstChild.nodeType === Node.TEXT_NODE
-			) {
+			if (element.childNodes.length === 1 && element.firstChild.nodeType === Node.TEXT_NODE) {
 				const p = document.createElement('p');
 				p.textContent = element.textContent.trim();
 				element.innerHTML = '';
@@ -81,7 +78,7 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 				}
 			} else {
 				partVisible.appendChild(paragraphs[0].cloneNode(true));
-				paragraphs.slice(1).forEach(p => partInner.appendChild(p.cloneNode(true)));
+				paragraphs.slice(1).forEach((p) => partInner.appendChild(p.cloneNode(true)));
 			}
 
 			const trigger = document.createElement('a');
@@ -89,13 +86,11 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 			trigger.classList.add(`${PRFX}-trigger`);
 			trigger.textContent = labels?.['Read More'] || 'Read More';
 
-			trigger.addEventListener('click', e => {
+			trigger.addEventListener('click', (e) => {
 				e.preventDefault();
 				const isOn = wrapper.classList.toggle('on');
 
-				trigger.textContent = isOn
-					? (labels?.['Read Less'] || 'Read Less')
-					: (labels?.['Read More'] || 'Read More');
+				trigger.textContent = isOn ? labels?.['Read Less'] || 'Read Less' : labels?.['Read More'] || 'Read More';
 			});
 
 			// Assemble structure
@@ -118,7 +113,7 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 	// Run once for all targets
 	refresh();
 
-	target.forEach(element => {
+	target.forEach((element) => {
 		const wrapper = element.querySelector(`.${PRFX}-wrapper`);
 		if (wrapper) observer.observe(wrapper);
 	});

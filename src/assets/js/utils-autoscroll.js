@@ -1,11 +1,4 @@
-function pluraAutoScroller({
-	speed = 100,
-	delay = 1000,
-	target = window,
-	toggleKey = ' ',
-	easing = true
-} = {}) {
-
+function pluraAutoScroller({ speed = 100, delay = 1000, target = window, toggleKey = ' ', easing = true } = {}) {
 	let isScrolling = true;
 	let isRunning = false;
 	let isDestroyed = false;
@@ -23,13 +16,9 @@ function pluraAutoScroller({
 
 	const isWindow = target === window;
 
-	const getScrollTop = () => isWindow ? window.scrollY : target.scrollTop;
-	const getScrollHeight = () => isWindow
-		? document.documentElement.scrollHeight
-		: target.scrollHeight;
-	const getClientHeight = () => isWindow
-		? window.innerHeight
-		: target.clientHeight;
+	const getScrollTop = () => (isWindow ? window.scrollY : target.scrollTop);
+	const getScrollHeight = () => (isWindow ? document.documentElement.scrollHeight : target.scrollHeight);
+	const getClientHeight = () => (isWindow ? window.innerHeight : target.clientHeight);
 	const doScrollBy = (pixels) => {
 		// behavior: 'instant' avoids the page's own `scroll-behavior: smooth` CSS
 		// hijacking these per-frame calls into competing browser-native animations
@@ -115,6 +104,6 @@ function pluraAutoScroller({
 			isDestroyed = true;
 			clearTimeout(timerId);
 			window.removeEventListener('keydown', toggleScroll);
-		}
+		},
 	};
 }

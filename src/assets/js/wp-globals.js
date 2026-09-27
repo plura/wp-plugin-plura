@@ -1,23 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
-
 	//carousel
-	if( window.Carousel ) {
+	if (window.Carousel) {
+		document.querySelectorAll('.plura-wp-posts.plura-wp-f-carousel').forEach((element) => {
+			[...element.children].forEach((element) => element.classList.add('f-carousel__slide'));
 
-		document.querySelectorAll('.plura-wp-posts.plura-wp-f-carousel').forEach( element => {
+			new Carousel(
+				element,
+				{
+					transition: 'slide',
 
-			[ ...element.children ].forEach( element => element.classList.add('f-carousel__slide') );
-
-			new Carousel( element, {
-
-				transition: 'slide',
-
-			  // Your custom options
-			  Dots: true
-			}/*, { Thumbs }*/);
-
+					// Your custom options
+					Dots: true,
+				} /*, { Thumbs }*/,
+			);
 		});
-
 	}
-
-
 });

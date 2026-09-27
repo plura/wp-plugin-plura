@@ -23,7 +23,7 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 
 	/**
 	 * Default grid breakpoints — fallback logic like:
-	 * 
+	 *
 	 * if (w >= 1600) n = 6;
 	 * else if (w >= 1366) n = 5;
 	 * ...
@@ -33,7 +33,7 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 		{ min: 1366, max: 1600, cols: 5 },
 		{ min: 991, max: 1366, cols: 4 },
 		{ min: 768, max: 991, cols: 3 },
-		{ max: 768, cols: 2 } // fallback
+		{ max: 768, cols: 2 }, // fallback
 	];
 
 	const ui_filter_groups = target.querySelectorAll('.plura-wp-dynamic-grid-filter-group');
@@ -50,15 +50,13 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 
 		url.searchParams.set('post_type', post_type);
 
-		ui_filter_groups.forEach(group => {
+		ui_filter_groups.forEach((group) => {
 			if (group.dataset.filterType === FILTER_DATA_FILTER_TYPE_SELECT) {
 				group.value.match(/^[0-9]+$/) && terms.push(group.value);
 			} else if (group.dataset.filterType === FILTER_DATA_FILTER_TYPE_TAG) {
-				group.querySelectorAll('.plura-wp-dynamic-grid-filter-item').forEach(el =>
-					el.classList.contains('on') &&
-					el.dataset.id.match(/^[0-9]+$/) &&
-					terms.push(el.dataset.id)
-				);
+				group
+					.querySelectorAll('.plura-wp-dynamic-grid-filter-item')
+					.forEach((el) => el.classList.contains('on') && el.dataset.id.match(/^[0-9]+$/) && terms.push(el.dataset.id));
 			}
 		});
 
@@ -75,18 +73,17 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 		console.log('[PluraWPDynamicGrid] Fetching:', url.toString());
 
 		fetch(url)
-			.then(res => res.ok ? res.json() : Promise.reject(res))
-			.then(data => refresh(data))
-			.catch(err => console.error('[PluraWPDynamicGrid] Fetch error:', err));
+			.then((res) => (res.ok ? res.json() : Promise.reject(res)))
+			.then((data) => refresh(data))
+			.catch((err) => console.error('[PluraWPDynamicGrid] Fetch error:', err));
 	};
-
 
 	/**
 	 * Toggles 'on' class for clicked tag and triggers filtering.
-	 * 
+	 *
 	 * @param {HTMLElement} element - The tag element clicked
 	 */
-	const activateTag = element => {
+	const activateTag = (element) => {
 		element.classList.toggle('on');
 		activate();
 	};
@@ -99,7 +96,7 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 		let w = window.innerWidth;
 		let b = breakpoints || COLS_BREAKPOINTS;
 
-		let n = b.find(bp => w >= (bp.min || 0) && w < (bp.max || Infinity))?.cols;
+		let n = b.find((bp) => w >= (bp.min || 0) && w < (bp.max || Infinity))?.cols;
 		grid_cols = n || 2;
 
 		console.log('[PluraWPDynamicGrid] Window:', w, 'Cols:', grid_cols);
@@ -107,10 +104,8 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 		// Set width and column count as CSS variables
 		Object.entries({
 			w: `${ui_grid.offsetWidth}px`,
-			cols: grid_cols
-		}).forEach(([key, value]) =>
-			ui_grid.style.setProperty(`--grid-${key}`, value)
-		);
+			cols: grid_cols,
+		}).forEach(([key, value]) => ui_grid.style.setProperty(`--grid-${key}`, value));
 
 		refresh();
 	};
@@ -120,7 +115,7 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	 * - Sets `--x` and `--y` for each item based on its new position
 	 * - Applies `.on` class only to active (visible) items
 	 * - Calculates number of rows and sets `--grid-rows` to adjust container height
-	 * 
+	 *
 	 * @param {Array<number>} [data] - Optional array of IDs for filtered items
 	 */
 	const refresh = (data) => {
@@ -162,13 +157,13 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 
 	// Bind filter listeners
 	if (ui_filter_groups.length) {
-		ui_filter_groups.forEach(group => {
+		ui_filter_groups.forEach((group) => {
 			if (group.dataset.filterType === FILTER_DATA_FILTER_TYPE_SELECT) {
 				group.addEventListener('change', () => activate());
 			} else if (group.dataset.filterType === FILTER_DATA_FILTER_TYPE_TAG) {
-				group.querySelectorAll('.plura-wp-dynamic-grid-filter-item').forEach(el =>
-					el.addEventListener('click', () => activateTag(el))
-				);
+				group
+					.querySelectorAll('.plura-wp-dynamic-grid-filter-item')
+					.forEach((el) => el.addEventListener('click', () => activateTag(el)));
 			}
 		});
 	}

@@ -576,6 +576,19 @@ Adds support for inline Lottie animations via a shortcode.
 
 ---
 
+## Code style
+
+PHP follows [PER Coding Style 3.0](https://www.php-fig.org/per/coding-style/), indented with tabs, with aligned docblock columns and array arrows. [`.php-cs-fixer.dist.php`](.php-cs-fixer.dist.php) applies it: run [`php-cs-fixer fix`](https://cs.symfony.com/) from the repo root before committing. List formatting-only commits in `.git-blame-ignore-revs`.
+
+Docs:
+
+- **File header**: 1–3 sentences on what the module is for, plus any load condition or dependency. No function index; the editor outline lists functions.
+- **Functions and methods**: a summary line, `@param` for every parameter in signature order, and `@return` (including `void`).
+- **Hooks**: a WordPress-style docblock directly above each `apply_filters()` / `do_action()` call ("Filters …", then a `@param` per argument). This is the one place a hook is described; function docblocks don't list them.
+- **Shortcodes**: a docblock above `add_shortcode()`, or on its named callback: `Shortcode [tag]: renders plura_wp_x().`, an `Attributes:` list (or, when they mirror a function's parameters, a sentence saying so), `@param` and `@return`. Attributes always arrive as strings, so no `@type` hash notation.
+
+---
+
 ## Versioning
 
 The `Version:` header in `src/plura.php` is the single source of truth, and every release is tagged `vX.Y.Z` in git. Tags before `v0.10.3` were added retroactively from the commit history, so their headers still read `1.0.0`. A site reporting `1.0.0` is on one of those; comparing its files against the tags tells which. Don't release `1.0.0` while any such site remains.

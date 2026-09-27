@@ -6,18 +6,16 @@
  *		- Posts Defaults
  *		- Post Defaults
  *		- Timeline Defaults
- *	. Posts 
+ *	. Posts
  *		- Query
  *  	- Timeline Query
  *   	- Posts
  *    	- Related Posts
- *	. Post 
+ *	. Post
  *		- Link
  *		- Timeline Datetime
  *		- Timeline Status
  */
-
-
 
 /**
  * Builds a WP_Query object with support for exclusion, taxonomy, timeline filtering, ordering, and site-specific params.
@@ -31,19 +29,15 @@
  * @param string       $order              Optional. Ordering direction. Default 'DESC'.
  * @param string       $orderby            Optional. Field to order by. Default 'date'.
  * @param string|array $type               Optional. Post type(s) to query. Default 'post'.
- *
  * @param int[]|int    $terms              Optional. Term ID or array of IDs to include in taxonomy query.
  * @param string       $taxonomy           Optional. Taxonomy to filter by. Required if $terms is set.
- *
  * @param int|null     $timeline           Optional. Timeline filter value (0, 1, or -1).
  * @param string       $timeline_start_key Optional. Meta key for timeline start date.
  * @param string       $timeline_end_key   Optional. Meta key for timeline end date.
- *
  * @param array        $params             Optional. Site-specific parameters to be handled via filters.
- *
  * @param string       $context            Optional. String context passed to filters to modify query dynamically.
  *
- * @return WP_Query    The resulting query object.
+ * @return WP_Query The resulting query object.
  */
 function plura_wp_posts_query(
 	// Query
@@ -70,7 +64,7 @@ function plura_wp_posts_query(
 	array $params = [],
 
 	// Filter / context
-	string $context = ''
+	string $context = '',
 ): WP_Query {
 	$args = compact(
 		'active',
@@ -88,7 +82,7 @@ function plura_wp_posts_query(
 		'timeline',
 		'timeline_end_key',
 		'timeline_start_key',
-		'type'
+		'type',
 	);
 
 	$query_params = [
@@ -135,7 +129,7 @@ function plura_wp_posts_query(
 		]);
 
 		$meta = array_merge($meta, [
-			'relation' => 'AND',
+			'relation'          => 'AND',
 			'start_date_clause' => [
 				'key'     => $timeline_start_key,
 				'compare' => 'EXISTS',
@@ -156,13 +150,13 @@ function plura_wp_posts_query(
 		]);
 	} else {
 		$query_params['orderby'] = $orderby;
-		$query_params['order']   = $order;
+		$query_params['order'] = $order;
 	}
 
 	// Active status
 	if (!is_null($active)) {
 		$value = $active ? 1 : 0;
-		$key   = !empty($active_key) ? $active_key : 'status';
+		$key = !empty($active_key) ? $active_key : 'status';
 
 		$meta[] = [
 			'key'     => $key,
@@ -174,7 +168,7 @@ function plura_wp_posts_query(
 	// Timeline status
 	if (!is_null($timeline) && in_array($timeline, [0, 1, -1], true)) {
 		$start = $timeline_start_key ?: 'start';
-		$end   = $timeline_end_key   ?: 'end';
+		$end = $timeline_end_key ?: 'end';
 
 		$meta[] = plura_wp_posts_query_timeline($timeline, $start, $end);
 	}
@@ -188,20 +182,19 @@ function plura_wp_posts_query(
 	return new WP_Query($query_params);
 }
 
-
-
 /**
  * Generates a meta query array for timeline-based post queries
  *
- * @param int $timeline The timeline status (-1 = future, 0 = past, 1 = in progress)
+ * @param int    $timeline           The timeline status (-1 = future, 0 = past, 1 = in progress)
  * @param string $timeline_start_key Meta key for start date (default: 'start')
- * @param string $timeline_end_key Meta key for end date (default: 'end')
+ * @param string $timeline_end_key   Meta key for end date (default: 'end')
+ *
  * @return array|WP_Error Returns meta query array or WP_Error on failure
  */
 function plura_wp_posts_query_timeline(
 	int $timeline,
 	string $timeline_start_key = 'start',
-	string $timeline_end_key = 'end'
+	string $timeline_end_key = 'end',
 ) {
 	// Validate empty keys first (fastest check)
 	if (empty($timeline_start_key) || empty($timeline_end_key)) {
@@ -210,8 +203,8 @@ function plura_wp_posts_query_timeline(
 			__('Both timeline keys must be provided', 'plura'),
 			[
 				'start_key' => $timeline_start_key,
-				'end_key' => $timeline_end_key
-			]
+				'end_key'   => $timeline_end_key,
+			],
 		);
 	}
 
@@ -220,7 +213,7 @@ function plura_wp_posts_query_timeline(
 		return new WP_Error(
 			'plura_invalid_timeline',
 			__('Timeline must be -1 (future), 0 (past), or 1 (in progress)', 'plura'),
-			['received' => $timeline]
+			['received' => $timeline],
 		);
 	}
 
@@ -232,55 +225,53 @@ function plura_wp_posts_query_timeline(
 		case -1: // Future
 			return [
 				[
-					'key' => $timeline_start_key,
-					'value' => $current_date,
+					'key'     => $timeline_start_key,
+					'value'   => $current_date,
 					'compare' => '>',
-					'type' => $datetime_type
-				]
+					'type'    => $datetime_type,
+				],
 			];
 
 		case 0: // Past
 			return [
 				[
-					'key' => $timeline_end_key,
-					'value' => $current_date,
+					'key'     => $timeline_end_key,
+					'value'   => $current_date,
 					'compare' => '<',
-					'type' => $datetime_type
-				]
+					'type'    => $datetime_type,
+				],
 			];
 
 		case 1: // In Progress
 			return [
 				'relation' => 'AND',
 				[
-					'key' => $timeline_start_key,
-					'value' => $current_date,
+					'key'     => $timeline_start_key,
+					'value'   => $current_date,
 					'compare' => '<=',
-					'type' => $datetime_type
+					'type'    => $datetime_type,
 				],
 				[
 					'relation' => 'OR',
 					[
-						'key' => $timeline_end_key,
-						'value' => $current_date,
+						'key'     => $timeline_end_key,
+						'value'   => $current_date,
 						'compare' => '>=',
-						'type' => $datetime_type
+						'type'    => $datetime_type,
 					],
 					[
-						'key' => $timeline_end_key,
-						'compare' => 'NOT EXISTS'
+						'key'     => $timeline_end_key,
+						'compare' => 'NOT EXISTS',
 					],
 					[
-						'key' => $timeline_end_key,
-						'value' => '',
-						'compare' => '='
-					]
-				]
+						'key'     => $timeline_end_key,
+						'value'   => '',
+						'compare' => '=',
+					],
+				],
 			];
 	}
 }
-
-
 
 /**
  * Renders a list of posts using plura_wp_post(), or optionally returns raw post objects.
@@ -290,7 +281,6 @@ function plura_wp_posts_query_timeline(
  * Accepts preloaded posts or runs a query internally.
  *
  * @param string|array $type                     Post type or array of post types.
- *
  * @param int|null     $active                   Optional post ID to highlight as "active".
  * @param string       $active_key               Key used to determine the active post.
  * @param int[]|int    $exclude                  Optional. Post ID or array of IDs to exclude (blacklist).
@@ -301,13 +291,11 @@ function plura_wp_posts_query_timeline(
  * @param int          $rand                     Whether to randomize results (1 = true).
  * @param int[]|int    $terms                    Optional term ID or array of term IDs.
  * @param string       $taxonomy                 Taxonomy to use for the $terms filter.
- *
  * @param int|null     $timeline                 Timeline filter flag (used in queries).
  * @param string       $timeline_start_key       ACF field key for timeline start.
  * @param string       $timeline_end_key         ACF field key for timeline end.
  * @param string       $timeline_datetime_format Datetime format for timeline display.
  * @param string       $timeline_datetime_source Format for parsing timeline raw values.
- *
  * @param string       $datetime_format          Format for post datetime (used in plura_wp_post()).
  * @param bool|string  $read_more                Whether to include a "read more" link (true/false or custom label).
  * @param int          $link                     Whether to wrap posts in a link (0 = partial links, 1 = wrap all, -1 = no links).
@@ -315,13 +303,12 @@ function plura_wp_posts_query_timeline(
  * @param array        $data                     Additional data-* attributes for the wrapper.
  * @param string|null  $label                    Optional label added as a data-label attribute to the wrapper.
  * @param bool         $wrap                     Whether to wrap the posts in a <div> container. Default true.
- *
  * @param array|null   $posts                    Optional preloaded array of WP_Post objects.
  * @param array        $params                   Optional site-specific parameters passed to the query filter.
  * @param string|null  $context                  Optional context string used in post rendering.
  * @param string       $output                   Output format: 'html' (default) or 'objects' (raw WP_Post[]).
  *
- * @return string|WP_Post[]                      HTML markup for the posts container or array of post objects.
+ * @return string|WP_Post[] HTML markup for the posts container or array of post objects.
  */
 function plura_wp_posts(
 	string|array $type = 'post',
@@ -364,10 +351,9 @@ function plura_wp_posts(
 	?string $context = null,
 
 	// Return type
-	string $output = 'html'
-
+	string $output = 'html',
 ): string|array {
-	if (! $posts) {
+	if (!$posts) {
 		$query = plura_wp_posts_query(
 			active: $active,
 			active_key: $active_key,
@@ -384,7 +370,7 @@ function plura_wp_posts(
 			timeline_end_key: $timeline_end_key,
 			timeline_start_key: $timeline_start_key,
 			type: $type,
-			params: $params
+			params: $params,
 		);
 
 		if ($query->have_posts()) {
@@ -413,46 +399,46 @@ function plura_wp_posts(
 				timeline_end_key: $timeline_end_key,
 				timeline_start_key: $timeline_start_key,
 				wrap: true,
-				index: $index
+				index: $index,
 			),
 			$posts,
-			range(0, max(0, count($posts) - 1))
+			range(0, max(0, count($posts) - 1)),
 		);
 
-		if (! $wrap) {
+		if (!$wrap) {
 			return implode('', $html);
 		}
 
 		$atts = ['class' => ['plura-wp-posts']];
 
-		if (! is_null($timeline)) {
+		if (!is_null($timeline)) {
 			$atts['data-timeline'] = $timeline;
 		}
 
-		if (! empty($class)) {
+		if (!empty($class)) {
 			$atts['class'] = array_merge(
 				$atts['class'],
-				is_array($class) ? $class : plura_explode(' ', $class)
+				is_array($class) ? $class : plura_explode(' ', $class),
 			);
 		}
 
 		$atts['data-type'] = is_array($type) ? implode(',', $type) : $type;
 
-		if (! empty($label)) {
+		if (!empty($label)) {
 			$atts['data-label'] = $label;
 		}
 
 		$atts['data-link-type'] = $link;
 
-		if (! empty($exclude)) {
+		if (!empty($exclude)) {
 			$atts['data-exclude'] = implode(',', (array) $exclude);
 		}
 
-		if (! empty($context)) {
+		if (!empty($context)) {
 			$atts['data-context'] = implode(',', (array) $context);
 		}
 
-		if (! empty($data)) {
+		if (!empty($data)) {
 			$atts = array_merge_recursive($atts, $data);
 		}
 
@@ -461,7 +447,7 @@ function plura_wp_posts(
 		return sprintf(
 			'<div %s>%s</div>',
 			plura_attributes($atts),
-			implode('', $html)
+			implode('', $html),
 		);
 	}
 
@@ -483,28 +469,28 @@ add_shortcode('plura-wp-posts', function ($args) {
 		'type' => 'post',
 
 		// Query
-		'active' => null,
+		'active'     => null,
 		'active_key' => '',
-		'exclude' => '',
-		'ids' => '',
-		'terms' => '',
-		'taxonomy' => '',
-		'limit' => -1,
-		'rand' => false,
-		'order' => 'DESC',
-		'orderby' => 'date',
+		'exclude'    => '',
+		'ids'        => '',
+		'terms'      => '',
+		'taxonomy'   => '',
+		'limit'      => -1,
+		'rand'       => false,
+		'order'      => 'DESC',
+		'orderby'    => 'date',
 
 		// Timeline
-		'timeline' => null,
-		'timeline_start_key' => '',
-		'timeline_end_key' => '',
+		'timeline'                 => null,
+		'timeline_start_key'       => '',
+		'timeline_end_key'         => '',
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
 		'timeline_datetime_source' => 'Y-m-d H:i:s',
 
 		// Content output
 		'datetime_format' => 'l, F jS, Y g:i A',
-		'read_more' => '1',
-		'link' => 0,
+		'read_more'       => '1',
+		'link'            => 0,
 
 		// Container / wrapping
 		'class' => '',
@@ -543,42 +529,39 @@ add_shortcode('plura-wp-posts', function ($args) {
 	return plura_wp_posts(...$atts);
 });
 
-
-
-
 /* Posts: Related Posts */
 add_shortcode('plura-wp-posts-related', function (array $args): string {
 	$atts = shortcode_atts([
-		'active' => null,
-		'active_key' => '',
-		'class' => '',
-		'datetime_format' => 'l, F jS, Y g:i A',
-		'exclude' => '',
-		'limit' => -1,
-		'link' => '0',
-		'order' => '',
-		'rand' => '0',
-		'read_more' => '1',
-		'context' => 'related',
-		'timeline' => null,
+		'active'                   => null,
+		'active_key'               => '',
+		'class'                    => '',
+		'datetime_format'          => 'l, F jS, Y g:i A',
+		'exclude'                  => '',
+		'limit'                    => -1,
+		'link'                     => '0',
+		'order'                    => '',
+		'rand'                     => '0',
+		'read_more'                => '1',
+		'context'                  => 'related',
+		'timeline'                 => null,
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
 		'timeline_datetime_source' => 'Y-m-d H:i:s',
-		'timeline_end_key' => '',
-		'timeline_start_key' => '',
-		'type' => ''
+		'timeline_end_key'         => '',
+		'timeline_start_key'       => '',
+		'type'                     => '',
 	], $args, 'plura-wp-posts-related');
 
 	// Type casting and validation
-	$atts['active'] = is_numeric($atts['active']) ? (int)$atts['active'] : null;
+	$atts['active'] = is_numeric($atts['active']) ? (int) $atts['active'] : null;
 	$atts['exclude'] = array_filter(
 		array_map('trim', explode(',', $atts['exclude'])),
-		fn($id) => is_numeric($id)
+		fn($id) => is_numeric($id),
 	);
-	$atts['limit'] = (int)$atts['limit'];
-	$atts['link'] = (int)$atts['link'];
-	$atts['rand'] = (int)$atts['rand'];
-	$atts['read_more'] = (int)$atts['read_more'];
-	$atts['timeline'] = is_numeric($atts['timeline']) ? (int)$atts['timeline'] : null;
+	$atts['limit'] = (int) $atts['limit'];
+	$atts['link'] = (int) $atts['link'];
+	$atts['rand'] = (int) $atts['rand'];
+	$atts['read_more'] = (int) $atts['read_more'];
+	$atts['timeline'] = is_numeric($atts['timeline']) ? (int) $atts['timeline'] : null;
 	$atts['type'] = array_filter(array_map('trim', explode(',', $atts['type'])));
 
 	// Context-aware defaults
@@ -590,7 +573,7 @@ add_shortcode('plura-wp-posts-related', function (array $args): string {
 	// 1. No manual exclusions provided
 	// 2. On a single post page
 	// 3. Current post type matches the requested types
-	if (empty($atts['exclude']) && is_single() && in_array(get_post_type(), (array)$atts['type'])) {
+	if (empty($atts['exclude']) && is_single() && in_array(get_post_type(), (array) $atts['type'])) {
 		$atts['exclude'] = [get_the_ID()];
 	}
 
@@ -605,32 +588,27 @@ add_shortcode('plura-wp-posts-related', function (array $args): string {
 	return plura_wp_posts(...$atts);
 });
 
-
-
 /**
  * Renders a customizable post block with support for featured image, title, excerpt, content, timeline, and read more link.
  *
  * Allows customization of output structure and filtering via hooks (`plura_wp_post`, `plura_wp_post_atts`).
  *
- * @param WP_Post|int  $post                      A WP_Post object or post ID.
- *
- * @param string       $class                     Optional CSS class(es) for the wrapper element.
- * @param string       $datetime_format           Format for main post datetime (default: post_date).
- * @param int          $link                      Defines how links are applied:
- *                                                0 = link inner elements (title, image, read more),
- *                                                1 = wrap the entire block in a link,
+ * @param WP_Post|int  $post                     A WP_Post object or post ID.
+ * @param string       $class                    Optional CSS class(es) for the wrapper element.
+ * @param string       $datetime_format          Format for main post datetime (default: post_date).
+ * @param int          $link                     Defines how links are applied:
+ *                                               0 = link inner elements (title, image, read more),
+ *                                               1 = wrap the entire block in a link,
  *                                               -1 = disable all links.
- * @param array|string $meta                      Optional meta key(s) to include, passed to plura_wp_post_meta().
- * @param bool|string  $read_more                 Whether to show a read more link, or custom label (false = no, true = default, string = label).
- * @param bool         $wrap                      Whether to wrap output in a container (or full link if $link === 1).
- *
- * @param string       $timeline_datetime_format  Datetime format for timeline output.
- * @param string       $timeline_datetime_source  Source format to parse raw date values.
- * @param string       $timeline_end_key          Meta key for timeline end date.
- * @param string       $timeline_start_key        Meta key for timeline start date.
- *
- * @param string|null  $context                   Optional context tag used for filters (e.g. 'archive', 'homepage').
- * @param int|null     $index                     Optional index for the post in a list.
+ * @param array|string $meta                     Optional meta key(s) to include, passed to plura_wp_post_meta().
+ * @param bool|string  $read_more                Whether to show a read more link, or custom label (false = no, true = default, string = label).
+ * @param bool         $wrap                     Whether to wrap output in a container (or full link if $link === 1).
+ * @param string       $timeline_datetime_format Datetime format for timeline output.
+ * @param string       $timeline_datetime_source Source format to parse raw date values.
+ * @param string       $timeline_end_key         Meta key for timeline end date.
+ * @param string       $timeline_start_key       Meta key for timeline start date.
+ * @param string|null  $context                  Optional context tag used for filters (e.g. 'archive', 'homepage').
+ * @param int|null     $index                    Optional index for the post in a list.
  *
  * @return string HTML markup of the rendered post.
  */
@@ -653,11 +631,11 @@ function plura_wp_post(
 
 	// Filter / scope
 	?string $context = null,
-	?int $index = null
+	?int $index = null,
 ): string {
 	if (is_int($post)) {
 		$post = get_post($post);
-		if (! $post) {
+		if (!$post) {
 			return '';
 		}
 	}
@@ -674,7 +652,7 @@ function plura_wp_post(
 		'timeline_datetime_source',
 		'timeline_end_key',
 		'timeline_start_key',
-		'wrap'
+		'wrap',
 	);
 
 	$atts = [
@@ -683,10 +661,10 @@ function plura_wp_post(
 		'data-type' => get_post_type($post),
 	];
 
-	if (! empty($class)) {
+	if (!empty($class)) {
 		$atts['class'] = array_merge(
 			$atts['class'],
-			is_array($class) ? $class : plura_explode(' ', $class)
+			is_array($class) ? $class : plura_explode(' ', $class),
 		);
 	}
 
@@ -695,7 +673,7 @@ function plura_wp_post(
 			date: $post->post_date,
 			class: ['plura-wp-post-datetime'],
 			source: 'Y-m-d H:i:s',
-			format: $datetime_format
+			format: $datetime_format,
 		),
 		'excerpt' => sprintf('<div class="plura-wp-post-excerpt">%s</div>', get_the_excerpt($post)),
 		'content' => sprintf('<div class="plura-wp-post-content">%s</div>', apply_filters('the_content', $post->post_content)),
@@ -706,21 +684,21 @@ function plura_wp_post(
 		object: $post,
 		tag: 'h3',
 		link: ($link === 0),
-		context: $context
+		context: $context,
 	);
 
-	if (! empty($title)) {
+	if (!empty($title)) {
 		$content['title'] = $title;
 		$title_text = plura_wp_title(object: $post, tag: false, link: false);
 	}
 
 	// Meta
-	if (! empty($meta)) {
+	if (!empty($meta)) {
 		$content['meta'] = plura_wp_post_meta(
 			post: $post,
 			meta: $meta,
 			html: true,
-			context: $context
+			context: $context,
 		);
 	}
 
@@ -732,7 +710,7 @@ function plura_wp_post(
 			target: $post,
 			atts: ['class' => 'plura-wp-post-read-more'],
 			title: $title_text ?? null,
-			context: $context
+			context: $context,
 		);
 	}
 
@@ -746,13 +724,13 @@ function plura_wp_post(
 
 	// Timeline
 	$timeline_start_key = empty($timeline_start_key) ? 'start' : $timeline_start_key;
-	$timeline_end_key   = empty($timeline_end_key)   ? 'end'   : $timeline_end_key;
+	$timeline_end_key = empty($timeline_end_key) ? 'end' : $timeline_end_key;
 
 	$timeline_status = plura_wp_get_post_timeline_status(
 		$post->ID,
 		$timeline_start_key,
 		$timeline_end_key,
-		true
+		true,
 	);
 
 	if (in_array($timeline_status, [-1, 0, 1], true)) {
@@ -763,7 +741,7 @@ function plura_wp_post(
 			timeline_start_key: $timeline_start_key,
 			timeline_end_key: $timeline_end_key,
 			timeline_datetime_format: $timeline_datetime_format,
-			timeline_datetime_source: $timeline_datetime_source
+			timeline_datetime_source: $timeline_datetime_source,
 		);
 	}
 
@@ -787,7 +765,7 @@ function plura_wp_post(
 		$ordered_content = ($filtered_content !== $ordered_content) ? $filtered_content : $ordered_content;
 	}
 
-	if (! has_filter('plura_wp_post') || $filtered_content === $ordered_content) {
+	if (!has_filter('plura_wp_post') || $filtered_content === $ordered_content) {
 		unset($ordered_content['content']);
 	}
 
@@ -796,7 +774,7 @@ function plura_wp_post(
 
 	$html = implode('', $ordered_content);
 
-	if (! $wrap) {
+	if (!$wrap) {
 		return $html;
 	}
 
@@ -817,21 +795,21 @@ add_shortcode('plura-wp-post', function ($args) {
 		'post' => 0,
 
 		// General output
-		'class' => '',
+		'class'           => '',
 		'datetime_format' => 'l, F jS, Y g:i A',
-		'link' => 0,
-		'meta' => [],
-		'read_more' => true,
-		'wrap' => true,
+		'link'            => 0,
+		'meta'            => [],
+		'read_more'       => true,
+		'wrap'            => true,
 
 		// Timeline
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
 		'timeline_datetime_source' => 'Y-m-d H:i:s',
-		'timeline_end_key' => '',
-		'timeline_start_key' => '',
+		'timeline_end_key'         => '',
+		'timeline_start_key'       => '',
 
 		// Filter / scope
-		'context' => null
+		'context' => null,
 	], $args);
 
 	// Type casting
@@ -851,17 +829,14 @@ add_shortcode('plura-wp-post', function ($args) {
 	return plura_wp_post(...$atts);
 });
 
-
-
-
 /* Post: Timeline Datetime */
 add_shortcode('plura-wp-post-timeline-datetime', function ($args) {
 	$atts = shortcode_atts([
-		'post' => 0,  // Post ID (0 will fall back to current post)
-		'timeline_start_key' => null,
-		'timeline_end_key' => null,
+		'post'                     => 0,  // Post ID (0 will fall back to current post)
+		'timeline_start_key'       => null,
+		'timeline_end_key'         => null,
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
-		'timeline_datetime_source' => 'Y-m-d H:i:s'
+		'timeline_datetime_source' => 'Y-m-d H:i:s',
 	], $args);
 
 	// Convert to integer (safe for both strings and numbers)
@@ -878,15 +853,15 @@ add_shortcode('plura-wp-post-timeline-datetime', function ($args) {
 	return ''; // Return empty string if no valid post
 });
 
-
 /**
  * Generates timeline date/time HTML for a post
  *
- * @param WP_Post $post Post object or ID
- * @param string|null $timeline_start_key ACF field name for start date
- * @param string|null $timeline_end_key ACF field name for end date
- * @param string $timeline_datetime_format Date format string
- * @param string $timeline_datetime_source Source format for date parsing
+ * @param WP_Post     $post                     Post object or ID
+ * @param string|null $timeline_start_key       ACF field name for start date
+ * @param string|null $timeline_end_key         ACF field name for end date
+ * @param string      $timeline_datetime_format Date format string
+ * @param string      $timeline_datetime_source Source format for date parsing
+ *
  * @return string|false HTML string for the timeline or false if no dates found
  */
 function plura_wp_post_timeline_datetime(
@@ -894,7 +869,7 @@ function plura_wp_post_timeline_datetime(
 	?string $timeline_start_key = null,
 	?string $timeline_end_key = null,
 	string $timeline_datetime_format = 'l, F jS, Y g:i A',
-	string $timeline_datetime_source = 'Y-m-d H:i:s'
+	string $timeline_datetime_source = 'Y-m-d H:i:s',
 ): string|false {
 	// Handle post parameter (convert ID to WP_Post object if needed)
 	if (is_int($post)) {
@@ -916,7 +891,7 @@ function plura_wp_post_timeline_datetime(
 				date: $datetime,
 				class: ['plura-wp-post-timeline-item', 'plura-wp-post-timeline-start'],
 				source: $timeline_datetime_source,
-				format: $timeline_datetime_format
+				format: $timeline_datetime_format,
 			);
 		}
 	}
@@ -930,7 +905,7 @@ function plura_wp_post_timeline_datetime(
 				date: $datetime,
 				class: ['plura-wp-post-timeline-item', 'plura-wp-post-timeline-end'],
 				source: $timeline_datetime_source,
-				format: $timeline_datetime_format
+				format: $timeline_datetime_format,
 			);
 		}
 	}
@@ -940,25 +915,24 @@ function plura_wp_post_timeline_datetime(
 		: false;
 }
 
-
-
 /**
  * Determines the timeline status of a post based on start/end dates
  *
- * @param int $post_id The WordPress post ID
+ * @param int    $post_id            The WordPress post ID
  * @param string $timeline_start_key Meta key for start date (default: 'start')
- * @param string $timeline_end_key Meta key for end date (default: 'end')
- * @param bool $int Whether to return integer codes (true) or string labels (false)
- * @return int|string|false Returns status as: 
- *   1/-1/0 (if $int=true), 
- *   'in_progress'/'future'/'past' (if $int=false), 
- *   or false if undetermined
+ * @param string $timeline_end_key   Meta key for end date (default: 'end')
+ * @param bool   $int                Whether to return integer codes (true) or string labels (false)
+ *
+ * @return int|string|false Returns status as:
+ *                          1/-1/0 (if $int=true),
+ *                          'in_progress'/'future'/'past' (if $int=false),
+ *                          or false if undetermined
  */
 function plura_wp_get_post_timeline_status(
 	int $post_id,
 	string $timeline_start_key = 'start',
 	string $timeline_end_key = 'end',
-	bool $int = true
+	bool $int = true,
 ) {
 	$current_date = date('Ymd'); // Format date as Ymd for comparison
 
@@ -987,29 +961,27 @@ function plura_wp_get_post_timeline_status(
 	return false;
 }
 
-
-
 /**
  * Returns the HTML for the post title element or just the plain title text.
  *
- * @param WP_Post|int  $post       A WP_Post object or post ID.
- * @param string|false $tag        HTML tag to use (e.g. h3, h2). If false, no tag is used.
- * @param bool         $link       Whether to wrap the title in a link (default: false).
- * @param string|null  $context    Optional context tag for filters.
+ * @param WP_Post|int  $post    A WP_Post object or post ID.
+ * @param string|false $tag     HTML tag to use (e.g. h3, h2). If false, no tag is used.
+ * @param bool         $link    Whether to wrap the title in a link (default: false).
+ * @param string|null  $context Optional context tag for filters.
  *
- * @return string|null             Title HTML or plain text, or null if no title found.
+ * @return string|null Title HTML or plain text, or null if no title found.
  */
 function plura_wp_post_title(
 	WP_Post|int $post,
 	string|false $tag = 'h3',
 	bool $link = false,
-	?string $context = null
+	?string $context = null,
 ): ?string {
 	if (is_int($post)) {
 		$post = get_post($post);
 	}
 
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return null;
 	}
 
@@ -1024,7 +996,7 @@ function plura_wp_post_title(
 			'<%1$s %3$s>%2$s</%1$s>',
 			tag_escape($tag),
 			esc_html($text),
-			plura_attributes(['class' => 'plura-wp-post-title'])
+			plura_attributes(['class' => 'plura-wp-post-title']),
 		);
 	} else {
 		$html = esc_html($text);
@@ -1034,13 +1006,12 @@ function plura_wp_post_title(
 		$html = plura_wp_link(
 			html: $html,
 			target: $post,
-			title: $text
+			title: $text,
 		);
 	}
 
 	return $html;
 }
-
 
 /**
  * Shortcode [plura-wp-post-title]: renders plura_wp_post_title().
@@ -1064,8 +1035,8 @@ function plura_wp_post_title_shortcode(array $atts): ?string
 		'context' => null,
 	], $atts);
 
-	$post    = intval($atts['id']);
-	$link    = filter_var($atts['link'], FILTER_VALIDATE_BOOLEAN);
+	$post = intval($atts['id']);
+	$link = filter_var($atts['link'], FILTER_VALIDATE_BOOLEAN);
 	$context = $atts['context'] ?: null;
 
 	// Handle string values like "false", "0" => false
@@ -1076,34 +1047,28 @@ function plura_wp_post_title_shortcode(array $atts): ?string
 }
 add_shortcode('plura-wp-post-title', 'plura_wp_post_title_shortcode');
 
-
-
-
-
-
-
-
 /**
  * Retrieves one or more post meta values with optional HTML formatting.
  *
- * @param WP_Post|int  $post                The post object or ID.
- * @param array|string $meta                Meta keys to retrieve. Accepts:
- *                                          - A single meta key as a string.
- *                                          - An indexed array of meta keys (strings).
- *                                          - An associative array with display keys (e.g., 'position' => 'acf_position').
- *                                          - An array of meta item arrays, where each item may include:
- *                                              [
- *                                                  'key'               => string                  // required ACF meta key
- *                                                  'label'             => string                  // optional label
- *                                                  'sanitize_callback' => callable                // optional value transformer
- *                                                  'raw_html'          => bool                    // if true, disables esc_html()
- *                                              ]
- * @param bool         $html                Whether to return HTML or raw values.
- * @param string|null  $context             Optional context string for filtering.
- * @param bool         $label               Whether to show labels for each meta field (if provided).
- * @param bool         $label_as_data_attr  If true, label will be added as data-label; if false, as inner element.
- * @param bool         $skip_empty          Whether to skip empty/null values.
- * @return array|string                     HTML string or array of values.
+ * @param WP_Post|int  $post               The post object or ID.
+ * @param array|string $meta               Meta keys to retrieve. Accepts:
+ *                                         - A single meta key as a string.
+ *                                         - An indexed array of meta keys (strings).
+ *                                         - An associative array with display keys (e.g., 'position' => 'acf_position').
+ *                                         - An array of meta item arrays, where each item may include:
+ *                                         [
+ *                                         'key'               => string                  // required ACF meta key
+ *                                         'label'             => string                  // optional label
+ *                                         'sanitize_callback' => callable                // optional value transformer
+ *                                         'raw_html'          => bool                    // if true, disables esc_html()
+ *                                         ]
+ * @param bool         $html               Whether to return HTML or raw values.
+ * @param string|null  $context            Optional context string for filtering.
+ * @param bool         $label              Whether to show labels for each meta field (if provided).
+ * @param bool         $label_as_data_attr If true, label will be added as data-label; if false, as inner element.
+ * @param bool         $skip_empty         Whether to skip empty/null values.
+ *
+ * @return array|string HTML string or array of values.
  */
 function plura_wp_post_meta(
 	WP_Post|int $post,
@@ -1112,30 +1077,28 @@ function plura_wp_post_meta(
 	?string $context = null,
 	bool $label = true,
 	bool $label_as_data_attr = false,
-	bool $skip_empty = true
+	bool $skip_empty = true,
 ): array|string {
-
 	if (is_int($post)) {
 		$post = get_post($post);
 	}
 
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return $html ? '<div class="plura-wp-post-meta error">Invalid post</div>' : [];
 	}
 
-	$meta   = (array) $meta;
-	$meta   = apply_filters('plura_wp_post_meta', $meta, $post, $context);
+	$meta = (array) $meta;
+	$meta = apply_filters('plura_wp_post_meta', $meta, $post, $context);
 	$output = [];
 
 	foreach ($meta as $item_key => $meta_item) {
-
-		$is_assoc       = is_array($meta_item);
-		$item_meta_key  = $is_assoc ? $meta_item['key'] : $meta_item;
-		$item_label     = $is_assoc && isset($meta_item['label']) ? $meta_item['label'] : null;
-		$sanitize_cb    = $is_assoc && isset($meta_item['sanitize_callback']) && is_callable($meta_item['sanitize_callback'])
+		$is_assoc = is_array($meta_item);
+		$item_meta_key = $is_assoc ? $meta_item['key'] : $meta_item;
+		$item_label = $is_assoc && isset($meta_item['label']) ? $meta_item['label'] : null;
+		$sanitize_cb = $is_assoc && isset($meta_item['sanitize_callback']) && is_callable($meta_item['sanitize_callback'])
 			? $meta_item['sanitize_callback']
 			: null;
-		$raw_html       = $is_assoc && ! empty($meta_item['raw_html']);
+		$raw_html = $is_assoc && !empty($meta_item['raw_html']);
 
 		// Get value (ACF or WP meta), filtered
 		$value = get_field($item_meta_key, $post->ID);
@@ -1152,19 +1115,19 @@ function plura_wp_post_meta(
 		}
 
 		// Skip non-scalar values when rendering HTML
-		if ($html && ! is_scalar($value)) {
+		if ($html && !is_scalar($value)) {
 			trigger_error(
 				sprintf('[plura_wp_post_meta] Skipping non-scalar meta value for key: "%s".', $item_meta_key),
-				E_USER_WARNING
+				E_USER_WARNING,
 			);
 			continue;
 		}
 
 		if ($html) {
 			$label_html = '';
-			$attr       = ['class' => 'plura-wp-post-meta-item'];
+			$attr = ['class' => 'plura-wp-post-meta-item'];
 
-			if (is_string($item_key) || ( is_array($meta_item) && isset($meta_item['type']) ) ) {
+			if (is_string($item_key) || (is_array($meta_item) && isset($meta_item['type']))) {
 				$attr['data-type'] = is_string($item_key) ? $item_key : $meta_item['type'];
 			}
 
@@ -1172,10 +1135,10 @@ function plura_wp_post_meta(
 				$attr['data-label'] = $item_label;
 			}
 
-			if ($label && $item_label && ! $label_as_data_attr) {
+			if ($label && $item_label && !$label_as_data_attr) {
 				$label_html = sprintf(
 					'<div class="plura-wp-post-meta-item-label">%s</div>',
-					esc_html($item_label)
+					esc_html($item_label),
 				);
 			}
 
@@ -1185,7 +1148,7 @@ function plura_wp_post_meta(
 				'<div %s>%s<div class="plura-wp-post-meta-item-value">%s</div></div>',
 				plura_attributes($attr),
 				$label_html,
-				$value_html
+				$value_html,
 			);
 		} else {
 			$output[$item_key] = $value;
@@ -1196,15 +1159,12 @@ function plura_wp_post_meta(
 		return sprintf(
 			'<div %s>%s</div>',
 			plura_attributes(['class' => 'plura-wp-post-meta']),
-			implode('', $output)
+			implode('', $output),
 		);
 	}
 
 	return $output;
 }
-
-
-
 
 /**
  * Renders the featured image (<img>) for a given post.
@@ -1212,28 +1172,28 @@ function plura_wp_post_meta(
  * Wrapper for `plura_wp_image()` using the post thumbnail ID.
  * Returns null if the post is invalid or has no thumbnail.
  *
- * @param WP_Post|int  $post    The post object or ID.
- * @param string       $size    Image size to retrieve. Defaults to 'large'.
- * @param array        $atts    Additional HTML attributes passed to `plura_wp_image()`.
- * @param string|null  $context Optional context tag for filters.
+ * @param WP_Post|int $post    The post object or ID.
+ * @param string      $size    Image size to retrieve. Defaults to 'large'.
+ * @param array       $atts    Additional HTML attributes passed to `plura_wp_image()`.
+ * @param string|null $context Optional context tag for filters.
  *
- * @return string|null          HTML <img> tag or null if no image is found.
+ * @return string|null HTML <img> tag or null if no image is found.
  */
 function plura_wp_post_featured_image(
 	WP_Post|int $post,
 	string $size = 'large',
 	array $atts = [],
-	?string $context = null
+	?string $context = null,
 ): ?string {
 	$post = get_post($post);
 
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return null;
 	}
 
 	// Default attributes
 	$default_atts = [
-		'class' => ['plura-wp-post-featured-image'],
+		'class'          => ['plura-wp-post-featured-image'],
 		'data-post-type' => get_post_type($post),
 	];
 
@@ -1272,7 +1232,7 @@ function plura_wp_post_featured_image_shortcode(array $atts): ?string
 
 	$img_atts = [];
 
-	if (! empty($atts['class'])) {
+	if (!empty($atts['class'])) {
 		$img_atts['class'] = $atts['class'];
 	}
 
@@ -1280,21 +1240,17 @@ function plura_wp_post_featured_image_shortcode(array $atts): ?string
 		post: intval($atts['id']),
 		size: $atts['size'],
 		atts: $img_atts,
-		context: $atts['context'] ?: null
+		context: $atts['context'] ?: null,
 	);
 }
 add_shortcode('plura-wp-post-featured-image', 'plura_wp_post_featured_image_shortcode');
 
-
-
-
-
 /**
  * Retrieves all taxonomy terms associated with a given post, optionally filtered by allowed taxonomies.
  *
- * @param int              $post_id             The ID of the post to get terms for.
- * @param array|string     $allowed_taxonomies  Optional. A taxonomy name or array of names to filter which taxonomies are included.
- *                                              If empty, all taxonomies for the post type will be included.
+ * @param int          $post_id            The ID of the post to get terms for.
+ * @param array|string $allowed_taxonomies Optional. A taxonomy name or array of names to filter which taxonomies are included.
+ *                                         If empty, all taxonomies for the post type will be included.
  *
  * @return array An associative array of taxonomies and their respective terms.
  *               Example: [ 'category' => [ WP_Term, ... ], 'post_tag' => [ WP_Term, ... ] ]
@@ -1306,7 +1262,7 @@ function plura_wp_post_terms_data(int|WP_Post $post, array|string $allowed_taxon
 	}
 
 	$post = get_post($post);
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return [];
 	}
 
@@ -1319,7 +1275,7 @@ function plura_wp_post_terms_data(int|WP_Post $post, array|string $allowed_taxon
 
 	foreach ($taxonomies as $taxonomy) {
 		$terms = get_the_terms($post, $taxonomy);
-		if (! is_wp_error($terms) && ! empty($terms)) {
+		if (!is_wp_error($terms) && !empty($terms)) {
 			$all_terms[$taxonomy] = $terms;
 		}
 	}
@@ -1327,22 +1283,20 @@ function plura_wp_post_terms_data(int|WP_Post $post, array|string $allowed_taxon
 	return apply_filters('plura_wp_post_terms_data', $all_terms, $post);
 }
 
-
-
 /**
  * Renders the taxonomy terms of a given post as HTML.
  *
- * @param int|WP_Post  $post                The post ID or WP_Post object.
- * @param array|string $allowed_taxonomies  Optional. A taxonomy name or array of names to include. If empty, all taxonomies will be used.
- * @param bool         $taxonomy            Optional. Whether to show taxonomy labels. Default true.
- * @param bool         $link                Optional. Whether to wrap terms in links to their archive pages. Default true.
+ * @param int|WP_Post  $post               The post ID or WP_Post object.
+ * @param array|string $allowed_taxonomies Optional. A taxonomy name or array of names to include. If empty, all taxonomies will be used.
+ * @param bool         $taxonomy           Optional. Whether to show taxonomy labels. Default true.
+ * @param bool         $link               Optional. Whether to wrap terms in links to their archive pages. Default true.
  *
  * @return string|null The generated HTML string of terms grouped by taxonomy, or null if there are no terms.
  */
 function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies = [], bool $taxonomy = true, bool $link = true): ?string
 {
 	$post = get_post($post);
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return null;
 	}
 
@@ -1355,7 +1309,7 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 
 	foreach ($terms_by_tax as $tax => $terms) {
 		$taxdata = get_taxonomy($tax);
-		if (! $taxdata) {
+		if (!$taxdata) {
 			continue;
 		}
 
@@ -1365,7 +1319,7 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 			$html_tax[] = sprintf(
 				'<div %s>%s</div>',
 				plura_attributes(['class' => 'plura-wp-post-terms-tax-title']),
-				esc_html($taxdata->label)
+				esc_html($taxdata->label),
 			);
 		}
 
@@ -1375,7 +1329,7 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 			$title = sprintf(
 				'<span %s>%s</span>',
 				plura_attributes(['class' => 'plura-wp-post-term-title']),
-				esc_html($term->name)
+				esc_html($term->name),
 			);
 
 			if ($link) {
@@ -1385,97 +1339,78 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 			$html_tax_terms[] = sprintf(
 				'<div %s>%s</div>',
 				plura_attributes(['class' => 'plura-wp-post-term', 'data-id' => $term->term_id]),
-				$title
+				$title,
 			);
 		}
 
 		$html_tax[] = sprintf(
 			'<div %s>%s</div>',
 			plura_attributes(['class' => 'plura-wp-post-terms-group']),
-			implode('', $html_tax_terms)
+			implode('', $html_tax_terms),
 		);
 
 		$html[] = sprintf(
 			'<div %s>%s</div>',
 			plura_attributes([
-				'class' => 'plura-wp-post-terms-taxonomy',
-				'data-taxonomy' => $taxdata->name,
-				'data-taxonomy-name' => $taxdata->label
+				'class'              => 'plura-wp-post-terms-taxonomy',
+				'data-taxonomy'      => $taxdata->name,
+				'data-taxonomy-name' => $taxdata->label,
 			]),
-			implode('', $html_tax)
+			implode('', $html_tax),
 		);
 	}
 
 	return sprintf(
 		'<div %s>%s</div>',
 		plura_attributes(['class' => 'plura-wp-post-terms']),
-		implode('', $html)
+		implode('', $html),
 	);
 }
 
-
-
-
-function plura_p_tags( $post, $html = true ) {
-
-	if( is_int( $post ) ) {
-
-		$post = get_post( $post );
-
+function plura_p_tags($post, $html = true)
+{
+	if (is_int($post)) {
+		$post = get_post($post);
 	}
 
-	$post_taxonomies = get_object_taxonomies( $post );
+	$post_taxonomies = get_object_taxonomies($post);
 
-	if( !empty( $post_taxonomies ) ) {
-
+	if (!empty($post_taxonomies)) {
 		$tags = [];
 
-		foreach( $post_taxonomies as $taxonomy ) {
+		foreach ($post_taxonomies as $taxonomy) {
+			$terms = get_the_terms($post, $taxonomy);
 
-			$terms = get_the_terms( $post, $taxonomy );
-
-			foreach( $terms as $term ) {
-
-				if( $html ) {
-
+			foreach ($terms as $term) {
+				if ($html) {
 					$atts = ['class' => 'plura-p-tag'];
 
-					$atts_link = ['title' => $term->name, 'href' => get_term_link( $term )];
+					$atts_link = ['title' => $term->name, 'href' => get_term_link($term)];
 
-					$tags[] = "<li " . plura_attributes( $atts ) . "><a " . plura_attributes( $atts_link ) . ">" . $term->name . "</a></li>";
-
+					$tags[] = "<li " . plura_attributes($atts) . "><a " . plura_attributes($atts_link) . ">" . $term->name . "</a></li>";
 				} else {
-
 					$tags[] = $term;
-
 				}
-
 			}
 
-			if( $html ) {
-
+			if ($html) {
 				$atts = ['class' => 'plura-p-tags', 'data-taxonomy' => $post_taxonomies[0]];
 
-				return "<ul " . plura_attributes( $atts ) . ">" . implode('', $tags) . "</ul>";
-
+				return "<ul " . plura_attributes($atts) . ">" . implode('', $tags) . "</ul>";
 			}
-
 		}
 
 		return $tags;
-
 	}
-
 }
 
-function plura_p_tags_shortcode( $args ) {
-
+function plura_p_tags_shortcode($args)
+{
 	$atts = shortcode_atts(['post' => ''], $args);
 
-	$id = empty( $atts['post'] ) ? get_the_ID() : $atts['id'];
+	$id = empty($atts['post']) ? get_the_ID() : $atts['id'];
 
-	return plura_p_tags( $atts['post'] );
-
+	return plura_p_tags($atts['post']);
 }
 
 add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');

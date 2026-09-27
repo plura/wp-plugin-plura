@@ -1,4 +1,5 @@
 <?php
+
 /*
 Plugin Name: Plura
 Plugin URI:  https://plura.pt
@@ -23,8 +24,8 @@ Domain Path: /languages
  * registered too, or they vanish from the dashboard.
  *
  * @param array<int, string> $modules List of module filenames or absolute paths.
- * @param string $dir Base directory path to prepend to filenames (if not absolute).
- * @param bool $admin Whether to include the modules in the admin area.
+ * @param string             $dir     Base directory path to prepend to filenames (if not absolute).
+ * @param bool               $admin   Whether to include the modules in the admin area.
  *
  * @return void
  */
@@ -49,7 +50,6 @@ function plura_includes(array $modules, string $dir, bool $admin = false): void
 }
 
 $plura_modules = [
-
 	'includes/core/core',
 	'includes/core/wp',
 	'includes/core/wp-component',
@@ -62,7 +62,6 @@ $plura_modules = [
 
 	'includes/integrations/apis',
 	'includes/integrations/lottie',
-
 ];
 
 plura_includes($plura_modules, __DIR__);
@@ -72,9 +71,15 @@ plura_includes($plura_modules, __DIR__);
 $plura_integrations = function (): void {
 	$modules = [];
 
-	if (class_exists('WPCF7'))                                       $modules[] = 'includes/integrations/wp-cf7';
-	if (class_exists('RevSlider') || class_exists('Essential_Grid')) $modules[] = 'includes/integrations/wp-revslider-egrid';
-	if (class_exists('SitePress'))                                   $modules[] = 'includes/integrations/wp-wpml';
+	if (class_exists('WPCF7')) {
+		$modules[] = 'includes/integrations/wp-cf7';
+	}
+	if (class_exists('RevSlider') || class_exists('Essential_Grid')) {
+		$modules[] = 'includes/integrations/wp-revslider-egrid';
+	}
+	if (class_exists('SitePress')) {
+		$modules[] = 'includes/integrations/wp-wpml';
+	}
 
 	plura_includes($modules, __DIR__);
 };
@@ -82,16 +87,10 @@ $plura_integrations = function (): void {
 $plura_integrations();
 add_action('plugins_loaded', $plura_integrations);
 
-
-add_action('init', function() {
-
+add_action('init', function () {
 	// Initialization code
 	load_plugin_textdomain('plura', false, dirname(plugin_basename(__FILE__)) . '/languages');
-
 });
-
-
-
 
 /**
  * Builds the payload localized onto the plugin's base script as `plura_wp_data`.
@@ -104,35 +103,30 @@ add_action('init', function() {
 function plura_wp_data(): array
 {
 	$data = [
-		'home' => home_url(),
+		'home'      => home_url(),
 		'pluginURL' => plugin_dir_url(__FILE__),
-		'restURL' => rest_url(),
-		'restNonce' => wp_create_nonce('wp_rest')
+		'restURL'   => rest_url(),
+		'restNonce' => wp_create_nonce('wp_rest'),
 	];
 
 	$object = get_queried_object();
 
 	if (is_singular()) {
-
 		$data = array_merge($data, [
-			'id' => $object->ID,
+			'id'    => $object->ID,
 			'title' => $object->post_title,
-			'type' => $object->post_type,
-			'url' => get_permalink($object->ID)
+			'type'  => $object->post_type,
+			'url'   => get_permalink($object->ID),
 		]);
-	} else if (is_archive()) {
-
+	} elseif (is_archive()) {
 		// Each archive kind hands back a different queried object — post type, term or
 		// user, and none at all on date archives — so 'type' has to be resolved per kind
 		// to keep meaning the post type slug, the way it does on singulars.
 		$archive = ['archive' => 1];
 
 		if ($object instanceof WP_Post_Type) {
-
 			$archive['type'] = $object->name;
-
-		} else if ($object instanceof WP_Term) {
-
+		} elseif ($object instanceof WP_Term) {
 			$taxonomy = get_taxonomy($object->taxonomy);
 
 			// First object type only, matching plura_p_date_archive()
@@ -142,17 +136,13 @@ function plura_wp_data(): array
 
 			$archive['taxonomy'] = $object->taxonomy;
 			$archive['term'] = $object->term_id;
-
-		} else if ($object instanceof WP_User) {
-
+		} elseif ($object instanceof WP_User) {
 			$archive['author'] = $object->ID;
-
-		} else if (is_date()) {
-
+		} elseif (is_date()) {
 			$archive['date'] = array_filter([
-				'year' => (int) get_query_var('year'),
+				'year'  => (int) get_query_var('year'),
 				'month' => (int) get_query_var('monthnum'),
-				'day' => (int) get_query_var('day')
+				'day'   => (int) get_query_var('day'),
 			]);
 		}
 
@@ -160,19 +150,15 @@ function plura_wp_data(): array
 	}
 
 	if (function_exists('plura_wpml') && plura_wpml()) {
-
 		$data = array_merge($data, ['lang' => plura_wpml_lang()]);
 	}
 
 	return apply_filters('plura_wp_data', $data);
 }
 
-
 function plura_wp_styles()
 {
-
 	$plura_scripts = [
-
 		__DIR__ . '/assets/js/p.js',
 
 		__DIR__ . '/assets/base.css',
@@ -188,7 +174,6 @@ function plura_wp_styles()
 		__DIR__ . '/assets/%s/wp-globals-theme.css',
 		__DIR__ . '/assets/%s/wp-dynamic-grid.%s',
 		__DIR__ . '/assets/js/wp-prevnext.js',
-
 	];
 
 	if (class_exists('WPCF7')) {
@@ -201,4 +186,3 @@ function plura_wp_styles()
 }
 
 add_action('wp_enqueue_scripts', 'plura_wp_styles');
-

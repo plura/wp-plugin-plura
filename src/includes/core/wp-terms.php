@@ -9,8 +9,6 @@
  *		- Title
  */
 
-
-
 /**
  * Builds a WP_Term_Query with support for inclusion, exclusion, parent, ordering, and site-specific params.
  *
@@ -22,9 +20,7 @@
  * @param string       $orderby  Optional. Field to order by. Default 'name'.
  * @param int|null     $parent   Optional. Only terms directly beneath this term ID; 0 for top-level terms.
  *                               Default null (all levels).
- *
  * @param array        $params   Optional. Site-specific parameters to be handled via filters.
- *
  * @param string       $context  Optional. String context passed to filters to modify query dynamically.
  *
  * @return WP_Term_Query The resulting query object.
@@ -44,7 +40,7 @@ function plura_wp_terms_query(
 	array $params = [],
 
 	// Filter / context
-	string $context = ''
+	string $context = '',
 ): WP_Term_Query {
 	$args = compact(
 		'context',
@@ -55,7 +51,7 @@ function plura_wp_terms_query(
 		'orderby',
 		'params',
 		'parent',
-		'taxonomy'
+		'taxonomy',
 	);
 
 	$query_params = [
@@ -90,8 +86,6 @@ function plura_wp_terms_query(
 	return new WP_Term_Query($query_params);
 }
 
-
-
 /**
  * Renders a list of terms using plura_wp_term(), or optionally returns raw term objects.
  *
@@ -99,7 +93,6 @@ function plura_wp_terms_query(
  * starts and $depth how many levels of child terms are nested beneath each item.
  *
  * @param string|array   $taxonomy Taxonomy or array of taxonomies. Default 'category'.
- *
  * @param int[]|int      $exclude  Optional. Term ID or array of IDs to exclude (blacklist).
  * @param int[]|int      $ids      Optional. Term ID or array of IDs to include (whitelist).
  * @param int            $limit    Max number of top-level terms to show (default: -1 = all).
@@ -108,7 +101,6 @@ function plura_wp_terms_query(
  * @param int|null       $parent   Only terms directly beneath this term ID; 0 for top-level terms.
  *                                 Default null: every term, or in a tree, those whose parent isn't listed.
  * @param int            $depth    Levels to show: 1 = a flat list (default), 0 = the whole tree, n = n levels.
- *
  * @param string         $class    Additional CSS class(es) for the wrapper.
  * @param array          $data     Additional data-* attributes for the wrapper.
  * @param bool           $image    Whether to show each term's featured image. Default true.
@@ -116,14 +108,13 @@ function plura_wp_terms_query(
  *                                 1 = the whole term, -1 = no links.
  * @param string|null    $label    Optional label added as a data-label attribute to the wrapper.
  * @param bool           $wrap     Whether to wrap the terms in a <div> container. Default true.
- *
  * @param WP_Term[]|null $terms    Optional preloaded terms. Query arguments are ignored; $parent, $depth
  *                                 and $limit still apply.
  * @param array          $params   Optional site-specific parameters passed to the query filter.
  * @param string|null    $context  Optional context string passed to every filter.
  * @param string         $output   Output format: 'html' (default) or 'objects' (the top-level WP_Term[]).
  *
- * @return string|WP_Term[]        HTML markup for the terms container or array of term objects.
+ * @return string|WP_Term[] HTML markup for the terms container or array of term objects.
  */
 function plura_wp_terms(
 	string|array $taxonomy = 'category',
@@ -155,7 +146,7 @@ function plura_wp_terms(
 	?string $context = null,
 
 	// Return type
-	string $output = 'html'
+	string $output = 'html',
 ): string|array {
 	$tree = ($depth !== 1);
 
@@ -171,19 +162,19 @@ function plura_wp_terms(
 			orderby: $orderby,
 			parent: $tree ? null : $parent,
 			params: $params,
-			taxonomy: $taxonomy
+			taxonomy: $taxonomy,
 		)->terms ?: [];
 	}
 
 	// Kept whole so each item can nest its children from it
 	$pool = $terms;
 
-	if (! is_null($parent)) {
+	if (!is_null($parent)) {
 		$terms = array_filter($terms, fn($term) => $term->parent === $parent);
 	} elseif ($tree) {
 		// Terms whose parent isn't listed start the tree, as orphans do in WordPress's Walker
 		$listed = wp_list_pluck($pool, 'term_id');
-		$terms  = array_filter($terms, fn($term) => ! in_array($term->parent, $listed, true));
+		$terms = array_filter($terms, fn($term) => !in_array($term->parent, $listed, true));
 	}
 
 	$terms = array_values($terms);
@@ -196,7 +187,7 @@ function plura_wp_terms(
 		return $terms;
 	}
 
-	if (! $terms) {
+	if (!$terms) {
 		return '';
 	}
 
@@ -208,13 +199,13 @@ function plura_wp_terms(
 			index: $index,
 			link: $link,
 			term: $term,
-			terms: $tree ? $pool : null
+			terms: $tree ? $pool : null,
 		),
 		$terms,
-		array_keys($terms)
+		array_keys($terms),
 	);
 
-	if (! $wrap) {
+	if (!$wrap) {
 		return implode('', $html);
 	}
 
@@ -224,21 +215,21 @@ function plura_wp_terms(
 		'data-taxonomy' => implode(',', array_unique(wp_list_pluck($terms, 'taxonomy'))),
 	];
 
-	if (! empty($class)) {
+	if (!empty($class)) {
 		$atts['class'] = array_merge($atts['class'], plura_explode(' ', $class));
 	}
 
-	if (! empty($label)) {
+	if (!empty($label)) {
 		$atts['data-label'] = $label;
 	}
 
 	$atts['data-link-type'] = $link;
 
-	if (! empty($context)) {
+	if (!empty($context)) {
 		$atts['data-context'] = $context;
 	}
 
-	if (! empty($data)) {
+	if (!empty($data)) {
 		$atts = array_merge_recursive($atts, $data);
 	}
 
@@ -247,7 +238,7 @@ function plura_wp_terms(
 	return sprintf(
 		'<div %s>%s</div>',
 		plura_attributes($atts),
-		implode('', $html)
+		implode('', $html),
 	);
 }
 
@@ -267,19 +258,19 @@ add_shortcode('plura-wp-terms', function ($args) {
 
 		// Query
 		'exclude' => '',
-		'ids' => '',
-		'limit' => -1,
-		'order' => 'ASC',
+		'ids'     => '',
+		'limit'   => -1,
+		'order'   => 'ASC',
 		'orderby' => 'name',
-		'parent' => null,
-		'depth' => 1,
+		'parent'  => null,
+		'depth'   => 1,
 
 		// Display
 		'class' => '',
 		'image' => true,
 		'label' => '',
-		'link' => 0,
-		'wrap' => true,
+		'link'  => 0,
+		'wrap'  => true,
 
 		// Filter / scope
 		'context' => null,
@@ -299,7 +290,7 @@ add_shortcode('plura-wp-terms', function ($args) {
 	if ($atts['parent'] === 'current') {
 		$object = get_queried_object();
 
-		if (! $object instanceof WP_Term) {
+		if (!$object instanceof WP_Term) {
 			return '';
 		}
 
@@ -311,8 +302,6 @@ add_shortcode('plura-wp-terms', function ($args) {
 	return plura_wp_terms(...$atts);
 });
 
-
-
 /**
  * Renders a single term as its featured image and title, linked to the term archive.
  *
@@ -320,18 +309,15 @@ add_shortcode('plura-wp-terms', function ($args) {
  * Allows customization of output structure via hooks (`plura_wp_term`, `plura_wp_term_atts`).
  *
  * @param WP_Term|int    $term    A WP_Term object or term ID.
- *
  * @param string         $class   Optional CSS class(es) for the wrapper element.
  * @param bool           $image   Whether to include the featured image. Default true.
  * @param int            $link    Defines how links are applied:
  *                                0 = link the image and title, as one link (default),
  *                                1 = make the wrapper itself the link,
- *                               -1 = disable all links.
+ *                                -1 = disable all links.
  * @param bool           $wrap    Whether to wrap output in a container (or full link if $link === 1).
- *
  * @param int            $depth   Levels to show, counting this term: 1 = no children (default), 0 = all.
  * @param WP_Term[]|null $terms   Terms to find the children in. Default null (queried).
- *
  * @param string|null    $context Optional context tag used for filters.
  * @param int|null       $index   Optional index for the term in a list.
  *
@@ -352,11 +338,11 @@ function plura_wp_term(
 
 	// Filter / scope
 	?string $context = null,
-	?int $index = null
+	?int $index = null,
 ): string {
 	$term = get_term($term);
 
-	if (! $term instanceof WP_Term) {
+	if (!$term instanceof WP_Term) {
 		return '';
 	}
 
@@ -366,7 +352,7 @@ function plura_wp_term(
 		'data-taxonomy' => $term->taxonomy,
 	];
 
-	if (! empty($class)) {
+	if (!empty($class)) {
 		$atts['class'] = array_merge($atts['class'], plura_explode(' ', $class));
 	}
 
@@ -382,7 +368,7 @@ function plura_wp_term(
 
 	$title = plura_wp_title(object: $term, tag: 'span', context: $context);
 
-	if (! empty($title)) {
+	if (!empty($title)) {
 		$content['title'] = $title;
 	}
 
@@ -394,7 +380,7 @@ function plura_wp_term(
 			link: $link,
 			parent: $term->term_id,
 			taxonomy: $term->taxonomy,
-			terms: $terms
+			terms: $terms,
 		);
 
 		if ($children) {
@@ -417,7 +403,7 @@ function plura_wp_term(
 		$html = plura_wp_link(html: $html, target: $term, context: $context);
 	}
 
-	if (! $wrap) {
+	if (!$wrap) {
 		return $html . $children;
 	}
 
@@ -427,30 +413,28 @@ function plura_wp_term(
 		: sprintf('<div %s>%s</div>', plura_attributes($atts), $html . $children);
 }
 
-
-
 /**
  * Renders the featured image (<img>) for a given term.
  *
  * Uses the term's `featured_image` meta, falling back to the featured image of the newest
  * post in the term, so taxonomies without an image field of their own still get one.
  *
- * @param WP_Term|int  $term    The term object or ID.
- * @param string       $size    Image size to retrieve. Defaults to 'large'.
- * @param array        $atts    Additional HTML attributes passed to the image.
- * @param string|null  $context Optional context tag for filters.
+ * @param WP_Term|int $term    The term object or ID.
+ * @param string      $size    Image size to retrieve. Defaults to 'large'.
+ * @param array       $atts    Additional HTML attributes passed to the image.
+ * @param string|null $context Optional context tag for filters.
  *
- * @return string|null          HTML <img> tag or null if no image is found.
+ * @return string|null HTML <img> tag or null if no image is found.
  */
 function plura_wp_term_featured_image(
 	WP_Term|int $term,
 	string $size = 'large',
 	array $atts = [],
-	?string $context = null
+	?string $context = null,
 ): ?string {
 	$term = get_term($term);
 
-	if (! $term instanceof WP_Term) {
+	if (!$term instanceof WP_Term) {
 		return null;
 	}
 
@@ -466,11 +450,11 @@ function plura_wp_term_featured_image(
 	// Read as meta rather than through get_field(): ACF stores an image field's attachment
 	// ID there whatever return format the field is set to
 	$image_id = (int) get_term_meta($term->term_id, 'featured_image', true);
-	$result   = $image_id ? plura_wp_image($image_id, $size, $atts) : null;
+	$result = $image_id ? plura_wp_image($image_id, $size, $atts) : null;
 
 	$post = null;
 
-	if (! $result) {
+	if (!$result) {
 		$post = get_posts([
 			'post_type'      => get_taxonomy($term->taxonomy)->object_type ?? 'any',
 			'posts_per_page' => 1,
@@ -492,17 +476,15 @@ function plura_wp_term_featured_image(
 	return apply_filters('plura_wp_term_featured_image', $result, $term, $size, $atts, $context, $post);
 }
 
-
-
 /**
  * Returns the HTML for a term title or just the plain text.
  *
  * @deprecated 0.12.2 Use plura_wp_title( object: $term ), which adds the plura_wp_title filter, context and linking.
  *
- * @param WP_Term        $term     The term object.
- * @param string|false   $tag      HTML tag to use (e.g. h3). False to return plain text.
+ * @param WP_Term      $term The term object.
+ * @param string|false $tag  HTML tag to use (e.g. h3). False to return plain text.
  *
- * @return string|null             Title HTML or plain text, or null if invalid.
+ * @return string|null Title HTML or plain text, or null if invalid.
  */
 function plura_wp_term_title(WP_Term $term, string|false $tag = 'h3'): ?string
 {
@@ -518,6 +500,6 @@ function plura_wp_term_title(WP_Term $term, string|false $tag = 'h3'): ?string
 		'<%1$s %3$s>%2$s</%1$s>',
 		tag_escape($tag),
 		esc_html($term->name),
-		plura_attributes(['class' => 'plura-wp-term-title'])
+		plura_attributes(['class' => 'plura-wp-term-title']),
 	);
 }

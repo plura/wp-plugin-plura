@@ -11,8 +11,6 @@
  *    		- Title
  */
 
-
-
 /**
  * Enqueue multiple CSS or JS files using absolute paths or pattern-based paths.
  *
@@ -27,14 +25,12 @@
  */
 function plura_wp_enqueue(array $scripts, bool $cache = true, string $prefix = '', bool $admin = true)
 {
-
 	// Exit early if we’re in admin and $admin is false
 	if (!$admin && is_admin()) {
 		return;
 	}
 
 	foreach ($scripts as $path => $options) {
-
 		if (is_int($path)) {
 			$path = $options;
 			$options = [];
@@ -61,8 +57,6 @@ function plura_wp_enqueue(array $scripts, bool $cache = true, string $prefix = '
 	}
 }
 
-
-
 /**
  * Enqueue a single CSS or JS file with optional dependencies and settings.
  *
@@ -84,10 +78,10 @@ function plura_wp_enqueue_asset(string $type, string $file, array $options = [],
 	$slug = sanitize_title(preg_replace('/\.(css|js)$/', '', $base_name));
 
 	$handle = $prefix . ($options['handle'] ?? $slug);
-	$deps   = $options['deps']   ?? [];
-	$media  = $options['media']  ?? 'all';
-	$ver    = $is_external ? false : ($cache ? filemtime($file) : time());
-	$url    = $is_external ? $file : plura_wp_file_url($file);
+	$deps = $options['deps'] ?? [];
+	$media = $options['media'] ?? 'all';
+	$ver = $is_external ? false : ($cache ? filemtime($file) : time());
+	$url = $is_external ? $file : plura_wp_file_url($file);
 
 	if ($type === 'css' && !wp_style_is($handle, 'enqueued')) {
 		wp_enqueue_style($handle, $url, $deps, $ver, $media);
@@ -111,16 +105,13 @@ function plura_wp_enqueue_asset(string $type, string $file, array $options = [],
 	}
 }
 
-
-
-
-
 /**
  * Convert an absolute file path (inside wp-content) to a corresponding URL.
  *
  * Uses WordPress internals to resolve the proper content URL.
  *
  * @param string $file Absolute file path (e.g., __DIR__ . '/js/script.js').
+ *
  * @return string Corresponding URL to be used in wp_enqueue_*.
  */
 function plura_wp_file_url(string $file): string
@@ -139,13 +130,9 @@ function plura_wp_file_url(string $file): string
 	return $file;
 }
 
-
-
-
-
 /**
  * Register REST API endpoint for batch post data retrieval
- * 
+ *
  * Endpoint: GET /pwp/v1/ids?ids=1,2,3
  * Returns: { [id]: { title: string, id: int, url: string } }
  */
@@ -160,18 +147,18 @@ add_action('rest_api_init', function () {
 					return is_string($param) && preg_match('/^\d+(,\d+)*$/', $param);
 				},
 				'sanitize_callback' => 'sanitize_text_field',
-				'description'      => __('Comma-separated list of post IDs', 'plura')
-			]
+				'description'       => __('Comma-separated list of post IDs', 'plura'),
+			],
 		],
-		'permission_callback' => '__return_true'
+		'permission_callback' => '__return_true',
 	]);
 });
-
 
 /**
  * Retrieves post data for specified IDs from REST request
  *
  * @param WP_REST_Request|null $request Optional REST request object containing 'ids' parameter
+ *
  * @return array<int,array{title:string,id:int,url:string}> Associative array of post data keyed by ID
  */
 function plura_wp_ids(?WP_REST_Request $request = null): array
@@ -183,7 +170,7 @@ function plura_wp_ids(?WP_REST_Request $request = null): array
 
 	$ids = array_filter(
 		array_map('intval', explode(',', $request->get_param('ids'))),
-		fn($id) => $id > 0
+		fn($id) => $id > 0,
 	);
 
 	if (empty($ids)) {
@@ -195,7 +182,7 @@ function plura_wp_ids(?WP_REST_Request $request = null): array
 		'post__in'       => $ids,
 		'posts_per_page' => count($ids),
 		'no_found_rows'  => true,
-		'orderby'        => 'post__in'
+		'orderby'        => 'post__in',
 	]);
 
 	if (!$query->have_posts()) {
@@ -207,14 +194,12 @@ function plura_wp_ids(?WP_REST_Request $request = null): array
 		$data[$post->ID] = [
 			'title' => $post->post_title,
 			'id'    => $post->ID,
-			'url'   => get_permalink($post)
+			'url'   => get_permalink($post),
 		];
 	}
 
 	return $data;
 }
-
-
 
 /* Layout: Datetime */
 
@@ -240,7 +225,7 @@ function plura_wp_datetime(
 	?int $id = null,
 	string $source = 'Y-m-d H:i:s',
 	string $tag = 'time',
-	bool $relative = false
+	bool $relative = false,
 ): ?string {
 	// If an ID is provided, get the post date
 	if ($id) {
@@ -285,17 +270,17 @@ function plura_wp_datetime(
 
 	// Build attributes array
 	$atts = [
-		'class' => ['plura-wp-datetime'],
-		'data-date-month' => $datetime->format('F'),
+		'class'                 => ['plura-wp-datetime'],
+		'data-date-month'       => $datetime->format('F'),
 		'data-date-month-short' => $datetime->format('M'),
-		'datetime' => $datetime->format(DateTime::ATOM), // ISO 8601
+		'datetime'              => $datetime->format(DateTime::ATOM), // ISO 8601
 	];
 
 	// Merge additional classes if provided
 	if ($class !== null) {
 		$atts['class'] = array_merge(
 			$atts['class'],
-			is_array($class) ? $class : preg_split('/\s+/', trim($class))
+			is_array($class) ? $class : preg_split('/\s+/', trim($class)),
 		);
 	}
 
@@ -303,19 +288,19 @@ function plura_wp_datetime(
 		'<%1$s %2$s>%3$s</%1$s>',
 		$tag,
 		plura_attributes($atts),
-		$display
+		$display,
 	);
 }
 
 add_shortcode('plura-wp-datetime', function ($args) {
 	$atts = shortcode_atts([
-		'date' => null,       // Date string or timestamp
-		'class' => null,      // Optional CSS class
-		'format' => 'l, F jS, Y g:i A',
-		'id' => null,         // Optional post ID
-		'source' => 'Y-m-d H:i:s',
-		'tag' => 'time',      // HTML wrapper tag
-		'relative' => false   // Use relative time format (e.g., "3 days ago")
+		'date'     => null,       // Date string or timestamp
+		'class'    => null,      // Optional CSS class
+		'format'   => 'l, F jS, Y g:i A',
+		'id'       => null,         // Optional post ID
+		'source'   => 'Y-m-d H:i:s',
+		'tag'      => 'time',      // HTML wrapper tag
+		'relative' => false,   // Use relative time format (e.g., "3 days ago")
 	], $args);
 
 	$atts['id'] = $atts['id'] !== null ? (int) $atts['id'] : null;
@@ -331,8 +316,6 @@ add_shortcode('plura-wp-datetime', function ($args) {
 
 	return plura_wp_datetime(...$atts);
 });
-
-
 
 /**
  * Generates a linked HTML element for WordPress posts, terms, or URLs.
@@ -357,9 +340,9 @@ function plura_wp_link(
 	array $atts = [],
 	bool $rel = false,
 	?string $title = null,
-	?string $context = null
+	?string $context = null,
 ): string {
-	if (! $target) {
+	if (!$target) {
 		return $html;
 	}
 
@@ -371,13 +354,13 @@ function plura_wp_link(
 	if ($target instanceof WP_Post) {
 		$href = get_permalink($target);
 		$link_atts = array_merge($link_atts, [
-			'title' => $title ?? $target->post_title,
+			'title'                          => $title ?? $target->post_title,
 			'data-plura-wp-link-target-type' => 'post',
 		]);
 	} elseif ($target instanceof WP_Term) {
 		$href = get_term_link($target);
 		$link_atts = array_merge($link_atts, [
-			'title' => $title ?? $target->name,
+			'title'                          => $title ?? $target->name,
 			'data-plura-wp-link-target-type' => 'term',
 		]);
 	} elseif (is_string($target) && preg_match('#^https?://#', $target)) {
@@ -390,7 +373,7 @@ function plura_wp_link(
 	}
 
 	$link_atts['href'] = $href;
-	
+
 	// Automatically add target="_blank" for external links (supports subdir installs)
 	$site_parts = parse_url(home_url());
 	$link_parts = parse_url($href);
@@ -409,7 +392,7 @@ function plura_wp_link(
 		$link_atts['target'] = '_blank';
 	}
 	// Merge user-defined attributes first
-	if (! empty($atts)) {
+	if (!empty($atts)) {
 		$link_atts = array_merge_recursive($link_atts, $atts);
 	}
 
@@ -423,8 +406,6 @@ function plura_wp_link(
 	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
 }
 
-
-
 /**
  * Resolves the current date archive's title and permalink from the query vars.
  *
@@ -433,37 +414,37 @@ function plura_wp_link(
  *
  * @return array{0: string, 1: string}|null Title text and archive URL, or null if no year is set.
  */
-function plura_wp_date_archive_title(): ?array {
-	$year  = (int) get_query_var( 'year' );
-	$month = (int) get_query_var( 'monthnum' );
-	$day   = (int) get_query_var( 'day' );
+function plura_wp_date_archive_title(): ?array
+{
+	$year = (int) get_query_var('year');
+	$month = (int) get_query_var('monthnum');
+	$day = (int) get_query_var('day');
 
-	if ( ! $year ) {
+	if (!$year) {
 		return null;
 	}
 
-	if ( $day ) {
+	if ($day) {
 		return [
-			date_i18n( get_option( 'date_format' ), mktime( 0, 0, 0, $month, $day, $year ) ),
-			get_day_link( $year, $month, $day ),
+			date_i18n(get_option('date_format'), mktime(0, 0, 0, $month, $day, $year)),
+			get_day_link($year, $month, $day),
 		];
 	}
 
 	// Month/year formats stay in the 'default' textdomain on purpose, so they
 	// pick up WordPress core's existing translations instead of needing our own.
-	if ( $month ) {
+	if ($month) {
 		return [
-			date_i18n( _x( 'F Y', 'monthly archives date format' ), mktime( 0, 0, 0, $month, 1, $year ) ),
-			get_month_link( $year, $month ),
+			date_i18n(_x('F Y', 'monthly archives date format'), mktime(0, 0, 0, $month, 1, $year)),
+			get_month_link($year, $month),
 		];
 	}
 
 	return [
-		date_i18n( _x( 'Y', 'yearly archives date format' ), mktime( 0, 0, 0, 1, 1, $year ) ),
-		get_year_link( $year ),
+		date_i18n(_x('Y', 'yearly archives date format'), mktime(0, 0, 0, 1, 1, $year)),
+		get_year_link($year),
 	];
 }
-
 
 /**
  * Returns a title (post, term, or archive) as plain text or wrapped in HTML.
@@ -475,108 +456,100 @@ function plura_wp_date_archive_title(): ?array {
  *
  * @param WP_Post|WP_Term|WP_Post_Type|WP_User|int|null $object  Optional. Post, term, post type or user object,
  *                                                               or a post ID. Default null (resolve from the request).
+ * @param string|false                                  $tag     Optional. HTML tag to wrap the title in. Default 'h3'.
+ *                                                               Pass false to return plain text only.
+ * @param bool                                          $link    Optional. Whether to wrap the title in a link to the post, term or archive. Default false.
+ * @param array|string|null                             $class   Optional. Additional CSS classes to add to the tag. Can be string or array. Default null.
+ * @param string|null                                   $context Optional. Filter context for `plura_wp_title`. Default null.
  *
- * @param string|false        $tag      Optional. HTML tag to wrap the title in. Default 'h3'.
- *                                      Pass false to return plain text only.
- * @param bool                $link     Optional. Whether to wrap the title in a link to the post, term or archive. Default false.
- * @param array|string|null   $class    Optional. Additional CSS classes to add to the tag. Can be string or array. Default null.
- *
- * @param string|null         $context  Optional. Filter context for `plura_wp_title`. Default null.
- *
- * @return string|null                  The rendered title HTML or plain string, or null if nothing resolved.
+ * @return string|null The rendered title HTML or plain string, or null if nothing resolved.
  */
 function plura_wp_title(
 	WP_Post|WP_Term|WP_Post_Type|WP_User|int|null $object = null,
 	string|false $tag = 'h3',
 	bool $link = false,
 	array|string|null $class = null,
-	?string $context = null
+	?string $context = null,
 ): ?string {
 	// Only an omitted $object falls back to the request — an ID that resolves to
 	// nothing must stay a miss, not silently become the current page.
-	$from_request = ( $object === null );
+	$from_request = ($object === null);
 
-	if ( is_int( $object ) ) {
-		$object = get_post( $object );
-	} elseif ( $from_request ) {
+	if (is_int($object)) {
+		$object = get_post($object);
+	} elseif ($from_request) {
 		$object = get_queried_object();
 	}
 
 	$target = null;
 
-	if ( $object instanceof WP_Post ) {
-		$type   = 'post';
-		$text   = $object->post_title;
+	if ($object instanceof WP_Post) {
+		$type = 'post';
+		$text = $object->post_title;
 		$target = $object;
-
-	} elseif ( $object instanceof WP_Term ) {
-		$type   = 'term';
-		$text   = $object->name;
+	} elseif ($object instanceof WP_Term) {
+		$type = 'term';
+		$text = $object->name;
 		$target = $object;
-
-	} elseif ( $object instanceof WP_Post_Type ) {
-		$type   = 'post-type';
-		$text   = $object->labels->name;
-		$target = get_post_type_archive_link( $object->name );
-
-	} elseif ( $object instanceof WP_User ) {
-		$type   = 'author';
-		$text   = $object->display_name;
-		$target = get_author_posts_url( $object->ID );
-
-	} elseif ( $from_request && is_date() ) {
+	} elseif ($object instanceof WP_Post_Type) {
+		$type = 'post-type';
+		$text = $object->labels->name;
+		$target = get_post_type_archive_link($object->name);
+	} elseif ($object instanceof WP_User) {
+		$type = 'author';
+		$text = $object->display_name;
+		$target = get_author_posts_url($object->ID);
+	} elseif ($from_request && is_date()) {
 		$date = plura_wp_date_archive_title();
 
-		if ( ! $date ) {
+		if (!$date) {
 			return null;
 		}
 
-		$type              = 'date';
+		$type = 'date';
 		[ $text, $target ] = $date;
-
 	} else {
 		return null;
 	}
 
-	$text = apply_filters( 'plura_wp_title', $text, $object, $context, $type );
+	$text = apply_filters('plura_wp_title', $text, $object, $context, $type);
 
-	if ( empty( $text ) ) {
+	if (empty($text)) {
 		return null;
 	}
 
-	if ( $tag !== false ) {
+	if ($tag !== false) {
 		$classes = [ 'plura-wp-title', "plura-wp-{$type}-title" ];
 
-		if ( $class ) {
+		if ($class) {
 			$classes = array_merge(
 				$classes,
 				array_filter(
-					array_map( 'trim', is_array( $class ) ? $class : explode( ' ', $class ) )
-				)
+					array_map('trim', is_array($class) ? $class : explode(' ', $class)),
+				),
 			);
 		}
 
 		$html = sprintf(
 			'<%1$s %3$s>%2$s</%1$s>',
-			tag_escape( $tag ),
-			esc_html( $text ),
-			plura_attributes([ 'class' => $classes ])
+			tag_escape($tag),
+			esc_html($text),
+			plura_attributes([ 'class' => $classes ]),
 		);
 	} else {
-		$html = esc_html( $text );
+		$html = esc_html($text);
 	}
 
-	if ( $link ) {
+	if ($link) {
 		$html = plura_wp_link(
 			html: $html,
 			target: $target,
-			title: $text
+			title: $text,
 		);
 	}
 
 	return $html;
 }
-
 
 /**
  * Shortcode [plura-wp-title]: renders plura_wp_title().
@@ -591,28 +564,29 @@ function plura_wp_title(
  *
  * @return string|null Title HTML, or null if nothing resolved.
  */
-function plura_wp_title_shortcode( array $atts ): ?string {
+function plura_wp_title_shortcode(array $atts): ?string
+{
 	$atts = shortcode_atts([
 		'object'  => null,
 		'tag'     => 'h3',
 		'link'    => false,
 		'context' => null,
-	], $atts );
+	], $atts);
 
 	// An explicit ID, otherwise null so plura_wp_title() resolves the request itself
-	$object = is_numeric( $atts['object'] ) ? intval( $atts['object'] ) : null;
+	$object = is_numeric($atts['object']) ? intval($atts['object']) : null;
 
-	$link    = filter_var( $atts['link'], FILTER_VALIDATE_BOOLEAN );
+	$link = filter_var($atts['link'], FILTER_VALIDATE_BOOLEAN);
 	$context = $atts['context'] ?: null;
 
-	$tag = strtolower( trim( $atts['tag'] ) );
-	$tag = in_array( $tag, ['false', '0', ''], true ) ? false : $tag;
+	$tag = strtolower(trim($atts['tag']));
+	$tag = in_array($tag, ['false', '0', ''], true) ? false : $tag;
 
 	return plura_wp_title(
 		object: $object,
 		tag: $tag,
 		link: $link,
-		context: $context
+		context: $context,
 	);
 }
-add_shortcode( 'plura-wp-title', 'plura_wp_title_shortcode' );
+add_shortcode('plura-wp-title', 'plura_wp_title_shortcode');

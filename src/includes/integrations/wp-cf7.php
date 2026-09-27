@@ -1,12 +1,9 @@
 <?php
 
-
-//https://developers.google.com/apps-script/guides/v8-runtime
-
+// https://developers.google.com/apps-script/guides/v8-runtime
 
 /* FIX: CF7 Breaking Spaces */
 add_filter('wpcf7_autop_or_not', '__return_false');
-
 
 /**
  * Send payload to a Google Apps Script endpoint.
@@ -15,17 +12,18 @@ add_filter('wpcf7_autop_or_not', '__return_false');
  *   https://script.google.com/macros/s/{ID}/exec
  * Adds `_referrer` automatically.
  *
- * @param string $endpoint  GAS Web App URL OR script ID.
- * @param array  $payload   Key-value data to send (JSON-encoded; arrays preserved).
- * @param bool   $blocking  If true, wait for response (default: false).
- * @param int    $timeout   Request timeout in seconds (default: 4).
- * @return array|\WP_Error  Response from wp_remote_post() or WP_Error (when blocking and fails).
+ * @param string $endpoint GAS Web App URL OR script ID.
+ * @param array  $payload  Key-value data to send (JSON-encoded; arrays preserved).
+ * @param bool   $blocking If true, wait for response (default: false).
+ * @param int    $timeout  Request timeout in seconds (default: 4).
+ *
+ * @return array|\WP_Error Response from wp_remote_post() or WP_Error (when blocking and fails).
  */
 function plura_to_sheets(
 	string $endpoint,
 	array $payload,
 	bool $blocking = false,
-	int $timeout = 4
+	int $timeout = 4,
 ) {
 	$endpoint = trim($endpoint);
 	if ($endpoint === '') {
@@ -63,7 +61,6 @@ function plura_to_sheets(
 	return $response;
 }
 
-
 /**
  * Register a CF7 hook to forward submissions to Google Sheets.
  *
@@ -77,49 +74,56 @@ function plura_to_sheets(
  * @param string $endpoint Global GAS endpoint (URL or script ID).
  * @param array  $forms    List of form configs. Each entry:
  *                         [
- *                           'id'        => '101',             // optional: numeric post ID
- *                           'hash'      => '79d97e5',         // optional: 7-char shortcode hash
- *                           'title'     => 'My Form',         // optional: form title
- *                           'whitelist' => ['field-1', ...],  // optional (strict mode if non-empty)
- *                           'blacklist' => ['_url', ...],     // optional (only used when no whitelist)
- *                           'endpoint'  => 'AKfycbw...'       // optional per-form override
+ *                         'id'        => '101',             // optional: numeric post ID
+ *                         'hash'      => '79d97e5',         // optional: 7-char shortcode hash
+ *                         'title'     => 'My Form',         // optional: form title
+ *                         'whitelist' => ['field-1', ...],  // optional (strict mode if non-empty)
+ *                         'blacklist' => ['_url', ...],     // optional (only used when no whitelist)
+ *                         'endpoint'  => 'AKfycbw...'       // optional per-form override
  *                         ]
- * @param bool  $blocking  If true, block until response (default: false).
- * @param int   $timeout   Timeout in seconds (default: 4).
+ * @param bool   $blocking If true, block until response (default: false).
+ * @param int    $timeout  Timeout in seconds (default: 4).
+ *
  * @return void
  */
 function plura_cf7_to_sheets(
 	string $endpoint,
 	array $forms,
 	bool $blocking = false,
-	int $timeout = 4
+	int $timeout = 4,
 ): void {
 	add_action('wpcf7_mail_sent', function ($contact_form) use ($endpoint, $forms, $blocking, $timeout) {
-		if (!$contact_form) return;
+		if (!$contact_form) {
+			return;
+		}
 
 		$submission = WPCF7_Submission::get_instance();
-		if (!$submission) return;
+		if (!$submission) {
+			return;
+		}
 
 		// Current form identifiers (hash sliced to 7 chars to match shortcode)
 		$current = [
-			'id'    => method_exists($contact_form, 'id')    ? (string) $contact_form->id()      : '',
-			'hash'  => method_exists($contact_form, 'hash')  ? (string) $contact_form->hash(7)   : '',
-			'title' => method_exists($contact_form, 'title') ? (string) $contact_form->title()    : '',
+			'id'    => method_exists($contact_form, 'id') ? (string) $contact_form->id() : '',
+			'hash'  => method_exists($contact_form, 'hash') ? (string) $contact_form->hash(7) : '',
+			'title' => method_exists($contact_form, 'title') ? (string) $contact_form->title() : '',
 		];
 
 		$post_data = $submission->get_posted_data();
 
 		foreach ($forms as $entry) {
-			$want_id    = isset($entry['id'])    ? (string) $entry['id']    : '';
-			$want_hash  = isset($entry['hash'])  ? (string) $entry['hash']  : '';
+			$want_id = isset($entry['id']) ? (string) $entry['id'] : '';
+			$want_hash = isset($entry['hash']) ? (string) $entry['hash'] : '';
 			$want_title = isset($entry['title']) ? (string) $entry['title'] : '';
 
-			$matched =
-				($want_id    !== '' && $want_id    === $current['id'])   ||
-				($want_hash  !== '' && $want_hash  === $current['hash']) ||
-				($want_title !== '' && $want_title === $current['title']);
+			$matched
+				= ($want_id !== '' && $want_id === $current['id'])
+				|| ($want_hash !== '' && $want_hash === $current['hash'])
+				|| ($want_title !== '' && $want_title === $current['title']);
 
-			if (!$matched) continue;
+			if (!$matched) {
+				continue;
+			}
 
 			$whitelist = $entry['whitelist'] ?? null;
 			$blacklist = $entry['blacklist'] ?? [];
@@ -130,10 +134,12 @@ function plura_cf7_to_sheets(
 				$keys = $whitelist;
 			} else {
 				// Open mode: gather all user fields except CF7 internals and blacklist
-				$blk  = is_array($blacklist) ? array_fill_keys($blacklist, true) : [];
+				$blk = is_array($blacklist) ? array_fill_keys($blacklist, true) : [];
 				$keys = [];
 				foreach ($post_data as $key => $_) {
-					if ($key === '' || $key[0] === '_' || isset($blk[$key])) continue;
+					if ($key === '' || $key[0] === '_' || isset($blk[$key])) {
+						continue;
+					}
 					$keys[] = $key; // preserves CF7's insertion order
 				}
 			}
@@ -151,7 +157,9 @@ function plura_cf7_to_sheets(
 					? $key
 					: (array_key_exists($key . '[]', $post_data) ? $key . '[]' : null);
 
-				if ($sourceKey === null) continue;
+				if ($sourceKey === null) {
+					continue;
+				}
 
 				$val = $post_data[$sourceKey];
 
@@ -170,12 +178,10 @@ function plura_cf7_to_sheets(
 				endpoint: $form_endpoint,
 				payload: $payload,
 				blocking: $blocking,
-				timeout: $timeout
+				timeout: $timeout,
 			);
 
 			return; // stop after first match
 		}
 	});
 }
-
-

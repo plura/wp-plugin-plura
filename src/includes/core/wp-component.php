@@ -6,11 +6,11 @@
  * This function loads HTML, optionally inlines SVG images, and enqueues associated scripts.
  * It also applies filters to allow overriding the manifest path and data.
  *
- * @param string      $manifest  Path to the manifest JSON file (relative or absolute).
- * @param string      $id        Optional ID to assign to the wrapper element.
- * @param bool        $img2svg   Whether to replace <img> tags with inline SVG sources.
- * @param string|null $context   Optional context string for filters and logic.
- * @param string|null $class     Optional additional CSS class(es) for the wrapper element.
+ * @param string      $manifest Path to the manifest JSON file (relative or absolute).
+ * @param string      $id       Optional ID to assign to the wrapper element.
+ * @param bool        $img2svg  Whether to replace <img> tags with inline SVG sources.
+ * @param string|null $context  Optional context string for filters and logic.
+ * @param string|null $class    Optional additional CSS class(es) for the wrapper element.
  *
  * @return string The rendered HTML output or a comment if errors occur.
  */
@@ -112,14 +112,13 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
 	if ($class) {
 		$attributes['class'] = array_merge(
 			$attributes['class'],
-			array_filter(array_map('trim', explode(' ', $class)))
+			array_filter(array_map('trim', explode(' ', $class))),
 		);
 	}
 
 	// Run do_shortcode to process any shortcodes inside the component HTML
 	return sprintf('<div %s>%s</div>', plura_attributes($attributes), do_shortcode($html));
 }
-
 
 /**
  * Shortcode handler for rendering a Plura WP component.
@@ -128,6 +127,7 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
  * [plura-wp-component manifest="path/to/manifest.json" id="optional-id" img2svg="true" context="optional-context"]
  *
  * @param array $atts Shortcode attributes.
+ *
  * @return string
  */
 add_shortcode('plura-wp-component', function ($atts) {
@@ -144,29 +144,25 @@ add_shortcode('plura-wp-component', function ($atts) {
 		$atts['id'],
 		filter_var($atts['img2svg'], FILTER_VALIDATE_BOOLEAN),
 		$atts['context'] !== null ? (string) $atts['context'] : null,
-		$atts['class'] !== null ? (string) $atts['class'] : null
+		$atts['class'] !== null ? (string) $atts['class'] : null,
 	);
 });
-
-
 
 add_shortcode('plura-wp-component-banner', function ($atts) {
-
 	return plura_wp_component(
 		manifest: __DIR__ . '/../../components/banner/manifest.json',
-		context: 'plura-wp-component-banner'
+		context: 'plura-wp-component-banner',
 	);
 });
-
-
 
 /**
  * Replaces <img> elements referencing local SVG files with inline SVG content.
  *
- * @param string  $html      The HTML content containing <img> tags.
- * @param string  $base_path Optional base path to prepend to relative SVG paths.
- * @param bool    $wrap      Whether to wrap the inline SVG in a div with class 'ph-svg-wrapper'.
- * @return string            The modified HTML with inline SVGs.
+ * @param string $html      The HTML content containing <img> tags.
+ * @param string $base_path Optional base path to prepend to relative SVG paths.
+ * @param bool   $wrap      Whether to wrap the inline SVG in a div with class 'ph-svg-wrapper'.
+ *
+ * @return string The modified HTML with inline SVGs.
  */
 function plura_img2svg(string $html, string $base_path = '', bool $wrap = false): string
 {
@@ -261,13 +257,12 @@ function plura_img2svg(string $html, string $base_path = '', bool $wrap = false)
 	return $dom->saveHTML();
 }
 
-
-
 /**
  * Converts relative paths to absolute URLs in specific HTML tags.
  *
- * @param string $html The input HTML content.
+ * @param string $html     The input HTML content.
  * @param string $base_url The base URL used to convert relative paths.
+ *
  * @return string The HTML with updated absolute paths.
  */
 function plura_rel2url(string $html, string $base_url): string
@@ -288,7 +283,9 @@ function plura_rel2url(string $html, string $base_url): string
 		$elements = $dom->getElementsByTagName($tag);
 		foreach ($elements as $el) {
 			foreach ($attrs as $attr) {
-				if (!$el->hasAttribute($attr)) continue;
+				if (!$el->hasAttribute($attr)) {
+					continue;
+				}
 
 				$original = $el->getAttribute($attr);
 

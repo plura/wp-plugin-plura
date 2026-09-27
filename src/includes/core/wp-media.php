@@ -8,8 +8,6 @@
  *	. Thumbnail
  */
 
-
-
 /**
  * Returns image data array for a given attachment ID or object.
  *
@@ -19,19 +17,20 @@
  *
  * @param int|WP_Post $attachment Image ID or post object.
  * @param string      $size       Image size to retrieve (ignored for SVGs).
- * @return array|null             Image data array or null if invalid.
+ *
+ * @return array|null Image data array or null if invalid.
  */
 function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?array
 {
 	$post = get_post($attachment);
 
-	if (! $post || 'attachment' !== $post->post_type || ! wp_attachment_is_image($post->ID)) {
+	if (!$post || 'attachment' !== $post->post_type || !wp_attachment_is_image($post->ID)) {
 		return null;
 	}
 
 	$src_data = wp_get_attachment_image_src($post->ID, $size);
 
-	if (! $src_data) {
+	if (!$src_data) {
 		return null;
 	}
 
@@ -54,7 +53,6 @@ function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?
 	];
 }
 
-
 /**
  * Generates an <img> HTML tag for a given image attachment.
  *
@@ -62,22 +60,22 @@ function plura_wp_image_data(int|WP_Post $attachment, string $size = 'large'): ?
  * Includes srcset, sizes, and loading attributes for responsive rendering.
  * The default class 'plura-wp-image' is always included.
  *
- * @param int|WP_Post     $attachment Attachment ID or WP_Post object. Must be an image.
- * @param string          $size       Image size to retrieve. Defaults to 'large'.
- * @param array           $atts       Optional HTML attributes. 'class' can be a string or an array.
- * @param string|false    $loading    Optional loading strategy (e.g., 'lazy', 'eager'). Use false to disable.
+ * @param int|WP_Post  $attachment Attachment ID or WP_Post object. Must be an image.
+ * @param string       $size       Image size to retrieve. Defaults to 'large'.
+ * @param array        $atts       Optional HTML attributes. 'class' can be a string or an array.
+ * @param string|false $loading    Optional loading strategy (e.g., 'lazy', 'eager'). Use false to disable.
  *
- * @return string|null                HTML <img> tag or null if image is invalid.
+ * @return string|null HTML <img> tag or null if image is invalid.
  */
 function plura_wp_image(
 	int|WP_Post $attachment,
 	string $size = 'large',
 	array $atts = [],
-	string|false $loading = 'lazy'
+	string|false $loading = 'lazy',
 ): ?string {
 	$data = plura_wp_image_data($attachment, $size);
 
-	if (! $data) {
+	if (!$data) {
 		return null;
 	}
 
@@ -94,7 +92,7 @@ function plura_wp_image(
 	// Merge image data into attributes (width/height absent for SVGs)
 	$atts = array_merge(array_filter([
 		'src'    => $data['src'],
-		'width'  => $data['width']  ?? null,
+		'width'  => $data['width'] ?? null,
 		'height' => $data['height'] ?? null,
 		'alt'    => $data['alt'],
 	], fn($v) => $v !== null), $atts);
@@ -114,7 +112,7 @@ function plura_wp_image(
 
 	return sprintf(
 		'<img %s />',
-		plura_attributes($atts)
+		plura_attributes($atts),
 	);
 }
 
@@ -141,14 +139,14 @@ add_shortcode('plura-wp-image', function ($args) {
 
 	$atts['attachment'] = (int) $atts['attachment'];
 
-	if (! $atts['attachment']) {
+	if (!$atts['attachment']) {
 		return '';
 	}
 
 	// Extract known parameters
 	$attachment = $atts['attachment'];
-	$size       = $atts['size'];
-	$loading    = strtolower(trim($atts['loading']));
+	$size = $atts['size'];
+	$loading = strtolower(trim($atts['loading']));
 
 	// Normalize loading value
 	$loading = match ($loading) {
@@ -162,8 +160,6 @@ add_shortcode('plura-wp-image', function ($args) {
 	return plura_wp_image($attachment, $size, $atts, $loading);
 });
 
-
-
 /**
  * Render a gallery of image attachments from explicit IDs and/or a post’s meta/ACF field.
  *
@@ -172,20 +168,16 @@ add_shortcode('plura-wp-image', function ($args) {
  *  2) Explicit attachment IDs from $ids
  *  3) Images returned by the $source_key meta/ACF field on $source
  *
- * @param array<int,int>|null	$ids                     Explicit attachment IDs; null or [] to skip.
- *
- * @param int|WP_Post|null		$source                  Post ID/object to read from; null to skip.
- * @param string|null			$source_key              Meta/ACF field key on $source; null/'' to skip.
- * @param bool					$source_featured_image   Prepend the featured image of $source if available. Default false.
- *
- * @param bool					$unique                  Remove duplicate image IDs. Default true.
- * @param string|null			$class                   Additional CSS class(es) as a space-delimited string.
- *
- * @param string|null			$context                 Optional context string passed to filters.
- *
- * @param string				$item_class              Additional CSS class(es) for each item, space-delimited
- *                                                       (e.g. 'f-carousel__slide', which Fancybox's stylesheet sizes slides by).
- * @param string				$size                    Image size displayed in each item. Default 'large'.
+ * @param array<int,int>|null $ids                   Explicit attachment IDs; null or [] to skip.
+ * @param int|WP_Post|null    $source                Post ID/object to read from; null to skip.
+ * @param string|null         $source_key            Meta/ACF field key on $source; null/'' to skip.
+ * @param bool                $source_featured_image Prepend the featured image of $source if available. Default false.
+ * @param bool                $unique                Remove duplicate image IDs. Default true.
+ * @param string|null         $class                 Additional CSS class(es) as a space-delimited string.
+ * @param string|null         $context               Optional context string passed to filters.
+ * @param string              $item_class            Additional CSS class(es) for each item, space-delimited
+ *                                                   (e.g. 'f-carousel__slide', which Fancybox's stylesheet sizes slides by).
+ * @param string              $size                  Image size displayed in each item. Default 'large'.
  *
  * @return string HTML markup of the rendered gallery, or an empty string if no images found.
  *
@@ -203,7 +195,7 @@ function plura_wp_gallery(
 
 	// Display
 	string $item_class = '',
-	string $size = 'large'
+	string $size = 'large',
 ): string {
 	$items = [];
 	$image_ids = [];
@@ -258,7 +250,7 @@ function plura_wp_gallery(
 	// Step 5: Render gallery HTML
 	$item_atts = ['class' => ['plura-wp-gallery-item']];
 
-	if (! empty($item_class)) {
+	if (!empty($item_class)) {
 		$item_atts['class'] = array_merge($item_atts['class'], plura_explode(' ', $item_class));
 	}
 
@@ -268,7 +260,7 @@ function plura_wp_gallery(
 		$html[] = sprintf(
 			'<div %s>%s</div>',
 			plura_attributes(array_merge($item_atts, ['data-thumb-src' => $thumb['src'] ?? null])),
-			plura_wp_image($id, $size)
+			plura_wp_image($id, $size),
 		);
 	}
 
@@ -282,13 +274,12 @@ function plura_wp_gallery(
 		return sprintf(
 			'<div %s>%s</div>',
 			plura_attributes(['class' => $classes]),
-			implode("\n", $html)
+			implode("\n", $html),
 		);
 	}
 
 	return '';
 }
-
 
 /**
  * Shortcode: [plura-wp-gallery]
@@ -308,15 +299,15 @@ function plura_wp_gallery(
  */
 add_shortcode('plura-wp-gallery', function ($args) {
 	$atts = shortcode_atts([
-		'ids' => null,
-		'source' => null,
-		'source_key' => '',
+		'ids'                   => null,
+		'source'                => null,
+		'source_key'            => '',
 		'source_featured_image' => false,
-		'unique' => true,
-		'class' => '',
-		'context' => null,
-		'item_class' => '',
-		'size' => 'large',
+		'unique'                => true,
+		'class'                 => '',
+		'context'               => null,
+		'item_class'            => '',
+		'size'                  => 'large',
 	], $args, 'plura-wp-gallery');
 
 	// Parse ids (CSV or array)
@@ -344,16 +335,12 @@ add_shortcode('plura-wp-gallery', function ($args) {
 			class: ($atts['class'] !== '') ? $atts['class'] : null,
 			context: $atts['context'] ?: null,
 			item_class: $atts['item_class'],
-			size: $atts['size']
+			size: $atts['size'],
 		);
 	}
 
 	return '';
 });
-
-
-
-
 
 /**
  * Returns the post thumbnail URL and size data for a given post.
@@ -367,7 +354,7 @@ function plura_wp_thumbnail(int|WP_Post $post, string $size = 'large'): array|fa
 {
 	$post = get_post($post);
 
-	if (! $post instanceof WP_Post) {
+	if (!$post instanceof WP_Post) {
 		return false;
 	}
 

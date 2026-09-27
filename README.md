@@ -620,10 +620,10 @@ Adds support for inline Lottie animations via a shortcode.
 
 ## Code style
 
-Formatting is automatic. List formatting-only commits in `.git-blame-ignore-revs`.
+Formatting is automatic. The repo holds only the formatters' config; nothing is installed. List formatting-only commits in `.git-blame-ignore-revs`.
 
-- **PHP** follows [PER Coding Style 3.0](https://www.php-fig.org/per/coding-style/), indented with tabs, with aligned docblock columns and array arrows. [`.php-cs-fixer.dist.php`](.php-cs-fixer.dist.php) applies it: run [`php-cs-fixer fix`](https://cs.symfony.com/) from the repo root before committing.
-- **JS, CSS and JSON** use [Prettier](https://prettier.io/), with tabs, single quotes and 120-character lines ([`.prettierrc.json`](.prettierrc.json)). Run `npm install` once, then `npm run format` before committing. [`.prettierignore`](.prettierignore) lists files left as they are.
+- **PHP** follows [PER Coding Style 3.0](https://www.php-fig.org/per/coding-style/), indented with tabs, with aligned docblock columns and array arrows. [`.php-cs-fixer.dist.php`](.php-cs-fixer.dist.php) applies it: run [`php-cs-fixer fix`](https://cs.symfony.com/) from the repo root.
+- **JS, CSS and JSON** use [Prettier](https://prettier.io/), with tabs, single quotes and 120-character lines ([`.prettierrc.json`](.prettierrc.json)). Run it with `npx prettier@3.9.9 --write "src/**/*.{js,css,json}"` from the repo root. [`.prettierignore`](.prettierignore) lists files left as they are.
 
 PHP docs:
 

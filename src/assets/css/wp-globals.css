@@ -1,9 +1,17 @@
-:root {
-	--plura-wp-gap: 30px;
+/**
+ * Shared styles for the rendering modules: base spacing and columns, posts (wp-posts.php),
+ * breadcrumbs and prev/next (wp-nav.php), and the sticky effect (fx-sticky.js). Also applies two
+ * global resets to the whole site: border-box sizing, and block-level images.
+ */
 
-	/* posts */
+:root {
+	/* Base spacing; the other gaps derive from it */
+	--plura-wp-gap: 30px;
+	/* Space between posts in a list, and the unit for spacing inside them */
 	--plura-wp-posts-gap: var(--plura-wp-gap);
+	/* Not used by the plugin's own rules; available to themes */
 	--plura-wp-post-gap: calc(var(--plura-wp-posts-gap) / 2);
+	/* Columns in a post list: 1, then 2 from 768px, 3 from 991px, 4 from 1200px, 5 from 1600px */
 	--plura-wp-posts-cols: 1;
 }
 
@@ -31,37 +39,24 @@
 	}
 }
 
-/**
- *
- *	. Global
- *	. Modules
- *		- Posts
- *		- Posts Carousel
- *	 	- Post
- *	 	- Post Timeline Datetime
- *		- Terms
- *
- * 
- */
-
+/* Global resets, applied site-wide */
 *,
 *::after,
 *::before {
 	box-sizing: border-box;
 }
 
-/* Globals */
 img {
 	display: block;
 }
 
-/* Elements: Link */
+/* Links inside posts don't box their content, so the post's own layout applies to it */
 .plura-wp-posts .plura-wp-link:not(.plura-wp-post):not(.plura-wp-post-read-more),
 .plura-wp-post .plura-wp-link:not(.plura-wp-post-read-more) {
 	display: contents;
 }
 
-/* Modules: Breadcrumbs */
+/* Breadcrumbs (wp-nav.php): groups stack; crumbs within a group are separated by "/" */
 .plura-wp-breadcrumbs {
 	display: flex;
 	flex-direction: column;
@@ -85,14 +80,14 @@ img {
 	display: block;
 }
 
-/* Modules: Posts */
+/* Post lists (wp-posts.php) */
 .plura-wp-posts {
 	display: grid;
 	grid-template-columns: repeat(var(--plura-wp-posts-cols), 1fr);
 	gap: var(--plura-wp-posts-gap);
 }
 
-/* Modules: Post */
+/* Posts: parts stacked; min-width: 0 lets a post shrink inside the list's grid */
 .plura-wp-post {
 	display: flex;
 	flex-direction: column;
@@ -101,19 +96,19 @@ img {
 	min-width: 0;
 }
 
-/* Post Meta */
+/* Post meta */
 .plura-wp-post-meta {
 	display: flex;
 	flex-direction: column;
 	gap: calc(var(--plura-wp-posts-gap) / 6);
 }
 
-/* fancyapps carousel */
+/* Post carousels (wp-globals.js): Fancybox spaces slides like the list's gap */
 .plura-wp-posts.plura-wp-f-carousel {
 	--f-carousel-spacing: var(--plura-wp-posts-gap);
 }
 
-/* Modules: Post Timeline Datetime */
+/* Post timelines: with both dates, a "-" goes between start and end */
 .plura-wp-post-timeline {
 	display: flex;
 	gap: calc(var(--plura-wp-posts-gap) / 3);
@@ -128,7 +123,7 @@ img {
 	order: 3;
 }
 
-/* Layout: PrevNext */
+/* Prev/next navigation (wp-nav.php): two columns; "next" stays right even without a "prev" */
 .plura-wp-prevnext-nav {
 	--plura-wp-prevnext-nav-gap: 40px;
 	display: flex;
@@ -147,7 +142,7 @@ img {
 	margin-left: auto;
 }
 
-/* FX: Sticky */
+/* Sticky effect (fx-sticky.js): fixed to the bottom, raised by --p-sticky-bottom-pos near its boundary */
 .p-sticky {
 	position: fixed;
 	z-index: auto;

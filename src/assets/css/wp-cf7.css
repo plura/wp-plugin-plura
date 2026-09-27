@@ -1,15 +1,20 @@
+/**
+ * Contact Form 7 (wp-cf7.php): lays out CF7 forms that have the plura-wp-cf7 class as a wrapping
+ * row of fields, using the data attributes wp-cf7.js adds. Add plura-wp-cf7-no-labels to style
+ * forms whose fields have no <label>, and plura-wp-cf7-btn to a radio group to show it as buttons.
+ * Loaded only when CF7 is active.
+ */
+
 :root {
+	/* Fields per row */
 	--plura-globals-wp-form-cols: 1;
+	/* Space between fields, and the unit for their padding */
 	--plura-globals-wp-form-gap: 30px;
+	/* Height of inputs, selects, buttons and radio buttons */
 	--plura-globals-wp-form-obj-h: 40px;
 }
 
-/**
- *	. Globals
- * 	. Others [Radio - Label as Input / Button]
- *	. Multi-Step
- */
-
+/* Fields: full width inside their label or wrapper, which take a column's width */
 .wpcf7
 	:is(
 		form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label:not(.wpcf7-list-item-label),
@@ -24,18 +29,12 @@
 	width: 100%;
 }
 
-.wpcf7 form.plura-wp-cf7 input[type="submit"],
-.wpcf7 :is( 
-	form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label:not(.wpcf7-list-item-label), 
-	form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap
-)/*:is(
-	[data-tag="input"][data-input-type="email"],
-	[data-tag="input"][data-input-type="tel"],
-	[data-tag="input"][data-input-type="text"],
-	[data-tag="textarea"]
-)*/,
-
-
+.wpcf7 form.plura-wp-cf7 input[type='submit'],
+.wpcf7
+	:is(
+		form.plura-wp-cf7:not(.plura-wp-cf7-no-labels) label:not(.wpcf7-list-item-label),
+		form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap
+	),
 .wpcf7 form.plura-wp-cf7.plura-wp-cf7-no-labels .wpcf7-form-control-wrap label.wpcf7-list-item-label {
 	--plura-globals-wp-form-obj-w: calc(
 		(100% - var(--plura-globals-wp-form-gap) * (var(--plura-globals-wp-form-cols) - 1)) /
@@ -44,6 +43,7 @@
 	width: var(--plura-globals-wp-form-obj-w);
 }
 
+/* The form: a wrapping flex row; CF7's <p> wrappers dissolve into it */
 .wpcf7 form.plura-wp-cf7 {
 	display: flex !important;
 	flex-wrap: wrap;
@@ -121,8 +121,7 @@
 	opacity: 0.5;
 }
 
-/* https://markheath.net/post/customize-radio-button-css */
-
+/* Response message and spinner, the spinner shown only while submitting */
 .wpcf7 form.plura-wp-cf7 .wpcf7-response-output:not(:empty) {
 	align-items: center;
 	display: flex !important;
@@ -143,7 +142,12 @@
 	display: none;
 }
 
-/* Form: Others [Radio - Label as Input / Button] */
+/*
+ * Radio buttons (.plura-wp-cf7-btn): each option's label becomes a button and the input is hidden.
+ * Colours come from --plura-globals-colors-secondary and -primary (checked), which only base.css
+ * defines; it isn't loaded, so the theme has to define them.
+ * Technique: https://markheath.net/post/customize-radio-button-css
+ */
 .wpcf7 form.plura-wp-cf7 .wpcf7-radio.plura-wp-cf7-btn {
 	--n: 2;
 	gap: var(--plura-globals-wp-form-gap);
@@ -191,9 +195,7 @@
 	padding: var(--plura-globals-wp-form-gap);
 }
 
-/* Form: fieldset [multi-step] */
-
-/* use the same flex settings as the defaul form */
+/* Multi-step forms (the CF7 Multi-Step Forms plugin): each step lays out like the form itself */
 .wpcf7 form.plura-wp-cf7.cf7mls fieldset.fieldset-cf7mls {
 	display: flex;
 	flex-wrap: wrap;
@@ -201,7 +203,7 @@
 	justify-content: space-between;
 }
 
-/* use the same width settings as the default form */
+/* Back / next / submit: two per row */
 .wpcf7
 	form.plura-wp-cf7.cf7mls
 	fieldset.fieldset-cf7mls

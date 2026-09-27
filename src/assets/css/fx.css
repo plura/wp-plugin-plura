@@ -1,4 +1,9 @@
-/* Text Toggle */
+/**
+ * Effects (fx-*.js): text toggle and infinite scroll. Their scripts set the custom properties used
+ * here. The sticky effect's rules are in wp-globals.css.
+ */
+
+/* Text toggle: the hidden part opens to --max-height, its height as measured by the script */
 .plura-fx-text-toggle-part-hidden {
 	overflow: hidden;
 	max-height: 0;
@@ -9,32 +14,29 @@
 	max-height: var(--max-height);
 }
 
-/* Infinite Scroll */
+/* Infinite scroll: the script sizes the container to the item and moves the track by --pos */
 .plura-fx-infinitescroll-container {
 	overflow: hidden;
 	position: relative;
 	width: 100%;
-	height: var(--plura-fx-infinitescroll-height); /* Dynamic height */
+	height: var(--plura-fx-infinitescroll-height);
 }
 
 .plura-fx-infinitescroll-track {
 	position: absolute;
 	top: 0;
-	left: var(--plura-fx-infinitescroll-pos); /* Track movement control */
+	left: var(--plura-fx-infinitescroll-pos);
 	display: flex;
 	white-space: nowrap;
 }
 
+/* Each of the two copies is placed on its own, so one can jump ahead while the other scrolls */
 .plura-fx-infinitescroll-wrapper {
-	position: absolute; /* Allow wrappers to be repositioned independently */
+	position: absolute;
 	display: flex;
 }
 
 .plura-fx-infinitescroll-item {
 	display: inline-block;
-	white-space: nowrap; /* Prevents line breaks in items */
-}
-
-.plura-fx-infinitescroll-target {
-	/* Specific styles for the target element if needed */
+	white-space: nowrap;
 }

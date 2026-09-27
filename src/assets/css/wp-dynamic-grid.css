@@ -1,20 +1,22 @@
 /**
- *	. Core
- *	. Filter
- *		. Filter Item Tag
- *	. Grid
- *		- Grid Items
- *		- Grid Item
- * 
+ * Dynamic grid (wp-dynamic-grid.php): the filters, and a grid whose posts wp-dynamic-grid.js places
+ * absolutely, from the --grid-*, --x and --y properties it sets, so they animate when filtered.
  */
 
 :root {
+	/* Space between the filters and the grid */
 	--plura-wp-dynamic-grid-gap: 15px;
+	/* Space between tag filters */
 	--plura-wp-dynamic-grid-filter-gap: var(--plura-wp-dynamic-grid-gap);
+	/* Tag filter padding: this vertically, twice this horizontally */
 	--plura-wp-dynamic-grid-filter-pad: 3px;
+	/* Space between tiles */
 	--plura-wp-dynamic-grid-items-gap: var(--plura-wp-dynamic-grid-gap);
+	/* Tile padding */
 	--plura-wp-dynamic-grid-item-gap: 20px;
+	/* Tile aspect ratio. Currently has no effect: the Grid items rules below end with 9 / 10 */
 	--plura-wp-dynamic-grid-item-ratio: 1 / 1;
+	/* Tile image aspect ratio. Currently has no effect: see the last rule */
 	--plura-wp-dynamic-grid-item-img-ratio: 16 / 9;
 }
 
@@ -25,14 +27,14 @@
 	}
 }
 
-/* Core */
+/* Wrapper: filters above the grid */
 .plura-wp-dynamic-grid {
 	display: flex;
 	flex-direction: column;
 	gap: var(--plura-wp-dynamic-grid-gap);
 }
 
-/* Filter Item: Tag */
+/* Tag filters: .on marks the selected ones */
 .plura-wp-dynamic-grid .plura-wp-dynamic-grid-filter .plura-wp-dynamic-grid-filter-group[data-filter-type='tag'] {
 	display: flex;
 	flex-wrap: wrap;
@@ -56,7 +58,11 @@
 	opacity: 1;
 }
 
-/* Grid: Grid Items */
+/*
+ * Grid items: tile width (--w) and height (--h) follow from the grid width, columns and gap, and the
+ * grid's own height from --grid-rows, since its absolutely placed tiles don't give it one. --s is
+ * the animation length.
+ */
 .plura-wp-dynamic-grid .plura-wp-dynamic-grid-items {
 	--s: 1s;
 	--grid-gap: var(--plura-wp-dynamic-grid-items-gap);
@@ -69,10 +75,12 @@
 	transition: height var(--s) ease-out;
 }
 
-/* Grid: Grid Item */
+/* Overrides the ratio set from --plura-wp-dynamic-grid-item-ratio above */
 .plura-wp-dynamic-grid .plura-wp-dynamic-grid-items {
 	--grid-item-ratio: 9 / 10;
 }
+
+/* Tiles: hidden until wp-dynamic-grid.js marks them .on, then moved into place by --x and --y */
 
 .plura-wp-dynamic-grid .plura-wp-dynamic-grid-items .plura-wp-post {
 	aspect-ratio: var(--grid-item-ratio);
@@ -98,6 +106,7 @@
 	transition-delay: 0s;
 }
 
+/* Matches nothing: featured images carry .plura-wp-post-featured-image */
 .plura-wp-dynamic-grid .plura-wp-dynamic-grid-items .plura-wp-post .plura-wp-post-featured-img {
 	aspect-ratio: var(--plura-wp-dynamic-grid-item-img-ratio);
 	object-fit: cover;

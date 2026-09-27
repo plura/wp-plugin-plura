@@ -1,3 +1,9 @@
+/**
+ * Theme layout: the width of the theme's content column, which components (e.g. the banner) use to
+ * line their content up with the theme's. Override it in the theme to match.
+ */
+
 :root {
+	/* Width of the theme's content column */
 	--plura-wp-globals-theme-width: min(80%, 1080px);
 }

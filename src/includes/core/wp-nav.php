@@ -629,11 +629,6 @@ add_shortcode('plura-wp-nav-list', function ($args) {
 
 		$html = [];
 
-		if (!empty($args['class'])) {
-
-			$classes = array_merge($classes, explode(',', $args['class']));
-		}
-
 
 		if ($args['list']) {
 

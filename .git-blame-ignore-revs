@@ -6,3 +6,6 @@ d4c5c03807e8c4d1d0e7d05dd6237d03e4dd6dd1
 
 # style: no spaces inside array brackets
 eb9ac3249d936a976cdb4466ff0e21e0947bf0ed
+
+# style: apply Prettier to JS, CSS and JSON
+81d2f643e8e2ee98e03ca879258a0892cb0ecd98

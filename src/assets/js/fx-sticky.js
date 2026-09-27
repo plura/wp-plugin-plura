@@ -28,8 +28,6 @@ function plura_fx_sticky({ bottom, target, top }) {
 	};
 
 	const updateStickyPosition = () => {
-		const targetRect = target.getBoundingClientRect();
-
 		if (top) handleBoundary(top, 'top');
 		if (bottom) handleBoundary(bottom, 'bottom');
 	};

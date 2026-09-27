@@ -70,8 +70,6 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 			target.classList.remove(clss);
 		}
 
-		console.log('[PluraWPDynamicGrid] Fetching:', url.toString());
-
 		fetch(url)
 			.then((res) => (res.ok ? res.json() : Promise.reject(res)))
 			.then((data) => refresh(data))
@@ -98,8 +96,6 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 
 		let n = b.find((bp) => w >= (bp.min || 0) && w < (bp.max || Infinity))?.cols;
 		grid_cols = n || 2;
-
-		console.log('[PluraWPDynamicGrid] Window:', w, 'Cols:', grid_cols);
 
 		// Set width and column count as CSS variables
 		Object.entries({

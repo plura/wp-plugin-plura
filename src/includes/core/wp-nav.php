@@ -430,6 +430,13 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 			$return = [];
 
 			foreach ($crumbs as $group) {
+				// Filter callbacks may add a post ID, post, term or plain label instead of a crumb array;
+				// null is an ancestor that no longer exists. Resolved first so is-current lands on a real crumb.
+				$group = array_values(array_filter(array_map(
+					fn($crumb) => is_array($crumb) || $crumb === null ? $crumb : plura_wp_breadcrumb($crumb),
+					$group,
+				)));
+
 				$g = [];
 
 				foreach ($group as $i => $crumb) {
@@ -439,16 +446,9 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 						$classes[] = 'is-current';
 					}
 
-					if (!is_array($crumb)) {
-						$c = plura_wp_breadcrumb($crumb);
-						if (!$c) {
-							continue;
-						}
-					}
-
 					$c = plura_wp_link(
 						html: $crumb['name'],
-						target: $crumb['obj'],
+						target: $crumb['obj'] ?? null,
 						atts: ['class' => 'plura-wp-breadcrumb-link'],
 					);
 

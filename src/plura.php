@@ -51,14 +51,13 @@ function plura_includes(array $modules, string $dir, bool $admin = false): void
 $plura_modules = [
 
 	'includes/core/core',
-	'includes/core/navwalker',
 	'includes/core/p',
 	'includes/core/wp',
 	'includes/core/wp-component',
 	'includes/core/wp-dynamic-grid',
 	'includes/core/wp-media',
+	'includes/core/wp-nav',
 	'includes/core/wp-posts',
-	'includes/core/wp-prevnext',
 	'includes/core/wp-restricted',
 	'includes/core/wp-terms',
 

@@ -7,7 +7,7 @@
  *    		- IDs
  *    	. Layout
  *    		- Datetime
- *     		- Nav List
+ *    		- Link
  */
 
 
@@ -421,79 +421,3 @@ function plura_wp_link(
 
 	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
 }
-
-
-
-
-
-/* Layout: Nav List */
-add_shortcode('plura-wp-nav-list', function ($args) {
-
-	$args = shortcode_atts(['id' => '', 'class' => '', 'rel' => '', 'list' => 1, 'drop' => 1], $args);
-
-	if (has_filter('pwp_nav_list')) {
-
-		$id = apply_filters('pwp_nav_list', $args['rel']);
-	}
-
-	if (isset($id) || !empty($args['id'])) {
-
-		$data = '';
-
-		$html = [];
-
-		if (!empty($args['class'])) {
-
-			$classes = array_merge($classes, explode(',', $args['class']));
-		}
-
-
-		if ($args['list']) {
-
-			$classes = ['menu', 'list'];
-
-			$html[] = wp_nav_menu([
-
-				'echo'          => 0,
-				'items_wrap'	=> '<ul id="%1$s" class="%2$s">%3$s</ul>',
-				'menu'          => isset($id) ? $id : $args['id'],
-				'menu_class'    => implode(' ', $classes)
-
-			]);
-		}
-
-		if ($args['drop']) {
-
-			$classes = ['menu', 'drop'];
-
-			$html[] = wp_nav_menu([
-
-				'echo'          => 0,
-				'items_wrap'	=> '<select class="%2$s">%3$s</select>',
-				'menu'          => isset($id) ? $id : $args['id'],
-				'menu_class'    => implode(' ', $classes),
-				'walker'		=> new P_Walker_Nav_Menu_Dropdown()
-
-			]);
-		}
-
-		if (!empty($html)) {
-
-			$classes = ['plura-wp-nav-list'];
-
-			if (!empty($args['class'])) {
-
-				$classes = array_merge($classes, explode(',', $args['class']));
-			}
-
-			$atts = ['class' => implode(' ', $classes)];
-
-			if (!empty($args['rel'])) {
-
-				$atts['data-rel'] = $args['rel'];
-			}
-
-			return "<div " . plura_attributes($atts) . ">" . implode('', $html) . "</div>";
-		}
-	}
-});

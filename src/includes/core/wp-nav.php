@@ -6,6 +6,8 @@
  * 	- plura_wp_traverse_nav_block	- traverse nav block for 'current', 'prev' and 'next items'
  * 	- plura_wp_breadcrumbs_nav 			- get nav breadcrumbs
  * 	- plura_wp_breadcrumbs_nav_html		- get nav breadcrumbs html
+ * 	- P_Walker_Nav_Menu_Dropdown		- menu walker rendering <option> items
+ * 	- [plura-wp-nav-list]				- menu as a list and/or <select>
  */
 
 
@@ -327,3 +329,127 @@ function plura_wp_breadcrumbs_nav_html(
         implode('', $crumbs_html)
     );
 }
+
+
+
+
+//https://wordpress.stackexchange.com/a/27498
+//https://www.billerickson.net/code/wordpress-menu-as-select-dropdown/
+
+
+class P_Walker_Nav_Menu_Dropdown extends Walker_Nav_Menu {
+
+    // don't output children opening tag (`<ul>`)
+    public function start_lvl(&$output, $depth = 0, $args = NULL){}
+
+	// don't output children closing tag    
+	public function end_lvl(&$output, $depth = 0, $args = NULL){}
+
+	public function start_el(&$output, $data_object, $depth = 0, $args = NULL, $current_object_id = 0){
+
+		// add spacing to the title based on the current depth
+		$data_object->title = str_repeat("&nbsp;", $depth * 4) . $data_object->title;
+
+		// call the prototype and replace the <li> tag
+		// from the generated markup... 
+		parent::start_el($output, $data_object, $depth, $args);
+
+
+		$val = "<option value=\"" . $data_object->object_id . "\"";
+
+
+		if( $data_object->current ) {
+
+			$output = str_replace('<li', $val . ' selected', $output);
+
+		} else {
+
+			$output = str_replace('<li', $val, $output);
+
+		}      
+
+    }
+
+    // replace closing </li> with the closing option tag
+    public function end_el(&$output, $data_object, $depth = 0, $args = NULL) {
+
+		$output .= "</option>\n";
+    
+    }
+
+}
+
+
+
+
+/* Layout: Nav List */
+add_shortcode('plura-wp-nav-list', function ($args) {
+
+	$args = shortcode_atts(['id' => '', 'class' => '', 'rel' => '', 'list' => 1, 'drop' => 1], $args);
+
+	if (has_filter('pwp_nav_list')) {
+
+		$id = apply_filters('pwp_nav_list', $args['rel']);
+	}
+
+	if (isset($id) || !empty($args['id'])) {
+
+		$data = '';
+
+		$html = [];
+
+		if (!empty($args['class'])) {
+
+			$classes = array_merge($classes, explode(',', $args['class']));
+		}
+
+
+		if ($args['list']) {
+
+			$classes = ['menu', 'list'];
+
+			$html[] = wp_nav_menu([
+
+				'echo'          => 0,
+				'items_wrap'	=> '<ul id="%1$s" class="%2$s">%3$s</ul>',
+				'menu'          => isset($id) ? $id : $args['id'],
+				'menu_class'    => implode(' ', $classes)
+
+			]);
+		}
+
+		if ($args['drop']) {
+
+			$classes = ['menu', 'drop'];
+
+			$html[] = wp_nav_menu([
+
+				'echo'          => 0,
+				'items_wrap'	=> '<select class="%2$s">%3$s</select>',
+				'menu'          => isset($id) ? $id : $args['id'],
+				'menu_class'    => implode(' ', $classes),
+				'walker'		=> new P_Walker_Nav_Menu_Dropdown()
+
+			]);
+		}
+
+		if (!empty($html)) {
+
+			$classes = ['plura-wp-nav-list'];
+
+			if (!empty($args['class'])) {
+
+				$classes = array_merge($classes, explode(',', $args['class']));
+			}
+
+			$atts = ['class' => implode(' ', $classes)];
+
+			if (!empty($args['rel'])) {
+
+				$atts['data-rel'] = $args['rel'];
+			}
+
+			return "<div " . plura_attributes($atts) . ">" . implode('', $html) . "</div>";
+		}
+	}
+});

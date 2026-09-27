@@ -1,0 +1,11 @@
+# Editor side of .php-cs-fixer.dist.php. Line endings are left to git.
+root = true
+
+[*]
+charset = utf-8
+indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false

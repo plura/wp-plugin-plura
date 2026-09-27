@@ -1,14 +1,8 @@
 <?php
 
 /**
- * 		. Utils
- *		 	- Enqueue
- *    	. REST
- *    		- IDs
- *    	. Layout
- *    		- Datetime
- *    		- Link
- *    		- Title
+ * Shared WordPress building blocks: asset enqueueing, the /pwp/v1/ids REST endpoint, and the
+ * datetime, link and title renderers the other modules build on.
  */
 
 /**
@@ -22,6 +16,8 @@
  * @param bool   $cache   Whether to use filemtime for cache busting (true) or false to use timestamp on each load.
  * @param string $prefix  String to prefix each handle with.
  * @param bool   $admin   Whether to enqueue assets in the admin area (default: true).
+ *
+ * @return void
  */
 function plura_wp_enqueue(array $scripts, bool $cache = true, string $prefix = '', bool $admin = true)
 {
@@ -69,6 +65,8 @@ function plura_wp_enqueue(array $scripts, bool $cache = true, string $prefix = '
  *                        - 'module' => true to add type="module" to the script tag
  * @param bool   $cache   Whether to use filemtime for version (true) or time() (false).
  * @param string $prefix  Optional prefix for auto-generated handles.
+ *
+ * @return void
  */
 function plura_wp_enqueue_asset(string $type, string $file, array $options = [], bool $cache = true, string $prefix = '')
 {
@@ -201,10 +199,8 @@ function plura_wp_ids(?WP_REST_Request $request = null): array
 	return $data;
 }
 
-/* Layout: Datetime */
-
 /**
- * Formats and outputs a datetime with HTML attributes.
+ * Formats a datetime and returns it wrapped in a tag with HTML attributes.
  *
  * Supports localization, HTML customization, and optional relative time formatting.
  *
@@ -257,6 +253,12 @@ function plura_wp_datetime(
 	if ($relative) {
 		$diff = human_time_diff($timestamp, time());
 
+		/**
+		 * Filters the suffix of a relative date: plura_datetime_suffix_past ("ago") or
+		 * plura_datetime_suffix_future ("from now").
+		 *
+		 * @param string $suffix Translated suffix.
+		 */
 		$suffix = $timestamp < time()
 			? apply_filters('plura_datetime_suffix_past', __('ago'))
 			: apply_filters('plura_datetime_suffix_future', __('from now'));
@@ -292,15 +294,33 @@ function plura_wp_datetime(
 	);
 }
 
+/**
+ * Shortcode [plura-wp-datetime]: renders plura_wp_datetime().
+ *
+ * With neither date nor id, shows the current post's date on single posts and the current time elsewhere.
+ *
+ * Attributes:
+ * - date:     Date string to format.
+ * - id:       Post ID whose date to show; overrides date.
+ * - format:   Display format. Default 'l, F jS, Y g:i A'.
+ * - source:   Format date is parsed with. Default 'Y-m-d H:i:s'.
+ * - relative: Whether to show relative time ("3 days ago") instead. Default false.
+ * - tag:      Wrapping tag. Default 'time'.
+ * - class:    Extra CSS classes.
+ *
+ * @param array $args Shortcode attributes.
+ *
+ * @return string|null Datetime HTML, or null if the date can't be parsed.
+ */
 add_shortcode('plura-wp-datetime', function ($args) {
 	$atts = shortcode_atts([
-		'date'     => null,       // Date string or timestamp
-		'class'    => null,      // Optional CSS class
+		'date'     => null,
+		'class'    => null,
 		'format'   => 'l, F jS, Y g:i A',
-		'id'       => null,         // Optional post ID
+		'id'       => null,
 		'source'   => 'Y-m-d H:i:s',
-		'tag'      => 'time',      // HTML wrapper tag
-		'relative' => false,   // Use relative time format (e.g., "3 days ago")
+		'tag'      => 'time',
+		'relative' => false,
 	], $args);
 
 	$atts['id'] = $atts['id'] !== null ? (int) $atts['id'] : null;
@@ -330,9 +350,6 @@ add_shortcode('plura-wp-datetime', function ($args) {
  * @param string|null                 $context Optional context string passed to the plura_wp_link_atts filter.
  *
  * @return string The generated <a> tag wrapping the HTML, or the original HTML if no valid link target.
- *
- * Filters:
- *  - plura_wp_link_atts( array $link_atts, WP_Post|WP_Term|string $target, ?string $context )
  */
 function plura_wp_link(
 	string $html,
@@ -401,6 +418,13 @@ function plura_wp_link(
 		$link_atts['rel'] = 'noopener noreferrer';
 	}
 
+	/**
+	 * Filters the attributes of the <a> tag.
+	 *
+	 * @param array                  $link_atts Link attributes, with $atts merged in.
+	 * @param WP_Post|WP_Term|string $target    Post, term or URL being linked.
+	 * @param string|null            $context   Caller's context.
+	 */
 	$link_atts = apply_filters('plura_wp_link_atts', $link_atts, $target, $context);
 
 	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
@@ -512,6 +536,14 @@ function plura_wp_title(
 		return null;
 	}
 
+	/**
+	 * Filters the title text before it is escaped and wrapped.
+	 *
+	 * @param string                                    $text    Title text.
+	 * @param WP_Post|WP_Term|WP_Post_Type|WP_User|null $object  Resolved object; null on date archives.
+	 * @param string|null                               $context Caller's context.
+	 * @param string                                    $type    'post', 'term', 'post-type', 'author' or 'date'.
+	 */
 	$text = apply_filters('plura_wp_title', $text, $object, $context, $type);
 
 	if (empty($text)) {

@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * Plain PHP helpers with no WordPress dependency.
+ */
+
+/**
  * Converts an array of attributes to HTML string
  *
  * @param array<string, mixed> $atts   Array of HTML attributes (name => value pairs)
@@ -89,11 +93,29 @@ function plura_curl(string $url, array $args, bool $json = false): array
 	];
 }
 
+/**
+ * Splits a string like explode(), trimming each part.
+ *
+ * @param string $separator Boundary string.
+ * @param string $string    String to split.
+ * @param int    $limit     Maximum number of parts, as in explode(). Default no limit.
+ *
+ * @return string[] Trimmed parts.
+ */
 function plura_explode(string $separator, string $string, int $limit = PHP_INT_MAX)
 {
 	return array_map('trim', explode($separator, $string, $limit));
 }
 
+/**
+ * Checks a value against the boolean-like forms 1/0, '1'/'0', 'true'/'false' and true/false.
+ *
+ * @param mixed     $value Value to check.
+ * @param bool|null $bool  Which forms to accept: true for the truthy ones, false for the falsy ones,
+ *                         null for either. Default null.
+ *
+ * @return bool Whether $value is one of the accepted forms.
+ */
 function plura_bool($value, $bool = null)
 {
 	if (is_null($bool)) {

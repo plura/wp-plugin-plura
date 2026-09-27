@@ -153,9 +153,19 @@ function plura_wp_data(): array
 		$data = array_merge($data, ['lang' => plura_wpml_lang()]);
 	}
 
+	/**
+	 * Filters the payload localized onto the plugin's base script as `plura_wp_data`.
+	 *
+	 * @param array<string, mixed> $data Base site/plugin keys, plus singular or archive context.
+	 */
 	return apply_filters('plura_wp_data', $data);
 }
 
+/**
+ * Enqueues the plugin's front-end scripts and styles, and localizes `plura_wp_data` onto `plura-p`.
+ *
+ * @return void
+ */
 function plura_wp_styles()
 {
 	$plura_scripts = [

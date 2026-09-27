@@ -1,11 +1,7 @@
 <?php
 
 /**
- *	. Image
- *		- Data
- *		- Image
- *	. Gallery
- *	. Thumbnail
+ * Images: attachment data and <img> tags, galleries built from IDs or an ACF field, and post thumbnails.
  */
 
 /**
@@ -117,16 +113,18 @@ function plura_wp_image(
 }
 
 /**
- * Shortcode [plura-wp-image] to render an image using plura_wp_image().
+ * Shortcode [plura-wp-image]: renders plura_wp_image().
  *
- * Supported attributes:
- * - attachment (int)      : Attachment ID (required)
- * - size (string)         : Image size (default: 'large')
- * - class (string)        : CSS classes (space-separated)
- * - alt (string)          : Alt text override
- * - loading (string|false): 'lazy', 'eager', or 'false' to disable (default: 'lazy')
+ * Attributes:
+ * - attachment: Attachment ID. Required.
+ * - size:       Image size. Default 'large'.
+ * - class:      CSS classes.
+ * - alt:        Alt text override.
+ * - loading:    'lazy', 'eager', or 'false' to omit the attribute. Default 'lazy'.
  *
- * Any additional attributes will be passed through to the image element.
+ * @param array $args Shortcode attributes.
+ *
+ * @return string|null Image HTML, an empty string without an attachment, or null if it isn't an image.
  */
 add_shortcode('plura-wp-image', function ($args) {
 	$atts = shortcode_atts([
@@ -180,9 +178,6 @@ add_shortcode('plura-wp-image', function ($args) {
  * @param string              $size                  Image size displayed in each item. Default 'large'.
  *
  * @return string HTML markup of the rendered gallery, or an empty string if no images found.
- *
- * Filters:
- *  - plura_wp_gallery( array $image_ids, int|WP_Post|null $source, ?string $source_key, ?string $context )
  */
 function plura_wp_gallery(
 	?array $ids = null,
@@ -244,7 +239,14 @@ function plura_wp_gallery(
 		$image_ids = array_unique($image_ids);
 	}
 
-	// Step 4.5: Filter image IDs before rendering the gallery
+	/**
+	 * Filters the gallery's image IDs before rendering.
+	 *
+	 * @param int[]            $image_ids  Attachment IDs, in display order.
+	 * @param int|WP_Post|null $source     Post the images were read from.
+	 * @param string|null      $source_key Meta/ACF field read on $source.
+	 * @param string|null      $context    Caller's context.
+	 */
 	$image_ids = apply_filters('plura_wp_gallery', $image_ids, $source, $source_key, $context);
 
 	// Step 5: Render gallery HTML
@@ -282,20 +284,24 @@ function plura_wp_gallery(
 }
 
 /**
- * Shortcode: [plura-wp-gallery]
+ * Shortcode [plura-wp-gallery]: renders plura_wp_gallery().
  *
- * Renders a gallery using explicit IDs and/or a post’s ACF/meta field.
+ * Renders nothing unless it has ids, or a source with source_key or source_featured_image.
  *
  * Attributes:
- *  - ids (csv|array, optional)              Explicit attachment IDs (e.g., "12,34,56") or an array of ints.
- *  - source (int, optional)                 Post ID to pull from. If omitted and inside The Loop, uses current post.
- *  - source_key (string, optional)          Meta/ACF field key on the source post that returns images (IDs/objects).
- *  - source_featured_image (bool, optional) Prepend the source post’s featured image. Default: false.
- *  - unique (bool, optional)                Remove duplicate image IDs. Default: true.
- *  - class (string, optional)               Additional CSS class(es) for the wrapper (space-separated).
- *  - context (string, optional)             Arbitrary context string forwarded to filters.
- *  - item_class (string, optional)          Additional CSS class(es) for each item (space-separated).
- *  - size (string, optional)                Image size displayed in each item. Default: 'large'.
+ * - ids:                   Comma-separated attachment IDs.
+ * - source:                Post ID to read from. Default the current post on singulars.
+ * - source_key:            Meta/ACF field on source that holds the images.
+ * - source_featured_image: Whether to prepend the source's featured image. Default false.
+ * - unique:                Whether to drop duplicate images. Default true.
+ * - class:                 Extra CSS classes for the wrapper.
+ * - item_class:            Extra CSS classes for each item.
+ * - size:                  Image size shown in each item. Default 'large'.
+ * - context:               Filter context.
+ *
+ * @param array $args Shortcode attributes.
+ *
+ * @return string Gallery HTML, or an empty string.
  */
 add_shortcode('plura-wp-gallery', function ($args) {
 	$atts = shortcode_atts([

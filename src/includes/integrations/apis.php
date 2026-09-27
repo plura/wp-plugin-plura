@@ -1,5 +1,23 @@
 <?php
 
+/**
+ * External services: SharePoint lists through Microsoft Graph.
+ */
+
+/**
+ * Adds an item to a SharePoint list through Microsoft Graph, authenticating as an Azure AD app.
+ *
+ * Errors and Graph's response are written to the PHP error log; nothing is returned.
+ *
+ * @param array  $data          List item fields, keyed by column name.
+ * @param string $client_id     Azure AD app (client) ID.
+ * @param string $client_secret Azure AD app secret.
+ * @param string $tenant_id     Azure AD tenant ID.
+ * @param string $site_id       SharePoint site ID.
+ * @param string $list_id       SharePoint list ID.
+ *
+ * @return void
+ */
 function plura_data_to_sharepoint(array $data, string $client_id, string $client_secret, string $tenant_id, string $site_id, string $list_id): void
 {
 	// 1. Authenticate to SharePoint (Get Access Token)

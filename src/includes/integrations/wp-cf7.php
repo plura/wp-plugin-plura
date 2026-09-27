@@ -1,8 +1,11 @@
 <?php
 
-// https://developers.google.com/apps-script/guides/v8-runtime
+/**
+ * Contact Form 7: forwards submissions to Google Sheets through an Apps Script web app
+ * (https://developers.google.com/apps-script/guides/v8-runtime). Loaded only when CF7 is active.
+ */
 
-/* FIX: CF7 Breaking Spaces */
+// Stop CF7 inserting <p> and <br> into form markup, which breaks the plugin's form layouts
 add_filter('wpcf7_autop_or_not', '__return_false');
 
 /**

@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Restricted area: [p-restricted-area] shows visitors a login form, and logged-in users a
+ * welcome message plus the p_restricted_area_data filter's content when p_restricted_user_valid
+ * lets them in.
+ */
+
 // plura_includes() includes this file from inside a function, so the global has to be explicit
 global $P_RESTRICTED_AREA_VARS;
 

@@ -1,12 +1,9 @@
 <?php
 
 /**
- * . Revolution Slider
- * 		- p_revslider
- * 		- plura_wp_revslider_bg_img
- * 		- plura_wp_revslider_bg_video
- * 		- plura_wp_revslider_bg_video_data
- * . Essential Grid
+ * Revolution Slider and Essential Grid: [plura-wp-revslider], and slide background image/video
+ * overrides that only take effect once RevSlider's own files are patched as described below.
+ * Loaded only when either plugin is active.
  */
 
 // REVOLUTION SLIDER

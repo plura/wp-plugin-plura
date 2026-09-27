@@ -1,6 +1,10 @@
 <?php
 
-// https://docs.lottiefiles.com/lottie-player/components/lottie-player/properties
+/**
+ * Lottie animations as <lottie-player> elements. The page must load the lottie-player script itself.
+ *
+ * Properties: https://docs.lottiefiles.com/lottie-player/components/lottie-player/properties
+ */
 
 /**
  * Generates HTML for a Lottie animation player with configurable attributes

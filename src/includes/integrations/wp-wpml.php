@@ -1,12 +1,8 @@
 <?php
 
 /**
- * - body class
- * - featured img
- * - featured img ID
- * - wpml
- * - wpml ID
- * - Essential Grid
+ * WPML: language checks, translated IDs, queries run in the default language, and
+ * wpml-lang-* / wpmlobj-id-* body classes on singulars. Loaded only when WPML is active.
  */
 
 // add wpml body class
@@ -64,13 +60,27 @@ function plura_wpml_featured_image_id($postID, $acf_field = false)
 
 /* WPML */
 
-// wpml: check if wpml exists
+/**
+ * Checks whether WPML is active.
+ *
+ * @return bool
+ */
 function plura_wpml()
 {
 	return class_exists('sitepress');
 }
 
-// wpml: gets the wpml id
+/**
+ * Translates post or term IDs into another language through WPML.
+ *
+ * @param int|int[]|false $id      ID or IDs to translate. Default the current post.
+ * @param bool|string     $default Target language: true for the default language (IDs are returned
+ *                                 unchanged while it is the current one), a language code, or false
+ *                                 for the current language. Default true.
+ * @param string          $type    'post' for posts, anything else for terms. Default 'post'.
+ *
+ * @return int|int[]|false Translated ID(s), or $id unchanged when there is nothing to translate.
+ */
 function plura_wpml_id($id = false, $default = true, $type = 'post')
 {
 	global $sitepress;
@@ -107,11 +117,12 @@ function plura_wpml_id($id = false, $default = true, $type = 'post')
 }
 
 /**
- * wpml query
+ * Runs a post or term query in WPML's default language, then switches back.
  *
- * @param  [type] $query_args [description]
+ * @param array        $query_args WP_Query or WP_Term_Query arguments.
+ * @param string|false $type       'terms' for a WP_Term_Query; anything else runs a WP_Query. Default false.
  *
- * @return [type]             [description]
+ * @return WP_Query|WP_Term_Query The query, already run.
  */
 function plura_wpml_query($query_args, $type = false)
 {
@@ -124,7 +135,6 @@ function plura_wpml_query($query_args, $type = false)
 	}
 
 	if ($type === 'terms') {
-		// $query = get_terms( $query_args );
 		$query = new WP_Term_Query($query_args);
 	} else {
 		$query = new WP_Query($query_args);
@@ -137,6 +147,11 @@ function plura_wpml_query($query_args, $type = false)
 	return $query;
 }
 
+/**
+ * Returns WPML's current language code.
+ *
+ * @return string|false Language code, or false when WPML is inactive.
+ */
 function plura_wpml_lang()
 {
 	global $sitepress;

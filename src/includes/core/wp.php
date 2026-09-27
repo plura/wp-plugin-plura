@@ -614,6 +614,7 @@ function plura_wp_title(
 			html: $html,
 			target: $target,
 			title: $text,
+			context: $context,
 		);
 	}
 

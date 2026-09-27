@@ -192,7 +192,8 @@ function plura_wp_dynamic_grid_query(
         }
     }
 
-    return plura_wpml_query($query_atts);
+    // wp-wpml.php only loads when WPML is active
+    return function_exists('plura_wpml_query') ? plura_wpml_query($query_atts) : new WP_Query($query_atts);
 }
 
 
@@ -459,7 +460,8 @@ function plura_wp_dynamic_grid_filter_data(
  * @return array<int, array{id: int, name: string}> Array of term data with term IDs as keys
  */
 function plura_wp_dynamic_grid_filter_data_items(array $query_args): array {
-    $terms = plura_wpml_query($query_args, 'terms')->get_terms();
+    $query = function_exists('plura_wpml_query') ? plura_wpml_query($query_args, 'terms') : new WP_Term_Query($query_args);
+    $terms = $query->get_terms();
     
     if (empty($terms)) {
         return [];

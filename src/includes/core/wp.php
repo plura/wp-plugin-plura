@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Shared WordPress building blocks: asset enqueueing, the /pwp/v1/ids REST endpoint, and the
- * datetime, link and title renderers the other modules build on.
+ * Shared WordPress building blocks: asset enqueueing, the /pwp/v1/ids REST endpoint, request
+ * helpers, and the datetime, link and title renderers the other modules build on.
  */
 
 /**
@@ -428,6 +428,43 @@ function plura_wp_link(
 	$link_atts = apply_filters('plura_wp_link_atts', $link_atts, $target, $context);
 
 	return sprintf('<a %s>%s</a>', plura_attributes($link_atts), $html);
+}
+
+/**
+ * Returns the post type the current request is about.
+ *
+ * Singulars and post type archives give their own type, and term archives the first type their
+ * taxonomy is registered for. Date and author archives have no typed queried object, so they read
+ * the post_type query var, which wp_get_archives() adds to its links for types other than 'post'.
+ * Reads the main query, so it must run at 'wp' or later.
+ *
+ * @return string|null Post type slug, or null outside singulars and archives, or for an unregistered taxonomy.
+ */
+function plura_wp_request_post_type(): ?string
+{
+	$object = get_queried_object();
+
+	if (is_singular()) {
+		return get_post_type($object) ?: null;
+	}
+
+	if (!is_archive()) {
+		return null;
+	}
+
+	if ($object instanceof WP_Post_Type) {
+		return $object->name;
+	}
+
+	if ($object instanceof WP_Term) {
+		$taxonomy = get_taxonomy($object->taxonomy);
+
+		return $taxonomy && !empty($taxonomy->object_type) ? $taxonomy->object_type[0] : null;
+	}
+
+	$post_type = (array) get_query_var('post_type');
+
+	return reset($post_type) ?: 'post';
 }
 
 /**

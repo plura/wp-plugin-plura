@@ -110,30 +110,23 @@ function plura_wp_data(): array
 	];
 
 	$object = get_queried_object();
+	$type = plura_wp_request_post_type();
 
 	if (is_singular()) {
 		$data = array_merge($data, [
 			'id'    => $object->ID,
 			'title' => $object->post_title,
-			'type'  => $object->post_type,
+			'type'  => $type,
 			'url'   => get_permalink($object->ID),
 		]);
 	} elseif (is_archive()) {
-		// Each archive kind hands back a different queried object — post type, term or
-		// user, and none at all on date archives — so 'type' has to be resolved per kind
-		// to keep meaning the post type slug, the way it does on singulars.
 		$archive = ['archive' => 1];
 
-		if ($object instanceof WP_Post_Type) {
-			$archive['type'] = $object->name;
-		} elseif ($object instanceof WP_Term) {
-			$taxonomy = get_taxonomy($object->taxonomy);
+		if ($type !== null) {
+			$archive['type'] = $type;
+		}
 
-			// First object type only, matching plura_p_date_archive()
-			if ($taxonomy && !empty($taxonomy->object_type)) {
-				$archive['type'] = $taxonomy->object_type[0];
-			}
-
+		if ($object instanceof WP_Term) {
 			$archive['taxonomy'] = $object->taxonomy;
 			$archive['term'] = $object->term_id;
 		} elseif ($object instanceof WP_User) {

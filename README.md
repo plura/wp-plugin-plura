@@ -465,12 +465,14 @@ On singulars it adds `id`, `title`, `type` and `url`. On archives it adds `archi
 
 | Archive | Keys |
 |---|---|
-| Post type — `/events/` | `type` |
+| Post type — `/events/` | `type` (plus `date` on its date archives) |
 | Taxonomy — `/category/news/` | `type`, `taxonomy`, `term` |
-| Author | `author` (user ID) |
-| Date | `date: { year, month?, day? }` |
+| Author | `type`, `author` (user ID) |
+| Date | `type`, `date: { year, month?, day? }` |
 
-`type` always means the post type slug, on singulars and archives alike. The blog index, search results and 404s get the base keys only.
+`type` always means the post type slug, on singulars and archives alike. On author and date archives it comes from the `post_type` query var (which `wp_get_archives()` adds to its links for other types), defaulting to `post`. The blog index, search results and 404s get the base keys only.
+
+In PHP, `plura_wp_request_post_type()` returns the same `type`, without the rest of the payload or the filter.
 
 `plura_wp_data()` builds the array. It's localized onto `plura-p`, the plugin's base script, so a theme script that reads `plura_wp_data` needs `plura-p` in its `deps` — otherwise it can run before the variable is printed.
 

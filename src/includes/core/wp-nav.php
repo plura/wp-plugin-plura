@@ -730,45 +730,32 @@ add_shortcode('plura-wp-nav-list', function ($args) {
 /**
  * Renders yearly archive links for the current request's post type; also [plura-p-date-archive].
  *
- * Resolves the post type on post type archives, term archives and singulars. Renders nothing
- * on date and author archives.
+ * The list's data-archive-request-obj says what the page is: 'single', 'is-archive' (a post type
+ * archive, including its date archives), 'term', 'author' or 'date'.
  *
  * @return string|null Archive list HTML, or null when no post type resolves.
  */
 function plura_p_date_archive()
 {
-	if (is_archive()) {
-		if (is_post_type_archive()) {
-			$post_type = get_queried_object()->name;
+	$post_type = plura_wp_request_post_type();
 
-			$atts = [
-				'data-archive-request-obj' => 'is-archive',
-				'data-archive-post-type'   => $post_type,
-			];
-		} elseif (isset(get_queried_object()->term_id)) {
-			$post_type = get_taxonomy(get_queried_object()->taxonomy)->object_type[0];
-
-			$term_id = get_queried_object()->term_id;
-
-			$atts = [
-				'data-archive-request-obj' => 'term',
-				'data-archive-post-type'   => $post_type,
-			];
-		}
-	} elseif (is_singular()) {
-		$post_type = get_post_type();
-
-		$atts = [
-			'data-archive-request-obj' => 'single',
-			'data-archive-post-type'   => $post_type,
-		];
+	if ($post_type === null) {
+		return null;
 	}
 
-	if (!empty($post_type)) {
-		$atts['class'] = 'plura-p-date-archive';
+	$atts = [
+		'data-archive-request-obj' => match (true) {
+			is_singular()                           => 'single',
+			is_post_type_archive()                  => 'is-archive',
+			get_queried_object() instanceof WP_Term => 'term',
+			is_author()                             => 'author',
+			default                                 => 'date',
+		},
+		'data-archive-post-type' => $post_type,
+		'class'                  => 'plura-p-date-archive',
+	];
 
-		return "<ul " . plura_attributes($atts) . ">" . wp_get_archives(['echo' => 0, 'type' => 'yearly', 'post_type' => $post_type]) . "</ul>";
-	}
+	return "<ul " . plura_attributes($atts) . ">" . wp_get_archives(['echo' => 0, 'type' => 'yearly', 'post_type' => $post_type]) . "</ul>";
 }
 
 add_shortcode('plura-p-date-archive', 'plura_p_date_archive');

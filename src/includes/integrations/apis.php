@@ -77,3 +77,22 @@ function plura_data_to_sharepoint(array $data, string $client_id, string $client
 }
 
 
+
+
+function plura_p_posts_remote( $args ) {
+
+	$url = $args['source'];
+
+	unset( $args['source'] );
+
+	$response = wp_remote_get( $url . '?' . http_build_query( $args ) );
+
+	if( is_wp_error( $response ) ) {
+
+		return __('Loading Failed...');
+
+	}
+
+	return json_decode( $response['body'] );
+	
+}

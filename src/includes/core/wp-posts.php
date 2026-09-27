@@ -1409,3 +1409,70 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 		implode('', $html)
 	);
 }
+
+
+
+
+function plura_p_tags( $post, $html = true ) {
+
+	if( is_int( $post ) ) {
+
+		$post = get_post( $post );
+
+	}
+
+	$post_taxonomies = get_object_taxonomies( $post );
+
+	if( !empty( $post_taxonomies ) ) {
+
+		$tags = [];
+
+		foreach( $post_taxonomies as $taxonomy ) {
+
+			$terms = get_the_terms( $post, $taxonomy );
+
+			foreach( $terms as $term ) {
+
+				if( $html ) {
+
+					$atts = ['class' => 'plura-p-tag'];
+
+					$atts_link = ['title' => $term->name, 'href' => get_term_link( $term )];
+
+					$tags[] = "<li " . plura_attributes( $atts ) . "><a " . plura_attributes( $atts_link ) . ">" . $term->name . "</a></li>";
+
+				} else {
+
+					$tags[] = $term;
+
+				}
+
+			}
+
+			if( $html ) {
+
+				$atts = ['class' => 'plura-p-tags', 'data-taxonomy' => $post_taxonomies[0]];
+
+				return "<ul " . plura_attributes( $atts ) . ">" . implode('', $tags) . "</ul>";
+
+			}
+
+		}
+
+		return $tags;
+
+	}
+
+}
+
+function plura_p_tags_shortcode( $args ) {
+
+	$atts = shortcode_atts(['post' => ''], $args);
+
+	$id = empty( $atts['post'] ) ? get_the_ID() : $atts['id'];
+
+	return plura_p_tags( $atts['post'] );
+
+}
+
+add_shortcode('plura-p-tags', 'plura_p_tags_shortcode');

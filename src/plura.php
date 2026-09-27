@@ -51,7 +51,6 @@ function plura_includes(array $modules, string $dir, bool $admin = false): void
 $plura_modules = [
 
 	'includes/core/core',
-	'includes/core/p',
 	'includes/core/wp',
 	'includes/core/wp-component',
 	'includes/core/wp-dynamic-grid',

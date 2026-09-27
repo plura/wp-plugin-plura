@@ -1,0 +1,5 @@
+# Left untouched until decided: base.css never loads, p.js awaits its rename,
+# p-revslider-egrid.js goes with the Essential Grid deprecation
+src/assets/css/base.css
+src/assets/js/p.js
+src/assets/js/p-revslider-egrid.js

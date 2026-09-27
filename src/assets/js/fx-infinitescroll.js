@@ -1,3 +1,18 @@
+/**
+ * Infinite scroll effect: moves an element sideways in an endless loop, like a news ticker.
+ * Start it with pluraFXInfiniteScroll({ target }); the styles are in fx.css.
+ */
+
+/**
+ * Clones the target until it fills twice its container, then scrolls the copies in an endless loop.
+ *
+ * @param {Object}             options
+ * @param {HTMLElement|string} options.target             Element to scroll, or a selector for it.
+ * @param {number}             [options.speed=4]          Pixels moved per frame.
+ * @param {string}             [options.direction='left'] 'left' or 'right'.
+ * @param {HTMLElement}        [options.container]        Element the effect is clipped to. Default the target's parent.
+ * @returns {void}
+ */
 function pluraFXInfiniteScroll({ target, speed = 4, direction = 'left', container } = {}) {
 	const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
 	if (!targetEl) return;
@@ -21,7 +36,11 @@ function pluraFXInfiniteScroll({ target, speed = 4, direction = 'left', containe
 	// Move the original target element into wrapper1
 	wrapper1.appendChild(targetEl);
 
-	// Wait for the width to be properly set after moving targetEl to wrapper1
+	/**
+	 * Waits until the target and container have a width, then builds the copies and starts the loop.
+	 *
+	 * @returns {void}
+	 */
 	function waitForWidth() {
 		const targetWidth = targetEl.offsetWidth;
 		const containerWidth = container.offsetWidth;
@@ -53,6 +72,13 @@ function pluraFXInfiniteScroll({ target, speed = 4, direction = 'left', containe
 		// Add the target class only to the original target element
 		targetEl.classList.add('plura-fx-infinitescroll-target');
 
+		/**
+		 * Positions a wrapper horizontally.
+		 *
+		 * @param {HTMLElement} element   Wrapper to move.
+		 * @param {number}      [value=0] Left offset in pixels.
+		 * @returns {void}
+		 */
 		function pos(element, value = 0) {
 			element.style.left = `${value}px`;
 		}
@@ -62,6 +88,11 @@ function pluraFXInfiniteScroll({ target, speed = 4, direction = 'left', containe
 
 		let offset = 0;
 
+		/**
+		 * Moves the track one step, and moves whichever copy has left the view to the other end.
+		 *
+		 * @returns {void}
+		 */
 		function animate() {
 			offset += direction === 'left' ? -speed : speed;
 			container.style.setProperty('--plura-fx-infinitescroll-pos', `${offset}px`);

@@ -1,18 +1,17 @@
+/**
+ * Post carousels (wp-posts.php): on page load, turns each .plura-wp-posts.plura-wp-f-carousel list
+ * into a Fancybox Carousel. Does nothing unless the site loads Fancybox's Carousel script.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
-	//carousel
 	if (window.Carousel) {
 		document.querySelectorAll('.plura-wp-posts.plura-wp-f-carousel').forEach((element) => {
 			[...element.children].forEach((element) => element.classList.add('f-carousel__slide'));
 
-			new Carousel(
-				element,
-				{
-					transition: 'slide',
-
-					// Your custom options
-					Dots: true,
-				} /*, { Thumbs }*/,
-			);
+			new Carousel(element, {
+				transition: 'slide',
+				Dots: true,
+			});
 		});
 	}
 });

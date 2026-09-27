@@ -1,7 +1,12 @@
+/**
+ * Banner component: once fonts have loaded, animates the title in character by character with GSAP's
+ * SplitText, which the component's manifest.json loads.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
 	gsap.registerPlugin(SplitText);
 
-	//https://www.youtube.com/watch?v=L1afzNAhI40&t=54s
+	// Technique: https://www.youtube.com/watch?v=L1afzNAhI40&t=54s
 	document.fonts.ready.then(() => {
 		let split = SplitText.create('.plura-wp-component-banner h1', {
 			type: 'chars, words, lines',

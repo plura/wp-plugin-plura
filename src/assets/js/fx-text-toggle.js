@@ -1,19 +1,28 @@
 /**
- * Expandable text toggle component
+ * Text toggle: collapses text to its first paragraph, or first sentence, behind a "Read More" link
+ * that expands the rest. Start it with PluraFXTextToggle({ target }); the styles are in fx.css.
+ */
+
+/**
+ * Splits each target's text into a visible part and a collapsible hidden part, followed by the link.
  *
- * - Splits content into visible and hidden parts.
- * - If only a single paragraph or text node, can split by first sentence.
- * - Measures hidden part's height for smooth CSS transitions.
+ * Targets already set up are skipped. The hidden part's height is kept in --max-height, which the
+ * CSS transitions to when the link adds .on.
  *
- * @param {Object} config
- * @param {Object} config.labels - Optional text labels like { 'Read More': '...', 'Read Less': '...' }
- * @param {HTMLElement[]} config.target - Array of target elements
- * @param {boolean} [config.splitSingleParagraph=true] - Whether to split a single paragraph into two
+ * @param {Object}                 options
+ * @param {HTMLElement[]|NodeList} options.target                      Elements to set up.
+ * @param {Object}                 [options.labels]                    Link texts keyed 'Read More' and 'Read Less', e.g. translated.
+ * @param {boolean}                [options.splitSingleParagraph=true] Whether a single paragraph splits after its first sentence.
+ * @returns {void}
  */
 function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 	const PRFX = 'plura-fx-text-toggle';
 
-	// Update CSS variable --max-height based on inner hidden content
+	/**
+	 * Stores each hidden part's natural height in --max-height, for the expand transition.
+	 *
+	 * @returns {void}
+	 */
 	const updateHeights = () => {
 		target.forEach((element) => {
 			const wrapper = element.querySelector(`.${PRFX}-wrapper`);
@@ -25,7 +34,11 @@ function PluraFXTextToggle({ labels, target, splitSingleParagraph = true }) {
 		});
 	};
 
-	// Refresh DOM structure
+	/**
+	 * Rebuilds each target not yet set up into visible part, hidden part and link.
+	 *
+	 * @returns {void}
+	 */
 	const refresh = () => {
 		target.forEach((element) => {
 			// Skip if already initialized

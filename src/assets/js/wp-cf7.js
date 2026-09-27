@@ -1,8 +1,14 @@
+/**
+ * Contact Form 7 (wp-cf7.php): on page load, adapts every CF7 form with the plura-wp-cf7 class.
+ * Radio buttons in .plura-wp-cf7-btn groups get real <label>s, with an optional data-info line, and
+ * fields get ids, label "for" attributes and the data-tag / data-input-type attributes wp-cf7.css uses.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
 	const form_field_id_prefix = `plura-wp-cf7-${Date.now()}-`;
 
 	document.querySelectorAll('.wpcf7 form.plura-wp-cf7').forEach((form, formIndex) => {
-		//checkboxes span 2 label
+		// Radio buttons: replace each item's <span> label with a <label> for its input
 		form.querySelectorAll('.wpcf7-radio.plura-wp-cf7-btn .wpcf7-list-item').forEach((element, index) => {
 			let info, txt;
 
@@ -38,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			span.replaceWith(label);
 		});
 
-		//add "for" attributes to labels of email, text and textarea elements
+		// Fields: link each to its label, and tag the label (or wrapper) with the field's type
 		form
 			.querySelectorAll(
 				`
@@ -70,10 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
 							value,
 						);
 					});
-
-					/*( form.classList.contains('plura-wp-cf7-no-labels') || !label ? wrapper : label )
-
-				.setAttribute('data-input-type', element.hasAttribute('type') ? element.getAttribute('type') : element.tagName.toLowerCase() );*/
 				}
 			});
 	});

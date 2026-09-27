@@ -1,11 +1,21 @@
 /**
- * PluraWPDynamicGrid
- * A dynamic responsive grid system with tag/select filtering.
+ * Dynamic grid (wp-dynamic-grid.php): lays a grid's posts out in columns and filters them by term,
+ * fetching the matching post IDs from /plura/v1/dynamic-grid. Start it with
+ * PluraWPDynamicGrid({ target }) on each .plura-wp-dynamic-grid; the styles are in wp-dynamic-grid.css.
+ */
+
+/**
+ * Lays out and filters one grid, reading its post type, taxonomy and AND/OR condition from the
+ * wrapper's data attributes.
  *
- * @param {Object} options
- * @param {Array<Object>} [options.breakpoints] - Optional breakpoints: [{min, max, cols}]
- * @param {string} [options.cond='AND'] - Tag condition: 'AND' | 'OR'
- * @param {HTMLElement} options.target - The container element
+ * Posts are absolutely positioned from --x and --y, so they animate into place when filtered. Needs
+ * plura_wp_data, localized onto the plura-p script, for the REST URL.
+ *
+ * @param {Object}                                              options
+ * @param {HTMLElement}                                         options.target        The .plura-wp-dynamic-grid element.
+ * @param {Array<{min?: number, max?: number, cols: number}>} [options.breakpoints] Columns per window width, in pixels.
+ *                                                                                    Default 6 from 1600 down to 2 below 768.
+ * @returns {void}
  */
 function PluraWPDynamicGrid({ breakpoints, target }) {
 	const filter_cond = target.dataset.filterCond;
@@ -21,13 +31,7 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	const FILTER_DATA_FILTER_TYPE_SELECT = 'select';
 	const FILTER_DATA_FILTER_TYPE_TAG = 'tag';
 
-	/**
-	 * Default grid breakpoints — fallback logic like:
-	 *
-	 * if (w >= 1600) n = 6;
-	 * else if (w >= 1366) n = 5;
-	 * ...
-	 */
+	// Columns per window width, unless options.breakpoints is given
 	const COLS_BREAKPOINTS = [
 		{ min: 1600, cols: 6 },
 		{ min: 1366, max: 1600, cols: 5 },
@@ -40,8 +44,9 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	const ui_grid = target.querySelector('.plura-wp-dynamic-grid-items');
 
 	/**
-	 * Collects filter values and makes request to REST API endpoint.
-	 * Toggles grid visibility based on tag matching and condition.
+	 * Collects the selected terms and fetches the matching post IDs; with none selected, all posts show.
+	 *
+	 * @returns {void}
 	 */
 	const activate = () => {
 		const clss = 'filtered';
@@ -77,9 +82,10 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	};
 
 	/**
-	 * Toggles 'on' class for clicked tag and triggers filtering.
+	 * Toggles a clicked tag filter and refilters.
 	 *
-	 * @param {HTMLElement} element - The tag element clicked
+	 * @param {HTMLElement} element The tag clicked.
+	 * @returns {void}
 	 */
 	const activateTag = (element) => {
 		element.classList.toggle('on');
@@ -87,8 +93,10 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	};
 
 	/**
-	 * Sets the number of columns in the grid based on current window width.
-	 * Also applies `--grid-w` and `--grid-cols` as CSS variables to the container.
+	 * Picks the column count for the window width, stores it and the grid width in --grid-cols and
+	 * --grid-w, and re-lays out the posts.
+	 *
+	 * @returns {void}
 	 */
 	const set_grid_cols = () => {
 		let w = window.innerWidth;
@@ -107,12 +115,12 @@ function PluraWPDynamicGrid({ breakpoints, target }) {
 	};
 
 	/**
-	 * Refreshes layout:
-	 * - Sets `--x` and `--y` for each item based on its new position
-	 * - Applies `.on` class only to active (visible) items
-	 * - Calculates number of rows and sets `--grid-rows` to adjust container height
+	 * Positions the visible posts (--x, --y), marks them .on, and sets --grid-rows, which gives the
+	 * absolutely positioned grid its height.
 	 *
-	 * @param {Array<number>} [data] - Optional array of IDs for filtered items
+	 * @param {number[]} [data] IDs of the posts to show, from the REST response. Default the last set,
+	 *                          or all posts before any filtering.
+	 * @returns {void}
 	 */
 	const refresh = (data) => {
 		if (data) active = data;

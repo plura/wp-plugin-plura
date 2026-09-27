@@ -1,31 +1,9 @@
 <?php
 
 /**
- * Summary of Filtering Grid Logic
- *
- * This module powers a filterable grid of posts/items.
- *
- * Core Flow:
- * - A filter UI is rendered above the grid.
- * - Each filter term (e.g., taxonomy term) acts as a toggle.
- * - When filters are interacted with (click, change), a fetch/AJAX request is triggered.
- * - The request sends the IDs of all selected filters to the backend.
- * - The backend returns posts matching all selected filters (AND logic).
- *
- * Grouped Filters:
- * - Filter terms can be visually grouped into logical categories.
- * - Groups can be rendered as:
- *   - Clickable tag groups, or
- *   - <select> dropdowns.
- *
- * Grouping Logic:
- * - Terms can include group information via custom term meta.
- * - This meta can be set manually, or managed through ACF (optional).
- * - If ACF is used, the field key (not meta key) may be passed to fetch group labels and order.
- *
- * Event Bindings:
- * - All interactive filters are tied to event listeners (click, change).
- * - On interaction, the currently active filters are collected and used in the request.
+ * Dynamic grid: a post grid with term filters, shown as tags or <select>s. Selecting terms makes
+ * the browser fetch the matching post IDs from /plura/v1/dynamic-grid, combined with AND or OR.
+ * Filters can be grouped by a term meta field whose choices come from an ACF field.
  */
 
 add_action('rest_api_init', function () {
@@ -255,27 +233,26 @@ function plura_wp_dynamic_grid(
 }
 
 /**
- * Registers the [plura-wp-dynamic-grid] shortcode to render a dynamic grid with optional filters.
+ * Shortcode [plura-wp-dynamic-grid]: renders plura_wp_dynamic_grid().
+ *
+ * Grouped filters also need term_meta_key, which this shortcode doesn't accept yet, so
+ * filter_group only works when calling plura_wp_dynamic_grid() from PHP.
  *
  * Attributes:
- * - class (string): Additional CSS classes for the grid container.
- * - filter (bool): Whether to display filters. Default: true.
- * - filter_group (bool): Whether to group filters by an ACF field. Default: false.
- * - filter_group_acf_field_key (?string): The ACF field key used for grouping filters.
- * - filter_type (string): The filter type, e.g., 'tag' or 'select'. Default: 'tag'.
- * - post_type (string): The post type to query. Default: 'post'.
- * - taxonomy (string): The taxonomy used to build the filters. Default: 'category'.
+ * - post_type:                  Post type to show. Default 'post'.
+ * - taxonomy:                   Taxonomy the filters list. Default 'category'.
+ * - filter:                     Whether to show the filters. Default true.
+ * - filter_type:                'tag' or 'select'. Default 'tag'.
+ * - filter_cond:                How selected terms combine: 'AND' or 'OR'. Default 'AND'.
+ * - filter_group:               Whether to group the filters. Default false.
+ * - filter_group_acf_field_key: ACF field whose choices name the groups.
+ * - class:                      Extra CSS classes for the wrapper.
+ * - context:                    Filter context.
  *
- * Example:
- * [plura-wp-dynamic-grid
- *     filter_group="1"
- *     filter_group_acf_field_key="field_63dd39b0dfb66"
- *     post_type="toyno_work"
- *     taxonomy="toyno_works_tag"
- *     term_meta_key="toyno_work_tags_group"
- * ]
+ * @param array|string $atts Shortcode attributes.
+ *
+ * @return string Grid HTML.
  */
-
 add_shortcode('plura-wp-dynamic-grid', function ($atts) {
 	$args = shortcode_atts([
 		'class'                      => '',
@@ -290,7 +267,7 @@ add_shortcode('plura-wp-dynamic-grid', function ($atts) {
 	], $atts);
 
 	// Type casting
-	$args['filter'] = (bool) $args['filter']; // Correcting the variable here
+	$args['filter'] = (bool) $args['filter'];
 	$args['filter_group'] = (bool) $args['filter_group'];
 
 	return plura_wp_dynamic_grid(...$args);
@@ -299,8 +276,11 @@ add_shortcode('plura-wp-dynamic-grid', function ($atts) {
 /**
  * Generates HTML filter controls for dynamic grid
  *
- * @param bool   $group The filter group identifier
- * @param string $type  The filter type/style to render
+ * @param bool        $group               Whether to group the terms, as plura_wp_dynamic_grid_filter_data() does.
+ * @param string|null $group_acf_field_key ACF field whose choices name the groups.
+ * @param string|null $taxonomy            Taxonomy whose terms become filters.
+ * @param string|null $term_meta_key       Term meta key holding each term's group.
+ * @param string      $type                'select' or 'tag'.
  *
  * @return string HTML markup for the filter controls
  */
@@ -429,10 +409,6 @@ function plura_wp_dynamic_grid_filter_data(
 
 		$terms = plura_wp_dynamic_grid_filter_data_items($group_query);
 		if (!empty($terms)) {
-			/*   $grouped_data[$group_key] = [
-				'group' => sanitize_text_field($group_label),
-				'terms' => $terms
-			]; */
 			$grouped_data[] = $terms;
 		}
 	}
@@ -478,8 +454,6 @@ function plura_wp_dynamic_grid_filter_data_items(array $query_args): array
  * @return string HTML markup for the rendered grid items.
  *
  * @see plura_wp_posts()
- *
- * @filter plura_wp_dynamic_grid_items_params Allows overriding the args passed to plura_wp_posts.
  */
 function plura_wp_dynamic_grid_items(?string $context = null, string $post_type = 'post'): string
 {
@@ -501,7 +475,12 @@ function plura_wp_dynamic_grid_items(?string $context = null, string $post_type 
 		'type'            => $post_type,
 	];
 
-	// Allow customization via filter
+	/**
+	 * Filters the named arguments the grid items are rendered with by plura_wp_posts().
+	 *
+	 * @param array       $args    plura_wp_posts() arguments, keyed by parameter name.
+	 * @param string|null $context The grid's context.
+	 */
 	$args = apply_filters('plura_wp_dynamic_grid_items_params', $args_defaults, $context);
 
 	return plura_wp_posts(...$args);

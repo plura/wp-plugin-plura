@@ -369,7 +369,14 @@ echo plura_wp_breadcrumbs(
 ```
 
 **Filters:**
-- `plura_wp_breadcrumbs` — Filters the array of breadcrumb groups before rendering.
+- `plura_wp_breadcrumbs` — Filters the array of breadcrumb groups before rendering. Receives `$crumbs`, the object, and `$context`. A callback can add crumbs as a post ID, a `WP_Post` or `WP_Term`, or a plain string (a label without a link), as well as full crumb arrays:
+
+```php
+add_filter('plura_wp_breadcrumbs', function (array $crumbs, $object, ?string $context): array {
+    array_unshift($crumbs, ['Shop', (int) get_option('page_for_posts')]);  // a new first group; IDs must be ints, strings are labels
+    return $crumbs;
+}, 10, 3);
+```
 
 ### `plura_wp_breadcrumbs_nav()` / `plura_wp_prevnext_nav()`
 
@@ -613,14 +620,24 @@ Adds support for inline Lottie animations via a shortcode.
 
 ## Code style
 
-PHP follows [PER Coding Style 3.0](https://www.php-fig.org/per/coding-style/), indented with tabs, with aligned docblock columns and array arrows. [`.php-cs-fixer.dist.php`](.php-cs-fixer.dist.php) applies it: run [`php-cs-fixer fix`](https://cs.symfony.com/) from the repo root before committing. List formatting-only commits in `.git-blame-ignore-revs`.
+Formatting is automatic. List formatting-only commits in `.git-blame-ignore-revs`.
 
-Docs:
+- **PHP** follows [PER Coding Style 3.0](https://www.php-fig.org/per/coding-style/), indented with tabs, with aligned docblock columns and array arrows. [`.php-cs-fixer.dist.php`](.php-cs-fixer.dist.php) applies it: run [`php-cs-fixer fix`](https://cs.symfony.com/) from the repo root before committing.
+- **JS, CSS and JSON** use [Prettier](https://prettier.io/), with tabs, single quotes and 120-character lines ([`.prettierrc.json`](.prettierrc.json)). Run `npm install` once, then `npm run format` before committing. [`.prettierignore`](.prettierignore) lists files left as they are.
+
+PHP docs:
 
 - **File header**: 1–3 sentences on what the module is for, plus any load condition or dependency. No function index; the editor outline lists functions.
 - **Functions and methods**: a summary line, `@param` for every parameter in signature order, and `@return` (including `void`).
 - **Hooks**: a WordPress-style docblock directly above each `apply_filters()` / `do_action()` call ("Filters …", then a `@param` per argument). This is the one place a hook is described; function docblocks don't list them.
 - **Shortcodes**: a docblock above `add_shortcode()`, or on its named callback: `Shortcode [tag]: renders plura_wp_x().`, an `Attributes:` list (or, when they mirror a function's parameters, a sentence saying so), `@param` and `@return`. Attributes always arrive as strings, so no `@type` hash notation.
+
+JS and CSS docs:
+
+- **File header**: 1–3 sentences on what the file does or styles and the PHP module it belongs to. A script the plugin doesn't start itself says how to start it, e.g. `PluraWPDynamicGrid({ target })`.
+- **JS functions**: JSDoc on every function, including inner ones, with `@param` (options objects as `options.name`) and `@returns`. A trivial getter can use a one-line `/** @returns {…} … */`.
+- **CSS custom properties**: declared at the top of the file, each with a one-line comment. They're the theming API.
+- **CSS sections**: a one-line comment per group of rules saying what it styles, plus anything non-obvious. No index blocks.
 
 ---
 

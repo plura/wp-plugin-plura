@@ -7,4 +7,4 @@
 
 ## Code style
 
-Follow README → Code style. Run PHP-CS-Fixer after PHP edits, and document every new function, hook call and shortcode as it describes.
+Follow README → Code style. Run PHP-CS-Fixer after PHP edits and `npm run format` after JS/CSS edits, and document every new function, hook call, shortcode, script and custom property as it describes.

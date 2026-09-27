@@ -184,7 +184,7 @@ function plura_wp_styles()
 		$plura_scripts[] = __DIR__ . '/assets/%s/wp-cf7.%s';
 	}
 
-	plura_wp_enqueue(scripts: $plura_scripts, prefix: 'plura-', cache: false);
+	plura_wp_enqueue(scripts: $plura_scripts, prefix: 'plura-');
 
 	wp_localize_script('plura-p', 'plura_wp_data', plura_wp_data());
 }

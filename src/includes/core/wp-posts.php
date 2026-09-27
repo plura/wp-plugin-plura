@@ -1366,17 +1366,29 @@ function plura_wp_post_terms_data(int|WP_Post $post, array|string $allowed_taxon
 }
 
 /**
- * Renders the taxonomy terms of a given post as HTML.
+ * Renders the taxonomy terms of a given post as HTML, one group per taxonomy.
+ *
+ * Each group is a plura_wp_terms() list of the post's terms, without images. With a $depth other
+ * than 1, the post's terms nest under whichever of their parents the post also has.
  *
  * @param int|WP_Post  $post               The post ID or WP_Post object.
  * @param array|string $allowed_taxonomies Optional. A taxonomy name or array of names to include. If empty, all taxonomies will be used.
  * @param bool         $taxonomy           Optional. Whether to show taxonomy labels. Default true.
- * @param bool         $link               Optional. Whether to wrap terms in links to their archive pages. Default true.
+ * @param int          $link               How terms link to their archives, as in plura_wp_term(): 0 = the title (default),
+ *                                         1 = the whole term, -1 = no links.
+ * @param int          $depth              Levels to show: 1 = a flat list (default), 0 = the whole tree, n = n levels.
+ * @param string|null  $context            Optional context string passed to every filter.
  *
  * @return string|null The generated HTML string of terms grouped by taxonomy, or null if there are no terms.
  */
-function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies = [], bool $taxonomy = true, bool $link = true): ?string
-{
+function plura_wp_post_terms(
+	int|WP_Post $post,
+	array|string $allowed_taxonomies = [],
+	bool $taxonomy = true,
+	int $link = 0,
+	int $depth = 1,
+	?string $context = null,
+): ?string {
 	$post = get_post($post);
 	if (!$post instanceof WP_Post) {
 		return null;
@@ -1405,30 +1417,13 @@ function plura_wp_post_terms(int|WP_Post $post, array|string $allowed_taxonomies
 			);
 		}
 
-		$html_tax_terms = [];
-
-		foreach ($terms as $term) {
-			$title = sprintf(
-				'<span %s>%s</span>',
-				plura_attributes(['class' => 'plura-wp-post-term-title']),
-				esc_html($term->name),
-			);
-
-			if ($link) {
-				$title = plura_wp_link(html: $title, target: $term, atts: ['class' => 'plura-wp-post-term-link']);
-			}
-
-			$html_tax_terms[] = sprintf(
-				'<div %s>%s</div>',
-				plura_attributes(['class' => 'plura-wp-post-term', 'data-id' => $term->term_id]),
-				$title,
-			);
-		}
-
-		$html_tax[] = sprintf(
-			'<div %s>%s</div>',
-			plura_attributes(['class' => 'plura-wp-post-terms-group']),
-			implode('', $html_tax_terms),
+		$html_tax[] = plura_wp_terms(
+			class: 'plura-wp-post-terms-group',
+			context: $context,
+			depth: $depth,
+			image: false,
+			link: $link,
+			terms: $terms,
 		);
 
 		$html[] = sprintf(

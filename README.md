@@ -78,6 +78,38 @@ echo plura_wp_post_meta(
 - `plura_wp_post_meta` — Filters the `$meta` array before the loop. Receives `$meta`, `WP_Post`, and `$context`. Use to remove, reorder, or inject items.
 - `plura_wp_post_meta_item_value` — Filters each resolved value before rendering. Receives `$value`, `WP_Post`, `$item_meta_key`, and `$context`.
 
+### `plura_wp_post_terms()`
+
+Renders a post's terms, one group per taxonomy, each group a [`plura_wp_terms()`](#plura_wp_terms) list without images.
+
+```php
+echo plura_wp_post_terms(
+    post: $post,
+    allowed_taxonomies: ['category', 'region'],  // default: all of the post's taxonomies
+    taxonomy: true,       // show each taxonomy's label
+    link: 0,              // as in plura_wp_term(): 0 = link the title, 1 = the whole term, -1 = no links
+    depth: 0,             // nest the post's terms under the parents it also has; 1 = flat (default)
+    context: 'card'
+);
+```
+
+```html
+<div class="plura-wp-post-terms">
+  <div class="plura-wp-post-terms-taxonomy" data-taxonomy="region" data-taxonomy-name="Region">
+    <div class="plura-wp-post-terms-tax-title">Region</div>
+    <div class="plura-wp-terms plura-wp-post-terms-group">
+      <div class="plura-wp-term">…</div>
+    </div>
+  </div>
+</div>
+```
+
+**Filters:**
+- `plura_wp_post_terms_data` — Filters the post's terms, keyed by taxonomy, before rendering. Receives the array and `WP_Post`.
+- Each group also runs `plura_wp_terms()`'s and `plura_wp_term()`'s filters, with `$context`.
+
+> Changed in 0.14.0: `$link` was a bool; pass `0` for `true` and `-1` for `false`. A leftover `true` still runs but means `1`, the whole term as the link. Terms render as `.plura-wp-term` (was `.plura-wp-post-term`), titles as `.plura-wp-term-title` (was `.plura-wp-post-term-title`), and links lose `.plura-wp-post-term-link`.
+
 ### `plura_wp_posts()`
 
 Renders a collection of posts. Runs its own query unless `$posts` is provided.
@@ -210,6 +242,7 @@ The wrapper carries `plura-wp-title` plus a per-type class: `plura-wp-post-title
 
 **Filters:**
 - `plura_wp_title` — Filters the title text. Args: `$text`, `$object`, `$context`, `$type`. `$object` is `null` on date archives; `$type` tells the sources apart.
+- With `link: true`, the link's `plura_wp_link_atts` filter receives the same `$context` (since 0.14.0; it used to get `null`).
 
 ### `plura_wp_post_title()`
 

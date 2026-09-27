@@ -12,6 +12,9 @@
 
 // REVOLUTION SLIDER
 
+// plura_includes() includes this file from inside a function, so the global has to be explicit
+global $P_REVSLIDER;
+
 $P_REVSLIDER = [
 	'alias' => '',
 	'img' => '',

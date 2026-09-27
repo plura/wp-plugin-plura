@@ -1,6 +1,9 @@
 <?php
 
 
+// plura_includes() includes this file from inside a function, so the global has to be explicit
+global $P_RESTRICTED_AREA_VARS;
+
 $P_RESTRICTED_AREA_VARS = [
 	'class' => ''
 ];

@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * Components: self-contained HTML/CSS/JS bundles described by a manifest.json, plus the HTML
+ * helpers they are rendered with (inline SVGs, relative-to-absolute URLs).
+ */
+
+/**
  * Renders a WordPress-compatible component based on a manifest file.
  *
  * This function loads HTML, optionally inlines SVG images, and enqueues associated scripts.
@@ -23,7 +28,12 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
 
 	$original_manifest = $manifest;
 
-	// Allow override of manifest path via filter
+	/**
+	 * Filters the path of the manifest to load.
+	 *
+	 * @param string $manifest Absolute manifest path.
+	 * @param array  $args     The call's 'id', 'img2svg' and 'context'.
+	 */
 	$manifest = apply_filters('plura_wp_component_manifest', $manifest, [
 		'id'      => $id,
 		'img2svg' => $img2svg,
@@ -60,7 +70,13 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
 		$args['manifest_original'] = $original_manifest;
 	}
 
-	// Allow filtering of manifest data before use
+	/**
+	 * Filters the parsed manifest before its HTML and scripts are used.
+	 *
+	 * @param array $data Manifest data: 'html', and optionally 'scripts'.
+	 * @param array $args The call's 'id', 'img2svg' and 'context', the loaded 'manifest' path,
+	 *                    and 'manifest_original' when the path filter changed it.
+	 */
 	$data = apply_filters('plura_wp_component_manifest_data', $data, $args);
 
 	$html_file = $data['html'] ?? '';
@@ -121,14 +137,18 @@ function plura_wp_component(string $manifest, string $id = '', bool $img2svg = t
 }
 
 /**
- * Shortcode handler for rendering a Plura WP component.
+ * Shortcode [plura-wp-component]: renders plura_wp_component().
  *
- * Usage:
- * [plura-wp-component manifest="path/to/manifest.json" id="optional-id" img2svg="true" context="optional-context"]
+ * Attributes:
+ * - manifest: Path to manifest.json, relative to the active theme or absolute. Required.
+ * - id:       id attribute for the wrapper.
+ * - img2svg:  Whether to inline local SVG <img>s. Default true.
+ * - class:    Extra CSS classes for the wrapper.
+ * - context:  Filter context.
  *
  * @param array $atts Shortcode attributes.
  *
- * @return string
+ * @return string Component HTML, or an HTML comment describing what failed.
  */
 add_shortcode('plura-wp-component', function ($atts) {
 	$atts = shortcode_atts([
@@ -148,6 +168,13 @@ add_shortcode('plura-wp-component', function ($atts) {
 	);
 });
 
+/**
+ * Shortcode [plura-wp-component-banner]: renders the plugin's bundled banner component.
+ *
+ * @param array|string $atts Shortcode attributes (unused).
+ *
+ * @return string Component HTML.
+ */
 add_shortcode('plura-wp-component-banner', function ($atts) {
 	return plura_wp_component(
 		manifest: __DIR__ . '/../../components/banner/manifest.json',

@@ -1,15 +1,8 @@
 <?php
 
 /**
- *	- plura_wp_get_nav_by_title 	- get nav by its title
- * 	- plura_wp_prevnext_nav 		- get prev next navigation
- * 	- plura_wp_traverse_nav_block	- traverse nav block for 'current', 'prev' and 'next items'
- * 	- plura_wp_breadcrumbs_nav 			- get nav breadcrumbs
- * 	- plura_wp_breadcrumbs_nav_html		- get nav breadcrumbs html
- * 	- plura_wp_breadcrumbs				- get post/page/term breadcrumbs from its hierarchy
- * 	- P_Walker_Nav_Menu_Dropdown		- menu walker rendering <option> items
- * 	- [plura-wp-nav-list]				- menu as a list and/or <select>
- * 	- plura_p_date_archive				- yearly archive links for the current post type
+ * Navigation: prev/next links and breadcrumbs from a navigation block menu, breadcrumbs from a
+ * post's or term's own hierarchy, classic menus as a list or <select>, and yearly archive links.
  */
 
 /**
@@ -199,6 +192,18 @@ function plura_wp_prevnext_nav(
 	);
 }
 
+/**
+ * Shortcode [plura-wp-prevnext-nav]: renders plura_wp_prevnext_nav().
+ *
+ * Attributes:
+ * - menu:        Title of the navigation block menu. Required.
+ * - class:       Extra CSS classes.
+ * - breadcrumbs: Whether to show each link's path in the menu. Default true.
+ *
+ * @param array $args Shortcode attributes.
+ *
+ * @return string|null Navigation HTML, or null without a menu or neighbouring items.
+ */
 add_shortcode('plura-wp-prevnext-nav', function (array $args): ?string {
 	$atts = shortcode_atts([
 		'menu'        => '',
@@ -221,7 +226,8 @@ add_shortcode('plura-wp-prevnext-nav', function (array $args): ?string {
  *
  * @param string      $menu  The menu title to use for breadcrumbs
  * @param string|null $class CSS class for the breadcrumbs container
- * @param int|null    $id    HTML ID for the breadcrumbs container
+ * @param int|null    $id    Post ID to find in the menu. Default the current post.
+ *                           Also output as the container's id attribute.
  *
  * @return string|null The breadcrumbs HTML or null if no valid path found
  */
@@ -247,6 +253,18 @@ function plura_wp_breadcrumbs_nav(
 	return null;
 }
 
+/**
+ * Shortcode [plura-wp-breadcrumbs-nav]: renders plura_wp_breadcrumbs_nav().
+ *
+ * Attributes:
+ * - menu:  Title of the navigation block menu. Required.
+ * - class: Extra CSS classes.
+ * - id:    Post ID to find in the menu. Default the current post.
+ *
+ * @param array $args Shortcode attributes.
+ *
+ * @return string|null Breadcrumbs HTML, or null if the post isn't in the menu.
+ */
 add_shortcode('plura-wp-breadcrumbs-nav', function (array $args): ?string {
 	$atts = shortcode_atts([
 		'menu'  => '',
@@ -366,9 +384,8 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 		if ($crumb) {
 			$crumbs[] = $crumb;
 		}
-
-		// Handle post or page
 	} elseif ($object instanceof WP_Post) {
+		// Handle post or page
 		$post_type = $object->post_type;
 
 		if ($post_type !== 'page') {
@@ -398,12 +415,13 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 		}
 	}
 
-	// Ensure array-of-groups structure BEFORE applying filters
-	/* 	if ( !is_array( $crumbs[0] ) || !array_key_exists( 0, $crumbs[0] ) ) {
-			$crumbs = [ $crumbs ];
-		} */
-
-	// Allow filtering
+	/**
+	 * Filters the breadcrumb groups before rendering.
+	 *
+	 * @param array[]              $crumbs  Groups of crumbs, each a list of plura_wp_breadcrumb() arrays.
+	 * @param WP_Post|WP_Term|null $object  Object the breadcrumbs are for.
+	 * @param string|null          $context Caller's context.
+	 */
 	$crumbs = apply_filters('plura_wp_breadcrumbs', $crumbs, $object, $context);
 
 	// Render
@@ -451,6 +469,19 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 	return '';
 }
 
+/**
+ * Shortcode [plura-wp-breadcrumbs]: renders plura_wp_breadcrumbs().
+ *
+ * Attributes:
+ * - object:  Post ID. Default the current queried object.
+ * - self:    Whether to end with the object itself (terms only). Default 0.
+ * - class:   Extra CSS classes.
+ * - context: Filter context.
+ *
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string Breadcrumbs HTML, or an empty string.
+ */
 function plura_wp_breadcrumbs_shortcode($args)
 {
 	$atts = shortcode_atts([
@@ -508,10 +539,10 @@ function plura_wp_breadcrumbs_terms(int $term_id, string $taxonomy, bool $includ
 /**
  * Generates a breadcrumb item for a term or a post/page.
  *
- * @param int|string   $id       The post ID, term ID, or a plain string (used as label without link).
- * @param string|false $taxonomy Optional. The taxonomy name if the ID refers to a term. Default false.
+ * @param WP_Post|WP_Term|int|string $object Post or term, a post ID, or a plain string (a label without a link).
  *
- * @return array An associative array with breadcrumb data.
+ * @return array|null Breadcrumb data ('type', 'name', and for posts and terms 'link', 'id', 'obj'),
+ *                    or null for an unknown post ID.
  */
 function plura_wp_breadcrumb(WP_Post|WP_Term|int|string $object): ?array
 {
@@ -549,17 +580,47 @@ function plura_wp_breadcrumb(WP_Post|WP_Term|int|string $object): ?array
 	return null;
 }
 
-// https://wordpress.stackexchange.com/a/27498
-// https://www.billerickson.net/code/wordpress-menu-as-select-dropdown/
-
+/**
+ * Menu walker that renders items as <option>s, indented by depth, for a <select> menu.
+ *
+ * Based on https://wordpress.stackexchange.com/a/27498 and
+ * https://www.billerickson.net/code/wordpress-menu-as-select-dropdown/
+ */
 class P_Walker_Nav_Menu_Dropdown extends Walker_Nav_Menu
 {
-	// don't output children opening tag (`<ul>`)
+	/**
+	 * Outputs nothing: <option>s can't nest, so submenus get no wrapper.
+	 *
+	 * @param string        $output Menu HTML so far, appended to by reference.
+	 * @param int           $depth  Depth of the submenu.
+	 * @param stdClass|null $args   wp_nav_menu() arguments.
+	 *
+	 * @return void
+	 */
 	public function start_lvl(&$output, $depth = 0, $args = null) {}
 
-	// don't output children closing tag
+	/**
+	 * Outputs nothing, matching start_lvl().
+	 *
+	 * @param string        $output Menu HTML so far, appended to by reference.
+	 * @param int           $depth  Depth of the submenu.
+	 * @param stdClass|null $args   wp_nav_menu() arguments.
+	 *
+	 * @return void
+	 */
 	public function end_lvl(&$output, $depth = 0, $args = null) {}
 
+	/**
+	 * Opens an <option> for the item, valued by its object ID and selected when current.
+	 *
+	 * @param string        $output            Menu HTML so far, appended to by reference.
+	 * @param WP_Post       $data_object       Menu item.
+	 * @param int           $depth             Depth of the item.
+	 * @param stdClass|null $args              wp_nav_menu() arguments.
+	 * @param int           $current_object_id ID of the current menu item.
+	 *
+	 * @return void
+	 */
 	public function start_el(&$output, $data_object, $depth = 0, $args = null, $current_object_id = 0)
 	{
 		// add spacing to the title based on the current depth
@@ -578,18 +639,45 @@ class P_Walker_Nav_Menu_Dropdown extends Walker_Nav_Menu
 		}
 	}
 
-	// replace closing </li> with the closing option tag
+	/**
+	 * Closes the item's <option>, in place of the parent's </li>.
+	 *
+	 * @param string        $output      Menu HTML so far, appended to by reference.
+	 * @param WP_Post       $data_object Menu item.
+	 * @param int           $depth       Depth of the item.
+	 * @param stdClass|null $args        wp_nav_menu() arguments.
+	 *
+	 * @return void
+	 */
 	public function end_el(&$output, $data_object, $depth = 0, $args = null)
 	{
 		$output .= "</option>\n";
 	}
 }
 
-/* Layout: Nav List */
+/**
+ * Shortcode [plura-wp-nav-list]: renders a classic menu as a <ul>, a <select>, or both.
+ *
+ * Attributes:
+ * - id:    Menu ID, slug or name.
+ * - rel:   Passed to the pwp_nav_list filter, which can pick the menu instead; also output as data-rel.
+ * - list:  Whether to render the <ul>. Default 1.
+ * - drop:  Whether to render the <select>. Default 1.
+ * - class: Comma-separated extra CSS classes for the wrapper.
+ *
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string|null Menu HTML, or null without a menu.
+ */
 add_shortcode('plura-wp-nav-list', function ($args) {
 	$args = shortcode_atts(['id' => '', 'class' => '', 'rel' => '', 'list' => 1, 'drop' => 1], $args);
 
 	if (has_filter('pwp_nav_list')) {
+		/**
+		 * Filters which menu [plura-wp-nav-list] renders, from its rel attribute.
+		 *
+		 * @param string $rel The shortcode's rel attribute.
+		 */
 		$id = apply_filters('pwp_nav_list', $args['rel']);
 	}
 
@@ -639,6 +727,14 @@ add_shortcode('plura-wp-nav-list', function ($args) {
 	}
 });
 
+/**
+ * Renders yearly archive links for the current request's post type; also [plura-p-date-archive].
+ *
+ * Resolves the post type on post type archives, term archives and singulars. Renders nothing
+ * on date and author archives.
+ *
+ * @return string|null Archive list HTML, or null when no post type resolves.
+ */
 function plura_p_date_archive()
 {
 	if (is_archive()) {

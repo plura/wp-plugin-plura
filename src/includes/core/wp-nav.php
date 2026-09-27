@@ -433,7 +433,7 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 				$g = [];
 
 				foreach ($group as $i => $crumb) {
-					$classes = [ 'plura-wp-breadcrumb' ];
+					$classes = ['plura-wp-breadcrumb'];
 
 					if ($i === array_key_last($group)) {
 						$classes[] = 'is-current';
@@ -449,16 +449,16 @@ function plura_wp_breadcrumbs(WP_Post|WP_Term|int|null $object = null, bool $sel
 					$c = plura_wp_link(
 						html: $crumb['name'],
 						target: $crumb['obj'],
-						atts: [ 'class' => 'plura-wp-breadcrumb-link' ],
+						atts: ['class' => 'plura-wp-breadcrumb-link'],
 					);
 
-					$g[] = sprintf('<li %s>%s</li>', plura_attributes([ 'class' => $classes ]), $c);
+					$g[] = sprintf('<li %s>%s</li>', plura_attributes(['class' => $classes]), $c);
 				}
 
-				$return[] = sprintf('<ul %s>%s</ul>', plura_attributes([ 'class' => 'plura-wp-breadcrumbs-group' ]), implode('', $g));
+				$return[] = sprintf('<ul %s>%s</ul>', plura_attributes(['class' => 'plura-wp-breadcrumbs-group']), implode('', $g));
 			}
 
-			$atts = [ 'class' => 'plura-wp-breadcrumbs' . ($class ? " {$class}" : '') ];
+			$atts = ['class' => 'plura-wp-breadcrumbs' . ($class ? " {$class}" : '')];
 
 			return '<div ' . plura_attributes($atts) . '>' . implode('', $return) . '</div>';
 		}
@@ -767,7 +767,7 @@ function plura_p_date_archive()
 	if (!empty($post_type)) {
 		$atts['class'] = 'plura-p-date-archive';
 
-		return "<ul " . plura_attributes($atts) . ">" . wp_get_archives(['echo' => 0, 'type' => 'yearly', 'post_type' => $post_type ]) . "</ul>";
+		return "<ul " . plura_attributes($atts) . ">" . wp_get_archives(['echo' => 0, 'type' => 'yearly', 'post_type' => $post_type]) . "</ul>";
 	}
 }
 

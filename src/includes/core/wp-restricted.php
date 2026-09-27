@@ -80,7 +80,7 @@ function p_restricted_area_log()
 
 	$html[] = preg_replace('/(<form)/', '$1 class="sgl-form"', wp_login_form($login_form_args));
 
-	$atts = ['class' => ['p-restricted-area-log'] ];
+	$atts = ['class' => ['p-restricted-area-log']];
 
 	return "<div " . plura_attributes($atts) . ">" . implode('', $html) . "</div>";
 }

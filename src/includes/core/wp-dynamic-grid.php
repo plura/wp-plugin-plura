@@ -388,7 +388,7 @@ function plura_wp_dynamic_grid_filter_data(
 	// Simple case: non-grouped terms
 	if (!$group) {
 		$terms = plura_wp_dynamic_grid_filter_data_items($base_query);
-		return [ $terms ];
+		return [$terms];
 	}
 
 	// Grouped terms case

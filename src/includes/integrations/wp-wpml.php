@@ -90,7 +90,7 @@ function plura_wpml_id($id = false, $default = true, $type = 'post')
 	}
 
 	if (plura_wpml() && (!$default || is_string($default) || $sitepress->get_current_language() !== $sitepress->get_default_language())) {
-		$objectIDs = is_array($id) ? $id : [ $id ];
+		$objectIDs = is_array($id) ? $id : [$id];
 
 		$ids = [];
 

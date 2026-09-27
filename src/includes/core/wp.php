@@ -531,7 +531,7 @@ function plura_wp_title(
 		}
 
 		$type = 'date';
-		[ $text, $target ] = $date;
+		[$text, $target] = $date;
 	} else {
 		return null;
 	}
@@ -551,7 +551,7 @@ function plura_wp_title(
 	}
 
 	if ($tag !== false) {
-		$classes = [ 'plura-wp-title', "plura-wp-{$type}-title" ];
+		$classes = ['plura-wp-title', "plura-wp-{$type}-title"];
 
 		if ($class) {
 			$classes = array_merge(
@@ -566,7 +566,7 @@ function plura_wp_title(
 			'<%1$s %3$s>%2$s</%1$s>',
 			tag_escape($tag),
 			esc_html($text),
-			plura_attributes([ 'class' => $classes ]),
+			plura_attributes(['class' => $classes]),
 		);
 	} else {
 		$html = esc_html($text);

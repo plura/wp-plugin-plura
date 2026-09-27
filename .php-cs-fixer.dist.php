@@ -17,6 +17,7 @@ return (new PhpCsFixer\Config())
 		'binary_operator_spaces' => ['default' => 'single_space', 'operators' => ['=>' => 'align_single_space_minimal']],
 		'no_extra_blank_lines' => ['tokens' => ['curly_brace_block', 'extra', 'parenthesis_brace_block', 'square_brace_block']],
 		'single_line_comment_spacing' => true,
+		'trim_array_spaces' => true,
 		'unary_operator_spaces' => true,
 
 		// Docblocks: tag columns aligned across the whole block, so @param tags stay together

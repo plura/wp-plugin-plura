@@ -65,11 +65,22 @@ $plura_modules = [
 
 ];
 
-if (class_exists('WPCF7'))                                       $plura_modules[] = 'includes/integrations/wp-cf7';
-if (class_exists('RevSlider') || class_exists('Essential_Grid')) $plura_modules[] = 'includes/integrations/wp-revslider-egrid';
-if (class_exists('SitePress'))                                   $plura_modules[] = 'includes/integrations/wp-wpml';
-
 plura_includes($plura_modules, __DIR__);
+
+// Checked now and again on plugins_loaded: WordPress loads plugins alphabetically, so
+// those sorting after "plura" (RevSlider, WPML) only exist by then. include_once skips repeats.
+$plura_integrations = function (): void {
+	$modules = [];
+
+	if (class_exists('WPCF7'))                                       $modules[] = 'includes/integrations/wp-cf7';
+	if (class_exists('RevSlider') || class_exists('Essential_Grid')) $modules[] = 'includes/integrations/wp-revslider-egrid';
+	if (class_exists('SitePress'))                                   $modules[] = 'includes/integrations/wp-wpml';
+
+	plura_includes($modules, __DIR__);
+};
+
+$plura_integrations();
+add_action('plugins_loaded', $plura_integrations);
 
 
 add_action('init', function() {

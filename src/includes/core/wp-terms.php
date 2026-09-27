@@ -1,12 +1,8 @@
 <?php
 
 /**
- *	. Terms
- *		- Query
- *		- Terms
- *	. Term
- *		- Featured Image
- *		- Title
+ * Terms: queries, flat or nested term lists, and each term's featured image, read from its
+ * `featured_image` meta or borrowed from its newest post.
  */
 
 /**
@@ -81,6 +77,12 @@ function plura_wp_terms_query(
 		$query_params['parent'] = $parent;
 	}
 
+	/**
+	 * Filters the WP_Term_Query arguments built by plura_wp_terms_query().
+	 *
+	 * @param array $query_params WP_Term_Query arguments.
+	 * @param array $args         The function's arguments, including $params and $context.
+	 */
 	$query_params = apply_filters('plura_wp_terms_query', $query_params, $args);
 
 	return new WP_Term_Query($query_params);
@@ -233,6 +235,13 @@ function plura_wp_terms(
 		$atts = array_merge_recursive($atts, $data);
 	}
 
+	/**
+	 * Filters the attributes of the terms wrapper.
+	 *
+	 * @param array       $atts    Wrapper attributes.
+	 * @param WP_Term[]   $terms   Top-level terms being rendered.
+	 * @param string|null $context Caller's context.
+	 */
 	$atts = apply_filters('plura_wp_terms_atts', $atts, $terms, $context);
 
 	return sprintf(
@@ -243,14 +252,15 @@ function plura_wp_terms(
 }
 
 /**
- * Shortcode [plura-wp-terms] to render terms using plura_wp_terms().
+ * Shortcode [plura-wp-terms]: renders plura_wp_terms().
  *
- * Supports most parameters from plura_wp_terms() except:
- * - $params (array) for query filters,
- * - $terms (array|null) for preloaded terms,
- * - $data (array) for wrapper attributes.
+ * Attributes: plura_wp_terms()'s parameters, by name and with the same defaults, except params,
+ * terms, data and output. taxonomy, ids and exclude take comma-separated lists, and
+ * parent="current" lists the children of the term archive being viewed (nothing elsewhere).
  *
- * `parent="current"` lists the children of the term archive being viewed, and nothing elsewhere.
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string Terms HTML, or an empty string.
  */
 add_shortcode('plura-wp-terms', function ($args) {
 	$atts = shortcode_atts([
@@ -388,8 +398,24 @@ function plura_wp_term(
 		}
 	}
 
+	/**
+	 * Filters the term's content parts, in render order.
+	 *
+	 * @param array       $content Parts keyed 'featured-image', 'title' and 'children'; children always
+	 *                             render after the rest, outside the term's link.
+	 * @param WP_Term     $term    Term being rendered.
+	 * @param string|null $context Caller's context.
+	 * @param int|null    $index   Position in the list, when rendered by plura_wp_terms().
+	 */
 	$content = apply_filters('plura_wp_term', $content, $term, $context, $index);
 
+	/**
+	 * Filters the attributes of the term's wrapper, or of its <a> when $link is 1.
+	 *
+	 * @param array       $atts    Wrapper attributes.
+	 * @param WP_Term     $term    Term being rendered.
+	 * @param string|null $context Caller's context.
+	 */
 	$atts = apply_filters('plura_wp_term_atts', $atts, $term, $context);
 
 	// Children hold their own links, and links can't nest, so they stay outside the term's —
@@ -471,8 +497,16 @@ function plura_wp_term_featured_image(
 		$result = $post ? plura_wp_post_featured_image($post, $size, $atts, $context) : null;
 	}
 
-	// Filter the final rendered featured image HTML. $post is the post it was borrowed from,
-	// or null when it is the term's own.
+	/**
+	 * Filters the term's featured image HTML.
+	 *
+	 * @param string|null  $result  Image HTML, or null when neither the term nor its posts have one.
+	 * @param WP_Term      $term    Term the image is for.
+	 * @param string       $size    Image size.
+	 * @param array        $atts    Attributes for the <img>.
+	 * @param string|null  $context Caller's context.
+	 * @param WP_Post|null $post    Post the image was borrowed from, or null when it is the term's own.
+	 */
 	return apply_filters('plura_wp_term_featured_image', $result, $term, $size, $atts, $context, $post);
 }
 

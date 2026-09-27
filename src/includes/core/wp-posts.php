@@ -1,39 +1,28 @@
 <?php
 
 /**
- *	. Globals
- *		- Query Defaults
- *		- Posts Defaults
- *		- Post Defaults
- *		- Timeline Defaults
- *	. Posts
- *		- Query
- *  	- Timeline Query
- *   	- Posts
- *    	- Related Posts
- *	. Post
- *		- Link
- *		- Timeline Datetime
- *		- Timeline Status
+ * Posts: queries (including timeline status from start/end date fields), list and single-post
+ * rendering, and each post's title, meta, featured image and terms. Meta fields and timeline
+ * dates are read with ACF's get_field().
  */
 
 /**
  * Builds a WP_Query object with support for exclusion, taxonomy, timeline filtering, ordering, and site-specific params.
  *
  * @param int|null     $active             Optional. If set, filters posts by a meta key/value (e.g., status = 1).
- * @param string       $active_key         Optional. Meta key used for the active filter. Default ''.
- * @param int[]|int    $ids                Optional. Post ID or array of IDs to include (whitelist).
+ * @param string       $active_key         Optional. Meta key used for the active filter. Default '' ('status').
  * @param int[]|int    $exclude            Optional. Post ID or array of IDs to exclude (blacklist).
+ * @param int[]|int    $ids                Optional. Post ID or array of IDs to include (whitelist).
  * @param int          $limit              Optional. Max number of posts to fetch. Default -1 (all).
- * @param bool         $rand               Optional. Whether to randomize results. Default false.
  * @param string       $order              Optional. Ordering direction. Default 'DESC'.
  * @param string       $orderby            Optional. Field to order by. Default 'date'.
+ * @param bool         $rand               Optional. Whether to randomize results. Default false.
  * @param string|array $type               Optional. Post type(s) to query. Default 'post'.
  * @param int[]|int    $terms              Optional. Term ID or array of IDs to include in taxonomy query.
  * @param string       $taxonomy           Optional. Taxonomy to filter by. Required if $terms is set.
  * @param int|null     $timeline           Optional. Timeline filter value (0, 1, or -1).
- * @param string       $timeline_start_key Optional. Meta key for timeline start date.
  * @param string       $timeline_end_key   Optional. Meta key for timeline end date.
+ * @param string       $timeline_start_key Optional. Meta key for timeline start date.
  * @param array        $params             Optional. Site-specific parameters to be handled via filters.
  * @param string       $context            Optional. String context passed to filters to modify query dynamically.
  *
@@ -177,6 +166,12 @@ function plura_wp_posts_query(
 		$query_params['meta_query'] = $meta;
 	}
 
+	/**
+	 * Filters the WP_Query arguments built by plura_wp_posts_query().
+	 *
+	 * @param array $query_params WP_Query arguments.
+	 * @param array $args         The function's arguments, including $params and $context.
+	 */
 	$query_params = apply_filters('plura_wp_posts_query', $query_params, $args);
 
 	return new WP_Query($query_params);
@@ -281,8 +276,8 @@ function plura_wp_posts_query_timeline(
  * Accepts preloaded posts or runs a query internally.
  *
  * @param string|array $type                     Post type or array of post types.
- * @param int|null     $active                   Optional post ID to highlight as "active".
- * @param string       $active_key               Key used to determine the active post.
+ * @param int|null     $active                   Optional. Only posts whose $active_key meta is 1 (or 0), as in plura_wp_posts_query().
+ * @param string       $active_key               Meta key for $active. Default '' ('status').
  * @param int[]|int    $exclude                  Optional. Post ID or array of IDs to exclude (blacklist).
  * @param int[]|int    $ids                      Optional. Post ID or array of IDs to include (whitelist).
  * @param int          $limit                    Max number of posts to show (default: -1 = all).
@@ -292,15 +287,15 @@ function plura_wp_posts_query_timeline(
  * @param int[]|int    $terms                    Optional term ID or array of term IDs.
  * @param string       $taxonomy                 Taxonomy to use for the $terms filter.
  * @param int|null     $timeline                 Timeline filter flag (used in queries).
- * @param string       $timeline_start_key       ACF field key for timeline start.
- * @param string       $timeline_end_key         ACF field key for timeline end.
  * @param string       $timeline_datetime_format Datetime format for timeline display.
  * @param string       $timeline_datetime_source Format for parsing timeline raw values.
- * @param string       $datetime_format          Format for post datetime (used in plura_wp_post()).
- * @param bool|string  $read_more                Whether to include a "read more" link (true/false or custom label).
- * @param int          $link                     Whether to wrap posts in a link (0 = partial links, 1 = wrap all, -1 = no links).
+ * @param string       $timeline_end_key         ACF field key for timeline end.
+ * @param string       $timeline_start_key       ACF field key for timeline start.
  * @param string       $class                    Additional CSS class(es) for the wrapper.
  * @param array        $data                     Additional data-* attributes for the wrapper.
+ * @param string       $datetime_format          Format for post datetime (used in plura_wp_post()).
+ * @param int          $link                     Whether to wrap posts in a link (0 = partial links, 1 = wrap all, -1 = no links).
+ * @param bool|string  $read_more                Whether to include a "read more" link (true/false or custom label).
  * @param string|null  $label                    Optional label added as a data-label attribute to the wrapper.
  * @param bool         $wrap                     Whether to wrap the posts in a <div> container. Default true.
  * @param array|null   $posts                    Optional preloaded array of WP_Post objects.
@@ -442,6 +437,13 @@ function plura_wp_posts(
 			$atts = array_merge_recursive($atts, $data);
 		}
 
+		/**
+		 * Filters the attributes of the posts wrapper.
+		 *
+		 * @param array       $atts    Wrapper attributes.
+		 * @param WP_Post[]   $posts   Posts being rendered.
+		 * @param string|null $context Caller's context.
+		 */
 		$atts = apply_filters('plura_wp_posts_atts', $atts, $posts, $context);
 
 		return sprintf(
@@ -455,14 +457,15 @@ function plura_wp_posts(
 }
 
 /**
- * Shortcode [plura-wp-posts] to render posts using plura_wp_posts().
+ * Shortcode [plura-wp-posts]: renders plura_wp_posts().
  *
- * Supports most parameters from plura_wp_posts() except:
- * - $params (array) for query filters,
- * - $posts (array|null) for preloaded posts,
- * - $data (array) for wrapper attributes.
+ * Attributes: plura_wp_posts()'s parameters, by name and with the same defaults, except params,
+ * posts and data, which need PHP. type, ids, terms and exclude take comma-separated lists, and
+ * exclude="1" excludes the current post on singulars.
  *
- * Only string and scalar params are accepted via shortcode attributes.
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string Posts HTML, or an empty string.
  */
 add_shortcode('plura-wp-posts', function ($args) {
 	$atts = shortcode_atts([
@@ -529,7 +532,21 @@ add_shortcode('plura-wp-posts', function ($args) {
 	return plura_wp_posts(...$atts);
 });
 
-/* Posts: Related Posts */
+/**
+ * Shortcode [plura-wp-posts-related]: renders plura_wp_posts() as posts related to the current one.
+ *
+ * On single posts, type defaults to the current post type and the current post is excluded.
+ * Without order or rand, posts come in random order. The wrapper's data-related lists the
+ * excluded IDs.
+ *
+ * Attributes: type, exclude, limit, order, rand, active, active_key, timeline, timeline_start_key,
+ * timeline_end_key, timeline_datetime_format, timeline_datetime_source, datetime_format,
+ * read_more, link, class and context, as in plura_wp_posts(); context defaults to 'related'.
+ *
+ * @param array $args Shortcode attributes.
+ *
+ * @return string Posts HTML, or an empty string.
+ */
 add_shortcode('plura-wp-posts-related', function (array $args): string {
 	$atts = shortcode_atts([
 		'active'                   => null,
@@ -754,6 +771,17 @@ function plura_wp_post(
 	}
 
 	if (has_filter('plura_wp_post')) {
+		/**
+		 * Filters the post's content parts, in render order. 'content' (the full post content)
+		 * is only rendered when a callback changes the array.
+		 *
+		 * @param array       $content  Parts keyed 'featured-image', 'title', 'datetime', 'meta',
+		 *                              'timeline', 'excerpt', 'content' and 'read-more'.
+		 * @param WP_Post     $post     Post being rendered.
+		 * @param string|null $context  Caller's context.
+		 * @param int|null    $index    Position in the list, when rendered by plura_wp_posts().
+		 * @param array       $original The unfiltered parts.
+		 */
 		$filtered_content = apply_filters(
 			'plura_wp_post',
 			$ordered_content,     // content for filtering
@@ -769,7 +797,13 @@ function plura_wp_post(
 		unset($ordered_content['content']);
 	}
 
-	// Final filter for atts — now includes all changes (like timeline status, classes, etc)
+	/**
+	 * Filters the attributes of the post's wrapper, or of its <a> when $link is 1.
+	 *
+	 * @param array       $atts    Wrapper attributes, including data-timeline when the post has one.
+	 * @param WP_Post     $post    Post being rendered.
+	 * @param string|null $context Caller's context.
+	 */
 	$atts = apply_filters('plura_wp_post_atts', $atts, $post, $context);
 
 	$html = implode('', $ordered_content);
@@ -785,10 +819,14 @@ function plura_wp_post(
 }
 
 /**
- * Shortcode [plura-wp-post] to render a single post using plura_wp_post().
+ * Shortcode [plura-wp-post]: renders plura_wp_post().
  *
- * Supports most parameters from plura_wp_post().
- * Only string and scalar parameters are supported.
+ * Attributes: plura_wp_post()'s parameters, by name and with the same defaults, except index.
+ * post is a post ID, defaulting to the current post.
+ *
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string Post HTML, or an empty string for an unknown post.
  */
 add_shortcode('plura-wp-post', function ($args) {
 	$atts = shortcode_atts([
@@ -829,10 +867,23 @@ add_shortcode('plura-wp-post', function ($args) {
 	return plura_wp_post(...$atts);
 });
 
-/* Post: Timeline Datetime */
+/**
+ * Shortcode [plura-wp-post-timeline-datetime]: renders plura_wp_post_timeline_datetime().
+ *
+ * Attributes:
+ * - post:                     Post ID. Default the current post on single posts.
+ * - timeline_start_key:       ACF field holding the start date.
+ * - timeline_end_key:         ACF field holding the end date.
+ * - timeline_datetime_format: Display format. Default 'l, F jS, Y g:i A'.
+ * - timeline_datetime_source: Format the dates are parsed with. Default 'Y-m-d H:i:s'.
+ *
+ * @param array|string $args Shortcode attributes.
+ *
+ * @return string|false Timeline HTML, false without dates, or an empty string without a post.
+ */
 add_shortcode('plura-wp-post-timeline-datetime', function ($args) {
 	$atts = shortcode_atts([
-		'post'                     => 0,  // Post ID (0 will fall back to current post)
+		'post'                     => 0,
 		'timeline_start_key'       => null,
 		'timeline_end_key'         => null,
 		'timeline_datetime_format' => 'l, F jS, Y g:i A',
@@ -856,7 +907,7 @@ add_shortcode('plura-wp-post-timeline-datetime', function ($args) {
 /**
  * Generates timeline date/time HTML for a post
  *
- * @param WP_Post     $post                     Post object or ID
+ * @param WP_Post|int $post                     Post object or ID
  * @param string|null $timeline_start_key       ACF field name for start date
  * @param string|null $timeline_end_key         ACF field name for end date
  * @param string      $timeline_datetime_format Date format string
@@ -985,6 +1036,13 @@ function plura_wp_post_title(
 		return null;
 	}
 
+	/**
+	 * Filters the post title text before it is escaped and wrapped.
+	 *
+	 * @param string      $title   Post title.
+	 * @param WP_Post     $post    Post the title belongs to.
+	 * @param string|null $context Caller's context.
+	 */
 	$text = apply_filters('plura_wp_post_title', $post->post_title, $post, $context);
 
 	if (empty($text)) {
@@ -1055,13 +1113,8 @@ add_shortcode('plura-wp-post-title', 'plura_wp_post_title_shortcode');
  *                                         - A single meta key as a string.
  *                                         - An indexed array of meta keys (strings).
  *                                         - An associative array with display keys (e.g., 'position' => 'acf_position').
- *                                         - An array of meta item arrays, where each item may include:
- *                                         [
- *                                         'key'               => string                  // required ACF meta key
- *                                         'label'             => string                  // optional label
- *                                         'sanitize_callback' => callable                // optional value transformer
- *                                         'raw_html'          => bool                    // if true, disables esc_html()
- *                                         ]
+ *                                         - An array of item arrays with 'key' (the ACF field, required), 'label',
+ *                                         'sanitize_callback' (transforms the value) and 'raw_html' (true skips esc_html()).
  * @param bool         $html               Whether to return HTML or raw values.
  * @param string|null  $context            Optional context string for filtering.
  * @param bool         $label              Whether to show labels for each meta field (if provided).
@@ -1088,6 +1141,14 @@ function plura_wp_post_meta(
 	}
 
 	$meta = (array) $meta;
+
+	/**
+	 * Filters which meta items are shown, before any value is read.
+	 *
+	 * @param array       $meta    Meta items, in the forms $meta accepts.
+	 * @param WP_Post     $post    Post the meta belongs to.
+	 * @param string|null $context Caller's context.
+	 */
 	$meta = apply_filters('plura_wp_post_meta', $meta, $post, $context);
 	$output = [];
 
@@ -1100,8 +1161,16 @@ function plura_wp_post_meta(
 			: null;
 		$raw_html = $is_assoc && !empty($meta_item['raw_html']);
 
-		// Get value (ACF or WP meta), filtered
 		$value = get_field($item_meta_key, $post->ID);
+
+		/**
+		 * Filters a meta value, before its sanitize_callback runs.
+		 *
+		 * @param mixed       $value   Value from get_field().
+		 * @param WP_Post     $post    Post the meta belongs to.
+		 * @param string      $key     ACF field name.
+		 * @param string|null $context Caller's context.
+		 */
 		$value = apply_filters('plura_wp_post_meta_item_value', $value, $post, $item_meta_key, $context);
 
 		// Custom value transformation
@@ -1203,8 +1272,15 @@ function plura_wp_post_featured_image(
 	$thumb_id = get_post_thumbnail_id($post);
 	$result = $thumb_id ? plura_wp_image($thumb_id, $size, $atts) : null;
 
-	// Filter the final rendered featured image HTML.
-	// Can be used to inject fallback logic if no thumbnail is present.
+	/**
+	 * Filters the featured image HTML, e.g. to supply a fallback when the post has none.
+	 *
+	 * @param string|null $result  Image HTML, or null without a featured image.
+	 * @param WP_Post     $post    Post the image belongs to.
+	 * @param string      $size    Image size.
+	 * @param array       $atts    Attributes for the <img>.
+	 * @param string|null $context Caller's context.
+	 */
 	return apply_filters('plura_wp_post_featured_image', $result, $post, $size, $atts, $context);
 }
 
@@ -1248,7 +1324,7 @@ add_shortcode('plura-wp-post-featured-image', 'plura_wp_post_featured_image_shor
 /**
  * Retrieves all taxonomy terms associated with a given post, optionally filtered by allowed taxonomies.
  *
- * @param int          $post_id            The ID of the post to get terms for.
+ * @param int|WP_Post  $post               The post, or its ID, to get terms for.
  * @param array|string $allowed_taxonomies Optional. A taxonomy name or array of names to filter which taxonomies are included.
  *                                         If empty, all taxonomies for the post type will be included.
  *
@@ -1280,6 +1356,12 @@ function plura_wp_post_terms_data(int|WP_Post $post, array|string $allowed_taxon
 		}
 	}
 
+	/**
+	 * Filters a post's terms, grouped by taxonomy.
+	 *
+	 * @param array<string, WP_Term[]> $all_terms Terms keyed by taxonomy name.
+	 * @param WP_Post                  $post      Post the terms belong to.
+	 */
 	return apply_filters('plura_wp_post_terms_data', $all_terms, $post);
 }
 

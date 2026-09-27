@@ -3,3 +3,6 @@
 
 # style: apply PER Coding Style to all PHP files
 d4c5c03807e8c4d1d0e7d05dd6237d03e4dd6dd1
+
+# style: no spaces inside array brackets
+eb9ac3249d936a976cdb4466ff0e21e0947bf0ed
